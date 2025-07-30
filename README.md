@@ -2,6 +2,8 @@
 
 Simple web app that uses the Crossref API to fetch and display publications on Predynastic Egyptian Archaeology 
 
+To view the demo, hop on over to https://watrall.github.io/crossref-predynastic/
+
 ## Features
 
 - Display publications about Predynastic Egypt using the Crossref API
