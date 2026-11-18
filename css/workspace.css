@@ -223,11 +223,20 @@ legend {
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
-.header-note {
+.crossref-attribution {
+  flex: none;
+}
+.crossref-attribution img {
+  display: block;
+  width: 160px;
+  height: auto;
+}
+.header-attribution {
   display: none;
-  font-size: var(--text-caption);
-  color: var(--color-muted);
   margin-left: auto;
+}
+.footer-attribution {
+  display: block;
 }
 .about-icon {
   display: none;
@@ -1041,8 +1050,11 @@ h1 {
   }
 }
 @media (min-width: 1000px) {
-  .header-note {
+  .header-attribution {
     display: block;
+  }
+  .footer-attribution {
+    display: none;
   }
   .about-button {
     margin-left: 0;

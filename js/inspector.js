@@ -175,7 +175,7 @@ export function createInspector(root, { onClose, onSave, isSaved = () => false }
       ),
     );
     const fields = [
-      ['DOI', externalLink(work.doi, doiURL(work.doi))],
+      ['DOI', externalLink(`https://doi.org/${work.doi}`, doiURL(work.doi))],
       ['Type', work.typeLabel],
       ['Published', work.year || 'Date not supplied'],
       ['Publisher', work.publisher || 'Not supplied'],
@@ -317,7 +317,7 @@ export function createInspector(root, { onClose, onSave, isSaved = () => false }
                   { disabled: following, onclick: () => follow(doi) },
                   'Inspect reference',
                 ),
-                el('small', {}, externalLink(doi, doiURL(doi))),
+                el('small', {}, externalLink(`https://doi.org/${doi}`, doiURL(doi))),
               ),
           ),
         );
