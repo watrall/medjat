@@ -20,6 +20,7 @@ const state = {
   collection: saved.records,
   storageWarning: saved.warning,
   collectionQuery: '',
+  lastRemoved: null,
   query: readQuery(location.search),
   draft: readQuery(location.search),
   items: [],
@@ -146,6 +147,7 @@ async function toggleSave(work) {
   if (saving.has(work.id)) return;
   const focusedRecord = document.activeElement?.closest('.result-row')?.dataset.record;
   const removing = state.collection.has(work.id);
+  const removedEntry = state.collection.get(work.id);
   saving.add(work.id);
   try {
     const result = await collectionStore.change(
@@ -153,6 +155,7 @@ async function toggleSave(work) {
     );
     state.collection = result.records;
     state.storageWarning = result.warning;
+    if (removing) state.lastRemoved = removedEntry;
   } catch (error) {
     notify(error.message);
     return;
@@ -170,9 +173,10 @@ async function toggleSave(work) {
   renderStatus();
   inspector.refresh();
   if (focusedRecord)
-    $('resultList')
-      .querySelector(`[data-record="${CSS.escape(focusedRecord)}"] .save-button`)
-      ?.focus({ preventScroll: true });
+    (
+      $('resultList').querySelector(`[data-record="${CSS.escape(focusedRecord)}"] .save-button`) ||
+      $('undoRemoval')
+    )?.focus({ preventScroll: true });
 }
 function setView(view, { navigate = true, syncURL = true, load = true } = {}) {
   if (view !== 'collection') exportController?.abort();
@@ -432,6 +436,9 @@ function renderList() {
   );
 }
 function renderStatus() {
+  $('collectionUndo').hidden = !state.lastRemoved;
+  if (state.lastRemoved)
+    $('removedTitle').textContent = `Removed “${state.lastRemoved.work.title}”.`;
   $('collectionCount').textContent = state.collection.size;
   if (state.view === 'collection') {
     $('resultCount').textContent =
@@ -630,6 +637,38 @@ $('aboutToggle').addEventListener('click', () => {
 $('exploreNav').addEventListener('click', () => setView('explore'));
 $('collectionNav').disabled = false;
 $('collectionNav').addEventListener('click', () => setView('collection'));
+$('dismissUndo').addEventListener('click', () => {
+  state.lastRemoved = null;
+  renderStatus();
+  $('resultsTitle').setAttribute('tabindex', '-1');
+  $('resultsTitle').focus();
+});
+$('undoRemoval').addEventListener('click', async () => {
+  const entry = state.lastRemoved;
+  if (!entry || $('undoRemoval').disabled) return;
+  $('undoRemoval').disabled = true;
+  try {
+    const result = await collectionStore.change({ add: entry });
+    state.collection = result.records;
+    state.storageWarning = result.warning;
+    state.lastRemoved = null;
+    renderList();
+    renderStatus();
+    inspector.refresh();
+    $('resultList')
+      .querySelector(`[data-record="${CSS.escape(entry.work.id)}"] .save-button`)
+      ?.focus();
+    notify(
+      result.warning
+        ? 'Restored for this visit. Export to keep a copy.'
+        : 'Publication restored to your collection.',
+    );
+  } catch (error) {
+    notify(error.message);
+  } finally {
+    $('undoRemoval').disabled = false;
+  }
+});
 collectionStore.subscribe(({ records, warning }) => {
   state.collection = records;
   state.storageWarning = warning;

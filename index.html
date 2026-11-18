@@ -238,6 +238,11 @@
           <div id="activeQuery" class="active-query" aria-label="Current search"></div>
           <div id="requestNotice" role="alert" hidden></div>
           <div id="collectionTools" hidden></div>
+          <div id="collectionUndo" class="collection-undo" role="status" hidden>
+            <span id="removedTitle"></span>
+            <button id="undoRemoval" class="text-button" type="button">Undo removal</button>
+            <button id="dismissUndo" class="text-button" type="button">Dismiss</button>
+          </div>
           <ol id="resultList" class="result-list" aria-label="Publications" aria-busy="true"></ol>
           <div id="resultsFooter" class="results-footer"></div>
         </section>

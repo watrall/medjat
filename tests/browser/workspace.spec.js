@@ -200,6 +200,9 @@ test('search, inspect, save, reload, cite, and export a collection', async ({ pa
   await expect(
     page.getByRole('heading', { name: 'Your next bibliography starts here.' }),
   ).toBeVisible();
+  await page.getByRole('button', { name: 'Undo removal', exact: true }).click();
+  await expect(page.locator('.result-row')).toHaveCount(1);
+  await page.getByRole('button', { name: /^Remove from collection: Settlement/ }).click();
   await page
     .locator('#importCollection')
     .setInputFiles({ name: 'collection.json', mimeType: 'application/json', buffer: backup });
