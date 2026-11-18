@@ -1,5 +1,5 @@
 import { PERIODS, TYPES, readQuery, queryString, authorLine, doiURL } from './data.js';
-import { searchWorks } from './crossref.js';
+import { searchWorks, DATE_BROWSE_LIMIT } from './crossref.js';
 import { createInspector } from './inspector.js';
 import { parseCollection } from './collection.js';
 import { createCollectionStore } from './collection-store.js';
@@ -30,6 +30,11 @@ const state = {
   requestId: 0,
   controller: null,
   doiLookup: false,
+  resultQuery: null,
+  errorRetryable: true,
+  failedAppend: false,
+  appending: false,
+  browseLimited: false,
 };
 
 let initialized = false;
@@ -50,15 +55,19 @@ function syncControls() {
   $('hasReferences').checked = state.query.references;
   $('sortSelect').value = state.query.sort;
   updatePeriodHint();
-  const period = PERIODS.find((p) => p.id === state.query.period);
+  renderAppliedQuery();
+}
+function renderAppliedQuery() {
+  const query = state.resultQuery || state.query;
+  const period = PERIODS.find((p) => p.id === query.period);
   const chips = [
     period && `Period keywords: ${period.name}`,
-    state.query.type && TYPES.get(state.query.type),
-    state.query.from && `From ${state.query.from}`,
-    state.query.to && `To ${state.query.to}`,
-    state.query.abstract && 'Has abstract',
-    state.query.orcid && 'Has ORCID',
-    state.query.references && 'Has references',
+    query.type && TYPES.get(query.type),
+    query.from && `From ${query.from}`,
+    query.to && `To ${query.to}`,
+    query.abstract && 'Has abstract',
+    query.orcid && 'Has ORCID',
+    query.references && 'Has references',
   ].filter(Boolean);
   $('activeQuery').replaceChildren(
     ...chips.map((text) => el('span', { class: 'query-chip' }, text)),
@@ -383,14 +392,23 @@ function renderStatus() {
       );
     return;
   }
+  const previous =
+    state.items.length &&
+    state.resultQuery &&
+    queryString(state.resultQuery) !== queryString(state.query);
   $('resultCount').textContent = state.loading
-    ? state.items.length
+    ? state.appending
       ? 'Loading more publications…'
       : 'Searching Crossref…'
-    : `${state.items.length.toLocaleString()} loaded${state.total ? ` · ${state.total.toLocaleString()} Crossref candidates` : ''}`;
+    : `${previous ? 'Previous results: ' : ''}${state.items.length.toLocaleString()} loaded${state.total ? ` · ${state.total.toLocaleString()} Crossref candidates` : ''}`;
+  const resultQuery = state.resultQuery || state.query;
+  const ranking =
+    resultQuery.sort === 'relevance'
+      ? 'Ranked by Crossref'
+      : `Sorted by publication date, ${resultQuery.sort === 'oldest' ? 'oldest' : 'newest'} first`;
   $('scopeNote').textContent = state.doiLookup
     ? 'DOI lookup opens one exact Crossref record; topic and publication filters do not apply.'
-    : `Ranked by Crossref${state.retrievedAt ? ` · ${state.cached ? 'cached' : 'retrieved'} ${new Date(state.retrievedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}. Relevance and coverage vary.`;
+    : `${previous ? `Showing the last successful search for “${resultQuery.q}”. ` : ''}${ranking}${state.retrievedAt ? ` · ${state.cached ? 'cached' : 'retrieved'} ${new Date(state.retrievedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}. Relevance and coverage vary.${resultQuery.sort !== 'relevance' ? ` Date-sorted browsing covers the first ${DATE_BROWSE_LIMIT.toLocaleString()} candidates; narrow your search for more focused results.` : ''}`;
   const notice = $('requestNotice');
   notice.hidden = !state.error;
   if (state.error)
@@ -407,16 +425,17 @@ function renderStatus() {
             'button',
             {
               class: 'button',
-              onclick: () => runSearch(state.items.length > 0 && Boolean(state.nextCursor)),
+              onclick: () =>
+                state.errorRetryable ? runSearch(state.failedAppend) : $('searchInput').focus(),
             },
-            'Retry search',
+            state.errorRetryable ? 'Retry search' : 'Edit search',
           ),
         ),
       ),
     );
   const footer = $('resultsFooter');
   footer.replaceChildren();
-  if (state.nextCursor)
+  if (state.nextCursor && !previous)
     footer.append(
       el(
         'button',
@@ -429,6 +448,14 @@ function renderStatus() {
         'Only loaded records are shown. Search more specifically to improve relevance.',
       ),
     );
+  if (state.browseLimited && !previous)
+    footer.append(
+      el(
+        'p',
+        { class: 'scope-note' },
+        'You have reached the publication-date browsing limit. Narrow the publication years or topic, or switch to relevance.',
+      ),
+    );
   $('sortSelect').disabled = state.loading;
 }
 async function runSearch(append = false) {
@@ -439,24 +466,21 @@ async function runSearch(append = false) {
   const requestId = ++state.requestId;
   state.loading = true;
   state.error = '';
-  if (!append) {
-    state.items = [];
-    state.selected = null;
-    state.nextCursor = null;
-    $('research').classList.remove('mobile-detail-open');
-    renderInspector(null);
-  }
+  state.appending = append;
+  state.failedAppend = append;
+  state.errorRetryable = true;
+  const requestedQuery = { ...state.query };
   syncControls();
   updateURL();
   renderList();
   renderStatus();
   try {
-    const result = await searchWorks(state.query, {
+    const result = await searchWorks(requestedQuery, {
       cursor: append ? state.nextCursor : '*',
       signal: controller.signal,
     });
     if (requestId !== state.requestId) return;
-    const existing = new Set(state.items.map((w) => w.id));
+    const existing = new Set(append ? state.items.map((w) => w.id) : []);
     const added = result.items.filter((w) => !existing.has(w.id));
     state.items = append ? [...state.items, ...added] : added;
     state.total = result.total;
@@ -464,12 +488,18 @@ async function runSearch(append = false) {
     state.retrievedAt = result.retrievedAt;
     state.cached = result.cached;
     state.doiLookup = result.doiLookup;
-    if (!state.selected && state.items.length) {
-      state.selected = state.items[0].id;
-      renderInspector(state.items[0]);
+    state.browseLimited = result.browseLimited;
+    state.resultQuery = requestedQuery;
+    renderAppliedQuery();
+    if (!append) {
+      const selected = state.items.find((work) => work.id === state.selected) || state.items[0];
+      state.selected = selected?.id || null;
+      renderInspector(selected);
+      $('research').classList.remove('mobile-detail-open');
     }
   } catch (error) {
     if (controller.signal.aborted || requestId !== state.requestId) return;
+    state.errorRetryable = error.retryable !== false;
     state.error =
       error.name === 'TimeoutError'
         ? 'Crossref took too long to respond. Retry your search.'

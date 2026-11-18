@@ -8,7 +8,7 @@ import {
   readQuery,
   queryString,
 } from '../js/data.js';
-import { buildSearchURL, searchWorks } from '../js/crossref.js';
+import { buildSearchURL, searchWorks, request } from '../js/crossref.js';
 
 const raw = {
   DOI: '10.1234/Example',
@@ -74,4 +74,38 @@ test('DOI lookup uses the single-record endpoint', async () => {
   assert.match(requested, /\/works\/10.1234%2Fdirect\?/);
   assert.equal(result.doiLookup, true);
   assert.equal(result.nextCursor, null);
+});
+
+test('publication-date sorts use bounded offset pages rather than an incompatible cursor', async () => {
+  for (const sort of ['newest', 'oldest']) {
+    const query = readQuery(`?q=date-contract-${sort}&sort=${sort}`);
+    const params = new URL(buildSearchURL(query, '25')).searchParams;
+    assert.equal(params.get('offset'), '25');
+    assert.equal(params.has('cursor'), false);
+    assert.equal(params.get('sort'), 'published');
+    assert.equal(params.get('order'), sort === 'oldest' ? 'asc' : 'desc');
+    const fetcher = async () =>
+      new Response(
+        JSON.stringify({
+          message: {
+            items: Array.from({ length: 25 }, (_, i) => ({ ...raw, DOI: `10.1234/date${i}` })),
+            'total-results': 20000,
+          },
+        }),
+      );
+    const first = await searchWorks(query, { fetcher });
+    assert.equal(first.nextCursor, '25');
+    const last = await searchWorks(query, { cursor: '9975', fetcher });
+    assert.equal(last.nextCursor, null);
+    assert.equal(last.browseLimited, true);
+    assert.throws(() => buildSearchURL(query, '10000'), /Narrow your search/);
+  }
+});
+test('invalid requests are distinguished from retryable service failures', async () => {
+  await assert.rejects(
+    request('https://api.crossref.org/works?invalid-contract', {
+      fetcher: async () => new Response('{}', { status: 400 }),
+    }),
+    (error) => error.retryable === false && /Change your search/.test(error.message),
+  );
 });

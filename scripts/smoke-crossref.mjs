@@ -21,6 +21,17 @@ if (first.nextCursor) {
   );
 }
 const work = await getWork('10.1093/actrade/9780198845461.003.0002');
+report.dateSorts = {};
+for (const sort of ['newest', 'oldest']) {
+  const sortedQuery = { ...query, sort };
+  const sorted = await searchWorks(sortedQuery);
+  assert.ok(sorted.items.length > 0, `${sort} must return publications`);
+  assert.equal(sorted.nextCursor, '25');
+  const next = await searchWorks(sortedQuery, { cursor: sorted.nextCursor });
+  assert.ok(next.items.length > 0, `${sort} second page must return publications`);
+  assert.ok(next.items.some((item) => !sorted.items.some((first) => first.id === item.id)));
+  report.dateSorts[sort] = { firstPage: sorted.items.length, secondPage: next.items.length };
+}
 const citation = await getCitation(work.doi, 'apa');
 assert.match(citation, /Shaw/);
 report.citation = citation;

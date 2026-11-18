@@ -50,7 +50,8 @@ async function fixtures(page, { fail = false, empty = false, hostile = false } =
           },
         },
       });
-    const next = url.searchParams.get('cursor') === 'next';
+    const next =
+      url.searchParams.get('cursor') === 'next' || url.searchParams.get('offset') === '25';
     const items = empty
       ? []
       : Array.from({ length: next ? 3 : 25 }, (_, i) => publication(i + (next ? 25 : 0)));
@@ -332,4 +333,39 @@ test('unavailable persistent storage keeps an explicit session collection', asyn
   await expect(page.locator('#collectionCount')).toHaveText('1');
   await page.locator('#collectionNav').click();
   await expect(page.locator('#requestNotice')).toContainText('for this visit only');
+});
+
+test('date sorts browse subsequent pages with supported pagination', async ({ page }) => {
+  const requests = await fixtures(page);
+  await page.goto('/');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  for (const sort of ['newest', 'oldest']) {
+    await page.locator('#sortSelect').selectOption(sort);
+    await expect(page.locator('#scopeNote')).toContainText('Sorted by publication date');
+    await expect(page.locator('#resultCount')).toContainText('25 loaded');
+    expect(requests.at(-1).searchParams.get('offset')).toBe('0');
+    expect(requests.at(-1).searchParams.has('cursor')).toBe(false);
+    await page.getByRole('button', { name: 'Load 25 more publications' }).click();
+    await expect(page.locator('.result-row')).toHaveCount(28);
+    expect(requests.at(-1).searchParams.get('offset')).toBe('25');
+  }
+});
+test('a rejected changed search preserves clearly identified previous results', async ({
+  page,
+}) => {
+  await fixtures(page);
+  await page.goto('/');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await page.route('https://api.crossref.org/works?**', (route) =>
+    route.fulfill({ status: 400, json: { message: 'invalid request' } }),
+  );
+  await page.locator('#searchInput').fill('a changed search');
+  await page.getByRole('button', { name: 'Search', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Edit search', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Retry search' })).toHaveCount(0);
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await expect(page.locator('#resultCount')).toContainText('Previous results:');
+  await expect(page.locator('#scopeNote')).toContainText(
+    'last successful search for “ancient egypt”',
+  );
 });

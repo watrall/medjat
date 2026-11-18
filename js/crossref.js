@@ -3,6 +3,7 @@ import { PERIODS, normalizeDOI, normalizeWork } from './data.js';
 export const API = 'https://api.crossref.org';
 export const CONTACT = 'ethan.watrall@gmail.com';
 export const PAGE_SIZE = 25;
+export const DATE_BROWSE_LIMIT = 10000;
 const cache = new Map();
 const TTL = 5 * 60 * 1000;
 
@@ -15,9 +16,15 @@ export function buildSearchURL(query, cursor = '*') {
   const params = new URLSearchParams({
     'query.bibliographic': terms.join(' '),
     rows: String(PAGE_SIZE),
-    cursor,
     mailto: CONTACT,
   });
+  if (query.sort === 'relevance') params.set('cursor', cursor);
+  else {
+    const offset = cursor === '*' ? 0 : Number(cursor);
+    if (!Number.isInteger(offset) || offset < 0 || offset >= DATE_BROWSE_LIMIT)
+      throw new Error('Narrow your search to continue browsing by publication date.');
+    params.set('offset', String(offset));
+  }
   const filters = [];
   if (query.type) filters.push(`type:${query.type}`);
   if (query.from) filters.push(`from-pub-date:${query.from}-01-01`);
@@ -71,8 +78,13 @@ export async function request(
           ? 'Crossref is receiving too many requests. Wait a moment, then retry.'
           : response.status === 404
             ? 'Crossref has no record for this DOI.'
-            : `Crossref could not complete the request (HTTP ${response.status}). Please retry.`;
-      throw new Error(message);
+            : response.status >= 400 && response.status < 500
+              ? 'Crossref could not run this search. Change your search terms or refinements and try again.'
+              : 'Crossref is temporarily unavailable. Please try again shortly.';
+      throw Object.assign(new Error(message), {
+        status: response.status,
+        retryable: response.status === 429 || response.status >= 500,
+      });
     }
     const body = format === 'json' ? await response.json() : await response.text();
     const result = { body, retrievedAt: new Date().toISOString(), cached: false };
@@ -109,14 +121,22 @@ export async function searchWorks(query, { cursor = '*', signal, fetcher } = {})
     }
   });
   const next = message['next-cursor'];
+  const dateSorted = query.sort !== 'relevance';
+  const nextOffset = (cursor === '*' ? 0 : Number(cursor)) + message.items.length;
+  const moreByDate =
+    dateSorted && message.items.length === PAGE_SIZE && nextOffset < message['total-results'];
   return {
     ...response,
     items,
     total: message['total-results'],
-    nextCursor:
-      message.items.length === PAGE_SIZE && typeof next === 'string' && next !== cursor
+    nextCursor: dateSorted
+      ? moreByDate && nextOffset < DATE_BROWSE_LIMIT
+        ? String(nextOffset)
+        : null
+      : message.items.length === PAGE_SIZE && typeof next === 'string' && next !== cursor
         ? next
         : null,
+    browseLimited: moreByDate && nextOffset >= DATE_BROWSE_LIMIT,
     doiLookup: false,
   };
 }
