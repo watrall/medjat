@@ -12,7 +12,7 @@ export function buildSearchURL(query, cursor='*') {
   const terms = [text || 'ancient egypt'];
   if (period) terms.push(period.query);
   if (!/\begypt(?:ian)?\b/i.test(text) && !period) terms.push('ancient Egypt');
-  const params = new URLSearchParams({query:terms.join(' '), rows:String(PAGE_SIZE), cursor, mailto:CONTACT});
+  const params = new URLSearchParams({'query.bibliographic':terms.join(' '), rows:String(PAGE_SIZE), cursor, mailto:CONTACT});
   const filters = [];
   if (query.type) filters.push(`type:${query.type}`);
   if (query.from) filters.push(`from-pub-date:${query.from}-01-01`);

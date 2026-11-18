@@ -22,7 +22,7 @@ test('query state round-trips and period queries do not become BCE publication f
   const query=readQuery('?q=Deir+el-Medina&period=new-kingdom&from=2000&abstract=1');
   assert.deepEqual(readQuery(queryString(query)),query);
   const params=new URL(buildSearchURL(query)).searchParams;
-  assert.match(params.get('query'),/New Kingdom Egypt/);
+  assert.match(params.get('query.bibliographic'),/New Kingdom Egypt/);
   assert.match(params.get('filter'),/from-pub-date:2000-01-01/);
   assert.doesNotMatch(params.get('filter'),/1550/);
   assert.equal(params.get('mailto'),'ethan.watrall@gmail.com');
