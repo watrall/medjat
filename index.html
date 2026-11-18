@@ -146,6 +146,13 @@
           <button class="button button-primary search-submit" type="submit">Search</button>
         </form>
         <p class="search-hint">Search topics, sites, authors, or a DOI.</p>
+        <div id="pendingQuery" class="pending-query" hidden>
+          <p>
+            Search changes are pending. Use Search or Update search to apply them. Sorting keeps
+            your draft.
+          </p>
+          <button id="discardDraft" class="text-button" type="button">Discard changes</button>
+        </div>
       </section>
       <section id="research" class="workspace" aria-label="Research workspace" tabindex="-1">
         <details id="refinements" class="refinements" open>

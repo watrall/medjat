@@ -19,6 +19,7 @@ const state = {
   storageWarning: saved.warning,
   collectionQuery: '',
   query: readQuery(location.search),
+  draft: readQuery(location.search),
   items: [],
   total: 0,
   nextCursor: null,
@@ -45,17 +46,39 @@ function updateURL() {
   initialized = true;
 }
 function syncControls() {
-  $('searchInput').value = state.query.q;
-  $('periodSelect').value = state.query.period;
-  $('yearFrom').value = state.query.from;
-  $('yearTo').value = state.query.to;
-  $('typeFilter').value = state.query.type;
-  $('hasAbstract').checked = state.query.abstract;
-  $('hasOrcid').checked = state.query.orcid;
-  $('hasReferences').checked = state.query.references;
+  $('searchInput').value = state.draft.q;
+  $('periodSelect').value = state.draft.period;
+  $('yearFrom').value = state.draft.from;
+  $('yearTo').value = state.draft.to;
+  $('typeFilter').value = state.draft.type;
+  $('hasAbstract').checked = state.draft.abstract;
+  $('hasOrcid').checked = state.draft.orcid;
+  $('hasReferences').checked = state.draft.references;
   $('sortSelect').value = state.query.sort;
   updatePeriodHint();
   renderAppliedQuery();
+  renderDraftStatus();
+}
+function readDraft() {
+  return {
+    q: $('searchInput').value.trim() || 'ancient egypt',
+    period: $('periodSelect').value,
+    from: $('yearFrom').value,
+    to: $('yearTo').value,
+    type: $('typeFilter').value,
+    abstract: $('hasAbstract').checked,
+    orcid: $('hasOrcid').checked,
+    references: $('hasReferences').checked,
+    sort: state.query.sort,
+  };
+}
+function renderDraftStatus() {
+  const pending = queryString(state.draft) !== queryString(state.resultQuery || state.query);
+  $('pendingQuery').hidden = !pending || state.loading || state.view === 'collection';
+}
+function captureDraft() {
+  state.draft = readDraft();
+  renderDraftStatus();
 }
 function renderAppliedQuery() {
   const query = state.resultQuery || state.query;
@@ -130,6 +153,7 @@ function setView(view) {
   if (view !== 'collection') exportController?.abort();
   $('research').classList.toggle('collection-view', view === 'collection');
   state.view = view;
+  renderDraftStatus();
   $('research').classList.remove('mobile-detail-open');
   $('collectionNav').setAttribute('aria-pressed', String(view === 'collection'));
   $('exploreNav').setAttribute('aria-pressed', String(view === 'explore'));
@@ -470,7 +494,8 @@ async function runSearch(append = false) {
   state.failedAppend = append;
   state.errorRetryable = true;
   const requestedQuery = { ...state.query };
-  syncControls();
+  renderAppliedQuery();
+  renderDraftStatus();
   updateURL();
   renderList();
   renderStatus();
@@ -511,6 +536,7 @@ async function runSearch(append = false) {
       state.loading = false;
       renderList();
       renderStatus();
+      renderDraftStatus();
     }
   }
 }
@@ -525,6 +551,7 @@ for (const period of PERIODS) {
 $('periodSelect').addEventListener('change', updatePeriodHint);
 $('sortSelect').addEventListener('change', (e) => {
   state.query.sort = e.target.value;
+  state.draft = readDraft();
   runSearch();
 });
 function submitSearch(e) {
@@ -544,22 +571,24 @@ function submitSearch(e) {
     return;
   }
   $('filterError').hidden = true;
-  Object.assign(state.query, {
-    q: $('searchInput').value.trim() || 'ancient egypt',
-    period: $('periodSelect').value,
-    from,
-    to,
-    type: $('typeFilter').value,
-    abstract: $('hasAbstract').checked,
-    orcid: $('hasOrcid').checked,
-    references: $('hasReferences').checked,
-  });
+  state.draft = readDraft();
+  state.query = { ...state.draft };
   runSearch();
 }
 $('searchForm').addEventListener('submit', submitSearch);
 $('filterForm').addEventListener('submit', submitSearch);
+for (const form of [$('searchForm'), $('filterForm')]) {
+  form.addEventListener('input', captureDraft);
+  form.addEventListener('change', captureDraft);
+}
+$('discardDraft').addEventListener('click', () => {
+  state.draft = { ...(state.resultQuery || state.query) };
+  syncControls();
+  $('searchInput').focus();
+});
 $('clearFilters').addEventListener('click', (e) => {
   $('filterForm').reset();
+  updatePeriodHint();
   submitSearch(e);
 });
 $('aboutToggle').addEventListener('click', () => {
@@ -579,6 +608,8 @@ collectionStore.subscribe(({ records, warning }) => {
 });
 window.addEventListener('popstate', () => {
   state.query = readQuery(location.search);
+  state.draft = { ...state.query };
+  syncControls();
   runSearch();
 });
 const filterLayout = matchMedia('(min-width:1300px)');
@@ -586,4 +617,5 @@ $('refinements').open = filterLayout.matches;
 filterLayout.addEventListener('change', (event) => {
   $('refinements').open = event.matches;
 });
+syncControls();
 runSearch();

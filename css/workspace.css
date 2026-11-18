@@ -1169,3 +1169,15 @@ h1 {
     transition: none !important;
   }
 }
+.pending-query {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+  margin-block-start: 12px;
+  color: var(--color-secondary);
+  font-size: 0.875rem;
+}
+.pending-query p {
+  margin: 0;
+}

@@ -75,6 +75,32 @@ async function fixtures(page, { fail = false, empty = false, hostile = false } =
   return requests;
 }
 
+test('sorting and navigation preserve unapplied search choices', async ({ page }) => {
+  const requests = await fixtures(page);
+  await page.goto('/');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await page.locator('#searchInput').fill('Abydos');
+  await page.locator('#periodSelect').selectOption('new-kingdom');
+  await page.locator('#typeFilter').selectOption('book');
+  await expect(page.locator('#pendingQuery')).toBeVisible();
+  await page.locator('#sortSelect').selectOption('newest');
+  await expect(page.locator('#scopeNote')).toContainText('newest first');
+  expect(requests.at(-1).searchParams.get('query.bibliographic')).toBe('ancient egypt');
+  await expect(page.locator('#searchInput')).toHaveValue('Abydos');
+  await expect(page.locator('#periodSelect')).toHaveValue('new-kingdom');
+  await expect(page.locator('#typeFilter')).toHaveValue('book');
+  await expect(page.locator('#pendingQuery')).toBeVisible();
+  await page.getByRole('button', { name: 'Load 25 more publications' }).click();
+  await expect(page.locator('.result-row')).toHaveCount(28);
+  await page.locator('#collectionNav').click();
+  await page.locator('#exploreNav').click();
+  await expect(page.locator('#searchInput')).toHaveValue('Abydos');
+  await page.locator('#filterForm').getByRole('button', { name: 'Update search' }).click();
+  await expect(page.locator('#pendingQuery')).toBeHidden();
+  expect(requests.at(-1).searchParams.get('query.bibliographic')).toContain('Abydos');
+  expect(requests.at(-1).searchParams.get('filter')).toContain('type:book');
+});
+
 test('search, inspect, save, reload, cite, and export a collection', async ({ page }) => {
   const requests = await fixtures(page);
   await page.goto('/');
