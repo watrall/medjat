@@ -20,7 +20,10 @@ const publication = (i) => ({
   abstract: '<jats:p>Evidence from archaeological research in ancient Egypt.</jats:p>',
   reference: [{ DOI: '10.1234/reference-record', unstructured: 'A deposited reference' }],
 });
-async function fixtures(page, { fail = false, empty = false, hostile = false } = {}) {
+async function fixtures(
+  page,
+  { fail = false, empty = false, hostile = false, referenceCount = 1 } = {},
+) {
   const requests = [];
   await page.route('https://fonts.googleapis.com/**', (r) => r.abort());
   await page.route('https://assets.crossref.org/**', (r) => r.abort());
@@ -55,6 +58,11 @@ async function fixtures(page, { fail = false, empty = false, hostile = false } =
     const items = empty
       ? []
       : Array.from({ length: next ? 3 : 25 }, (_, i) => publication(i + (next ? 25 : 0)));
+    if (items.length && referenceCount > 1)
+      items[0].reference = Array.from({ length: referenceCount }, (_, i) => ({
+        DOI: `10.1234/reference-${i}`,
+        unstructured: `Deposited reference ${i + 1}`,
+      }));
     if (hostile && items.length)
       Object.assign(items[0], {
         title: ['A "quoted" title <img src=x onerror="window.crossrefInjection=true">'],
@@ -244,16 +252,28 @@ test('network errors remain visible and never become demonstration records', asy
 });
 
 test('reference navigation retains its source publication', async ({ page }) => {
-  await fixtures(page);
+  await fixtures(page, { referenceCount: 30 });
   await page.goto('/');
   await expect(page.locator('.result-row')).toHaveCount(25);
   await page.getByRole('button', { name: 'Connections', exact: true }).click();
-  await page.getByRole('button', { name: 'Inspect reference', exact: true }).click();
+  await page.getByRole('button', { name: 'Show 20 more references', exact: true }).click();
+  const reference = page.getByRole('button', { name: 'Inspect reference', exact: true }).nth(24);
+  await reference.focus();
+  await page.keyboard.press('Enter');
   await expect(
     page.getByRole('heading', { name: 'A referenced publication', exact: true }),
   ).toBeVisible();
+  await expect(page.locator('.detail-title')).toBeFocused();
   await page.getByRole('button', { name: 'Back to previous publication', exact: true }).click();
   await expect(page.locator('.detail-title')).toHaveText(/Settlement patterns/);
+  await expect(page.getByRole('button', { name: 'Connections', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(page.getByRole('button', { name: 'Inspect reference', exact: true })).toHaveCount(
+    30,
+  );
+  await expect(reference).toBeFocused();
 });
 test('empty search responses provide a useful recovery state', async ({ page }) => {
   await fixtures(page, { empty: true });

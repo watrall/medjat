@@ -1,9 +1,12 @@
-import { authorLine, doiURL, normalizeDOI, plainText, safeURL } from './data.js';
+import { authorLine, doiURL, normalizeDOI, normalizeWork, plainText, safeURL } from './data.js';
 import { getWork, getCitation } from './crossref.js';
 import { el, icon, externalLink, emptyState, notify } from './dom.js';
 import { createCover } from './covers.js';
 
-export function createInspector(root, { onClose, onSave, isSaved = () => false } = {}) {
+export function createInspector(
+  root,
+  { onClose, onSave, onChange = () => {}, onNavigate = () => {}, isSaved = () => false } = {},
+) {
   let work = null,
     tab = 'overview',
     style = 'apa',
@@ -16,18 +19,50 @@ export function createInspector(root, { onClose, onSave, isSaved = () => false }
     followError = '',
     following = false;
 
-  function show(next, { fromReference = false } = {}) {
+  function readingPosition() {
+    return {
+      raw: work?.raw,
+      tab,
+      style,
+      referenceLimit,
+      citation,
+      scrollTop: root.scrollTop,
+      pageScroll: window.scrollY,
+      focusKey: root.contains(document.activeElement)
+        ? document.activeElement?.dataset.focusKey
+        : null,
+    };
+  }
+  function show(next, { fromReference = false, reading = null, silent = false } = {}) {
     generation++;
     work = next;
-    tab = 'overview';
-    referenceLimit = 20;
-    citation = '';
+    tab = ['overview', 'connections', 'cite'].includes(reading?.tab) ? reading.tab : 'overview';
+    style = ['apa', 'mla', 'chicago'].includes(reading?.style) ? reading.style : style;
+    referenceLimit = Math.max(
+      20,
+      Math.min(Number(reading?.referenceLimit) || 20, next?.references.length || 20),
+    );
+    citation = typeof reading?.citation === 'string' ? reading.citation : '';
     citationError = '';
     citationLoading = false;
     followError = '';
     following = false;
     if (!fromReference) trail = [];
     render();
+    if (reading) {
+      const target =
+        reading.focusKey &&
+        root.querySelector(`[data-focus-key="${CSS.escape(reading.focusKey)}"]`);
+      (target || root.querySelector('.detail-title'))?.focus({ preventScroll: true });
+      root.scrollTop = Number(reading.scrollTop) || 0;
+      window.scrollTo({ top: Number(reading.pageScroll) || 0 });
+    } else if (fromReference) {
+      root.scrollTop = 0;
+      root.querySelector('.detail-title')?.focus({ preventScroll: true });
+      notify(`Opened referenced publication: ${next.title}`);
+    }
+    if (tab === 'cite' && !citation) loadCitation();
+    if (fromReference && !silent) onNavigate();
   }
   function actionButton(savedWork) {
     return el(
@@ -75,7 +110,7 @@ export function createInspector(root, { onClose, onSave, isSaved = () => false }
             class: 'text-button',
             onclick: () => {
               const previous = trail.pop();
-              show(previous, { fromReference: true });
+              show(normalizeWork(previous.raw), { fromReference: true, reading: previous });
             },
           },
           icon('arrow-left'),
@@ -104,7 +139,7 @@ export function createInspector(root, { onClose, onSave, isSaved = () => false }
           label,
         ),
       );
-    root.append(tabs, el('h2', { class: 'detail-title' }, work.title));
+    root.append(tabs, el('h2', { class: 'detail-title', tabindex: '-1' }, work.title));
     root.append(
       el(
         'div',
@@ -156,6 +191,7 @@ export function createInspector(root, { onClose, onSave, isSaved = () => false }
     );
     if (focusKey)
       root.querySelector(`[data-focus-key="${focusKey}"]`)?.focus({ preventScroll: true });
+    onChange();
   }
   function section(title, ...children) {
     return el('section', { class: 'detail-section' }, el('h3', {}, title), ...children);
@@ -239,6 +275,7 @@ export function createInspector(root, { onClose, onSave, isSaved = () => false }
     );
   }
   async function follow(doi) {
+    const origin = readingPosition();
     following = true;
     followError = '';
     render();
@@ -246,13 +283,16 @@ export function createInspector(root, { onClose, onSave, isSaved = () => false }
     try {
       const next = await getWork(doi);
       if (id !== generation) return;
-      trail.push(work);
+      trail.push(origin);
       show(next, { fromReference: true });
     } catch (error) {
       if (id !== generation) return;
       following = false;
       followError = error.message;
       render();
+      root
+        .querySelector(`[data-focus-key="${CSS.escape(origin.focusKey || '')}"]`)
+        ?.focus({ preventScroll: true });
     }
   }
   function connections(container) {
@@ -289,7 +329,7 @@ export function createInspector(root, { onClose, onSave, isSaved = () => false }
       );
     else {
       const list = el('ol', { class: 'reference-list' });
-      for (const ref of refs.slice(0, referenceLimit)) {
+      for (const [index, ref] of refs.slice(0, referenceLimit).entries()) {
         const doi = normalizeDOI(ref.DOI);
         const label =
           plainText(ref.unstructured) ||
@@ -314,7 +354,11 @@ export function createInspector(root, { onClose, onSave, isSaved = () => false }
                 {},
                 el(
                   'button',
-                  { disabled: following, onclick: () => follow(doi) },
+                  {
+                    'data-focus-key': `reference-${index}`,
+                    disabled: following,
+                    onclick: () => follow(doi),
+                  },
                   'Inspect reference',
                 ),
                 el('small', {}, externalLink(`https://doi.org/${doi}`, doiURL(doi))),
@@ -329,9 +373,14 @@ export function createInspector(root, { onClose, onSave, isSaved = () => false }
             'button',
             {
               class: 'text-button',
+              'data-focus-key': 'more-references',
               onclick: () => {
+                const firstNew = referenceLimit;
                 referenceLimit += 20;
                 render();
+                root
+                  .querySelector(`[data-focus-key="reference-${firstNew}"]`)
+                  ?.focus({ preventScroll: true });
               },
             },
             'Show 20 more references',
@@ -349,7 +398,15 @@ export function createInspector(root, { onClose, onSave, isSaved = () => false }
               'li',
               {},
               el('p', {}, plainText(type.replaceAll('-', ' '))),
-              el('button', { disabled: following, onclick: () => follow(doi) }, doi),
+              el(
+                'button',
+                {
+                  'data-focus-key': `relation-${relations.length}`,
+                  disabled: following,
+                  onclick: () => follow(doi),
+                },
+                doi,
+              ),
               el('small', {}, externalLink('Open DOI', doiURL(doi))),
             ),
           );
@@ -463,5 +520,17 @@ export function createInspector(root, { onClose, onSave, isSaved = () => false }
     );
     container.append(block);
   }
-  return { show, refresh: render, getCurrentWork: () => work };
+  return {
+    show,
+    refresh: render,
+    getCurrentWork: () => work,
+    capture: () => (work ? { current: readingPosition(), trail } : null),
+    restore(snapshot) {
+      const next = normalizeWork(snapshot.current.raw);
+      trail = Array.isArray(snapshot.trail)
+        ? snapshot.trail.filter((entry) => normalizeDOI(entry?.raw?.DOI))
+        : [];
+      show(next, { fromReference: true, reading: snapshot.current, silent: true });
+    },
+  };
 }
