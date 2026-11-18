@@ -22,3 +22,8 @@ test('export cancellation stops before making a request',async()=>{
   await assert.rejects(exportCollection(records,'ris',{signal:controller.signal,fetcher:async()=>{called=true;return new Response('');}}));
   assert.equal(called,false);
 });
+test('generic RIS chapters retain their deposited publication type',async()=>{
+  const chapter=normalizeWork({DOI:'10.1234/chapter-ris',type:'book-chapter',title:['A chapter']});
+  const result=await exportCollection(new Map([[chapter.id,{work:chapter}]]),'ris',{fetcher:async()=>new Response('TY  - GENERIC\nTI  - A chapter\nER  -')});
+  assert.match(result,/^TY  - CHAP/m);
+});

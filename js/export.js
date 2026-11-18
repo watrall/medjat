@@ -25,6 +25,12 @@ export async function exportCollection(records,format,{signal,onProgress=()=>{},
     let text=response.body.trim();
     if(!text||format==='bibtex'&&!/^@\w+\s*\{/m.test(text)||format==='ris'&&!/^TY\s+-/m.test(text))throw new Error(`Crossref could not format “${work.title}”. Try CSV or a collection backup to keep all records.`);
     if(format==='bibtex')text=text.replace(/^(@\w+\s*\{)[^,]+,/m,`$1record${index+1},`);
+    // Crossref sometimes emits GENERIC for deposited book chapters. Preserve the
+    // deposited type so reference managers import these as book sections.
+    if(format==='ris') {
+      const types={'journal-article':'JOUR',book:'BOOK','edited-book':'BOOK',monograph:'BOOK','book-chapter':'CHAP','proceedings-article':'CPAPER',dissertation:'THES',report:'RPRT'};
+      if(types[work.type])text=text.replace(/^TY\s+-\s*GENERIC\s*$/m,`TY  - ${types[work.type]}`);
+    }
     parts.push(text);onProgress(++index,records.size);
   }
   return parts.join('\n\n')+'\n';
