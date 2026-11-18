@@ -1,5 +1,6 @@
 import { PERIODS, TYPES, readQuery, queryString, authorLine, doiURL } from './data.js';
-import { searchWorks, DATE_BROWSE_LIMIT } from './crossref.js';
+import { searchWorks, getWork, DATE_BROWSE_LIMIT } from './crossref.js';
+import { readSession, writeSession } from './session.js';
 import { createInspector } from './inspector.js';
 import { parseCollection } from './collection.js';
 import { createCollectionStore } from './collection-store.js';
@@ -13,6 +14,7 @@ try {
 } catch {}
 const collectionStore = createCollectionStore({ storage });
 const saved = await collectionStore.ready;
+const resumedSession = readSession();
 const state = {
   view: 'explore',
   collection: saved.records,
@@ -38,12 +40,32 @@ const state = {
   browseLimited: false,
 };
 
-let initialized = false;
-function updateURL() {
-  const next = `${location.pathname}?${queryString(state.query)}${location.hash}`;
+let initialized = false,
+  restoringLocation = false;
+function saveSession() {
+  writeSession({
+    view: state.view,
+    draft: state.draft,
+    selected: state.selected,
+    collectionQuery: state.collectionQuery,
+    inspector: inspector.capture(),
+  });
+}
+function updateURL({ push = false } = {}) {
+  const params = new URLSearchParams(queryString(state.query));
+  if (state.view === 'collection') params.set('view', 'collection');
+  const work = inspector.getCurrentWork();
+  if (work) params.set('record', work.doi);
+  if ($('research').classList.contains('mobile-detail-open')) params.set('detail', '1');
+  const next = `${location.pathname}?${params}${location.hash}`;
   if (next !== `${location.pathname}${location.search}${location.hash}`)
-    history[initialized ? 'pushState' : 'replaceState'](null, '', next);
+    history[initialized && push && !restoringLocation ? 'pushState' : 'replaceState'](
+      null,
+      '',
+      next,
+    );
   initialized = true;
+  saveSession();
 }
 function syncControls() {
   $('searchInput').value = state.draft.q;
@@ -79,6 +101,7 @@ function renderDraftStatus() {
 function captureDraft() {
   state.draft = readDraft();
   renderDraftStatus();
+  saveSession();
 }
 function renderAppliedQuery() {
   const query = state.resultQuery || state.query;
@@ -101,6 +124,8 @@ const inspector = createInspector($('inspector'), {
   onClose: closeInspector,
   onSave: toggleSave,
   isSaved: (id) => state.collection.has(id),
+  onChange: saveSession,
+  onNavigate: () => updateURL({ push: true }),
 });
 function visibleWorks() {
   if (state.view === 'explore') return state.items;
@@ -149,7 +174,7 @@ async function toggleSave(work) {
       .querySelector(`[data-record="${CSS.escape(focusedRecord)}"] .save-button`)
       ?.focus({ preventScroll: true });
 }
-function setView(view) {
+function setView(view, { navigate = true, syncURL = true, load = true } = {}) {
   if (view !== 'collection') exportController?.abort();
   $('research').classList.toggle('collection-view', view === 'collection');
   state.view = view;
@@ -168,6 +193,8 @@ function setView(view) {
   renderInspector(work);
   renderList();
   renderStatus();
+  if (syncURL) updateURL({ push: navigate });
+  if (view === 'explore' && !state.resultQuery && !state.loading && load) runSearch();
 }
 let exportController = null;
 function renderCollectionTools() {
@@ -180,6 +207,7 @@ function renderCollectionTools() {
       state.collectionQuery = e.target.value;
       renderList();
       renderStatus();
+      saveSession();
     },
   });
   const formats = el('select', { id: 'exportFormat' });
@@ -290,6 +318,7 @@ function closeInspector() {
   $('resultList')
     .querySelector(`[data-record="${CSS.escape(state.selected || '')}"] .result-open`)
     ?.focus();
+  updateURL();
 }
 function selectWork(work) {
   state.selected = work.id;
@@ -302,6 +331,7 @@ function selectWork(work) {
     $('inspector').focus();
     $('research').scrollIntoView({ block: 'start' });
   }
+  updateURL({ push: true });
 }
 function renderList() {
   const list = $('resultList');
@@ -483,7 +513,7 @@ function renderStatus() {
   $('sortSelect').disabled = state.loading;
 }
 async function runSearch(append = false) {
-  if (state.view !== 'explore') setView('explore');
+  if (state.view !== 'explore') setView('explore', { syncURL: false, load: false });
   state.controller?.abort();
   const controller = new AbortController();
   state.controller = controller;
@@ -496,7 +526,7 @@ async function runSearch(append = false) {
   const requestedQuery = { ...state.query };
   renderAppliedQuery();
   renderDraftStatus();
-  updateURL();
+  updateURL({ push: initialized });
   renderList();
   renderStatus();
   try {
@@ -537,6 +567,7 @@ async function runSearch(append = false) {
       renderList();
       renderStatus();
       renderDraftStatus();
+      updateURL();
     }
   }
 }
@@ -606,16 +637,59 @@ collectionStore.subscribe(({ records, warning }) => {
   renderStatus();
   inspector.refresh();
 });
-window.addEventListener('popstate', () => {
-  state.query = readQuery(location.search);
-  state.draft = { ...state.query };
-  syncControls();
-  runSearch();
-});
+async function restoreLocation(resume = null) {
+  restoringLocation = true;
+  const params = new URLSearchParams(location.search);
+  const record = params.get('record');
+  const detail = params.get('detail') === '1';
+  try {
+    state.query = readQuery(location.search);
+    state.draft = resume?.draft ? readQuery(queryString(resume.draft)) : { ...state.query };
+    state.collectionQuery =
+      typeof resume?.collectionQuery === 'string' ? resume.collectionQuery : '';
+    state.selected = resume?.selected || record;
+    syncControls();
+    const view = params.get('view') === 'collection' ? 'collection' : 'explore';
+    setView(view, { navigate: false, syncURL: false, load: false });
+    if (
+      view === 'explore' &&
+      (!state.resultQuery || queryString(state.resultQuery) !== queryString(state.query))
+    )
+      await runSearch();
+    if (resume?.inspector) inspector.restore(resume.inspector);
+    else if (record) {
+      const work =
+        state.collection.get(record)?.work ||
+        state.items.find((work) => work.id === record) ||
+        (await getWork(record));
+      renderInspector(work);
+      state.selected = work.id;
+      renderList();
+    }
+    if (detail && matchMedia('(max-width:999px)').matches)
+      $('research').classList.add('mobile-detail-open');
+    else $('research').classList.remove('mobile-detail-open');
+  } catch {
+    notify('The reading position could not be restored. Your saved collection is still available.');
+  } finally {
+    restoringLocation = false;
+    updateURL();
+  }
+}
+window.addEventListener('popstate', () => restoreLocation());
+window.addEventListener('pagehide', saveSession);
+let positionTimer;
+const savePosition = () => {
+  clearTimeout(positionTimer);
+  positionTimer = setTimeout(saveSession, 180);
+};
+$('inspector').addEventListener('scroll', savePosition, { passive: true });
+$('inspector').addEventListener('focusin', savePosition);
+window.addEventListener('scroll', savePosition, { passive: true });
 const filterLayout = matchMedia('(min-width:1300px)');
 $('refinements').open = filterLayout.matches;
 filterLayout.addEventListener('change', (event) => {
   $('refinements').open = event.matches;
 });
 syncControls();
-runSearch();
+await restoreLocation(resumedSession);

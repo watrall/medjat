@@ -109,6 +109,59 @@ test('sorting and navigation preserve unapplied search choices', async ({ page }
   expect(requests.at(-1).searchParams.get('filter')).toContain('type:book');
 });
 
+test('refresh restores collection scope, selected record, and an unfinished search', async ({
+  page,
+}) => {
+  await fixtures(page);
+  await page.goto('/');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await page.locator('.save-button').nth(0).click();
+  await page.locator('.save-button').nth(1).click();
+  await page.locator('#searchInput').fill('Abydos');
+  await page.locator('#collectionNav').click();
+  await page.locator('#collectionSearch').fill('Settlement');
+  await page.reload();
+  await expect(page.locator('#collectionNav')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#collectionSearch')).toHaveValue('Settlement');
+  await expect(page.locator('.result-row')).toHaveCount(1);
+  await expect(page.locator('.detail-title')).toHaveText(/Settlement/);
+  await expect(page.locator('#searchInput')).toHaveValue('Abydos');
+});
+
+test('refresh preserves a reference trail and expanded source connections', async ({ page }) => {
+  await fixtures(page, { referenceCount: 30 });
+  await page.goto('/');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await page.getByRole('button', { name: 'Connections', exact: true }).click();
+  await page.getByRole('button', { name: 'Show 20 more references', exact: true }).click();
+  await page.getByRole('button', { name: 'Inspect reference', exact: true }).nth(24).click();
+  await expect(page.locator('.detail-title')).toHaveText('A referenced publication');
+  await page.reload();
+  await expect(page.locator('.detail-title')).toHaveText('A referenced publication');
+  await page.getByRole('button', { name: 'Back to previous publication', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Connections', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(page.getByRole('button', { name: 'Inspect reference', exact: true })).toHaveCount(
+    30,
+  );
+  await expect(
+    page.getByRole('button', { name: 'Inspect reference', exact: true }).nth(24),
+  ).toBeFocused();
+});
+
+test('browser back returns from mobile publication detail to its results', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await fixtures(page);
+  await page.goto('/');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await page.locator('.result-open').nth(1).click();
+  await expect(page.locator('.results-column')).toBeHidden();
+  await page.goBack();
+  await expect(page.locator('.results-column')).toBeVisible();
+});
+
 test('search, inspect, save, reload, cite, and export a collection', async ({ page }) => {
   const requests = await fixtures(page);
   await page.goto('/');

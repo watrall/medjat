@@ -53,7 +53,11 @@ Approximate historical ranges follow the [Egypt Exploration Society chronology](
 
 Searches go directly from the browser to Crossref. Requests identify the application contact through `mailto=ethan.watrall@gmail.com`; there are no credentials in the frontend. The client caches recent responses in memory, cancels superseded searches, applies timeouts, and backs off on appropriate transient errors.
 
-The collection is stored in `localStorage` on the current browser and origin. It is not synchronized between devices or between localhost and a hosted deployment. Private browsing, clearing browser data, and storage limits can remove it. The interface reports storage failures; export a JSON backup to keep a portable copy. Collections support up to 500 publications.
+The collection is stored in IndexedDB on the current browser and origin. Read/write transactions protect concurrent saves, removals, and imports; open tabs refresh through change notifications. Existing localStorage collections migrate once without deleting the original backup. The collection is not synchronized between devices or between localhost and a hosted deployment. Private browsing, clearing browser data, and storage limits can remove it. The interface reports storage failures and keeps changes in memory for the visit when persistence is unavailable; export a JSON backup to keep a portable copy. Collections support up to 500 publications.
+
+The current view and inspected DOI are addressable in the URL. Per-tab session storage retains unfinished query changes, collection search, and the reference reading trail, including expanded references and focus position. This is reading-position convenience, not a backup. Search results are retrieved again on refresh and may change; saved publications remain independent of those results.
+
+Publication-date sorts use offset pagination, limited here to the first 10,000 candidates; relevance uses cursor pagination. Narrow the topic or publication years for deeper date-specific research. These controls follow the [current Crossref API contract](https://api.crossref.org/swagger-ui/index.html); publication dates are never replaced with deposit dates.
 
 Open Library cover requests contain the deposited ISBN of the inspected book. Covers are requested only for inspected records and credited to Open Library. Google Fonts supplies Quicksand. Crossref supplies the official “Metadata from Crossref” badge directly from its asset CDN, following its [brand guidance](https://www.crossref.org/brand/). There is no application analytics or account system.
 
@@ -61,18 +65,18 @@ Open Library cover requests contain the deposited ISBN of the inspected book. Co
 
 Quicksand typography, Lucide icons, and the supplied papyrus mark define the interface. The layout moves from a refinement/list/inspector workspace on desktop to linked list and detail views on mobile.
 
-| Module | Responsibility |
-| --- | --- |
-| `js/main.js` | Query state, view transitions, result rendering, and collection actions |
-| `js/data.js` | Scholarly period presets, normalization, identifiers, and shareable query state |
-| `js/crossref.js` | API requests, cancellation, caching, retries, pagination, and citation negotiation |
-| `js/inspector.js` | Publication metadata, references, relationships, and citation views |
-| `js/collection.js` | Collection validation, persistence, and import/backup format |
-| `js/export.js` | Bibliography conversion, CSV, JSON, and downloads |
-| `js/covers.js` | ISBN validation and attributed Open Library covers |
-| `js/dom.js` | Text-safe DOM construction and shared interface helpers |
-| `css/tokens.css` | Primitive and semantic design tokens |
-| `css/workspace.css` | Components, layout, responsive behavior, and interaction states |
+| Module              | Responsibility                                                                     |
+| ------------------- | ---------------------------------------------------------------------------------- |
+| `js/main.js`        | Query state, view transitions, result rendering, and collection actions            |
+| `js/data.js`        | Scholarly period presets, normalization, identifiers, and shareable query state    |
+| `js/crossref.js`    | API requests, cancellation, caching, retries, pagination, and citation negotiation |
+| `js/inspector.js`   | Publication metadata, references, relationships, and citation views                |
+| `js/collection.js`  | Collection validation, persistence, and import/backup format                       |
+| `js/export.js`      | Bibliography conversion, CSV, JSON, and downloads                                  |
+| `js/covers.js`      | ISBN validation and attributed Open Library covers                                 |
+| `js/dom.js`         | Text-safe DOM construction and shared interface helpers                            |
+| `css/tokens.css`    | Primitive and semantic design tokens                                               |
+| `css/workspace.css` | Components, layout, responsive behavior, and interaction states                    |
 
 API-supplied text is rendered through DOM text nodes. Data is not embedded in inline event handlers. DOI, ORCID, ISBN, and external URL handling have explicit validation. Raw deposited records remain available for download.
 
