@@ -1,0 +1,13 @@
+{
+  "name": "egypt-research-explorer",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "An integrated ancient Egyptian research workspace using Crossref metadata.",
+  "scripts": {
+    "dev": "python3 -m http.server 8614 --bind 127.0.0.1",
+    "test": "node --test tests/*.test.js",
+    "check": "node --check js/main.js && node --check js/data.js && node --check js/crossref.js && node --check js/collection.js && node --check js/export.js"
+  },
+  "engines": { "node": ">=20" }
+}
