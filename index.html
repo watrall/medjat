@@ -1,87 +1,254 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="description" content="Discover ancient Egyptian scholarship, inspect Crossref metadata, follow references, and build a research bibliography.">
-  <meta name="theme-color" content="#b8321e">
-  <title>Ancient Egypt Research Explorer</title>
-  <link rel="icon" href="assets/mark.svg" type="image/svg+xml">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/workspace.css">
-  <script type="module" src="js/main.js"></script>
-</head>
-<body>
-  <a class="skip-link" href="#research">Skip to publications</a>
-  <header class="masthead">
-    <div class="shell masthead-inner">
-      <a class="brand" href="./" aria-label="Ancient Egypt Research Explorer home">
-        <img class="brand-mark" src="assets/mark.svg" width="42" height="43" alt="">
-        <span class="brand-name">Ancient Egypt<span>Research Explorer</span></span>
-      </a>
-      <nav class="main-nav" aria-label="Research workspace">
-        <button id="exploreNav" class="nav-button" aria-pressed="true">Explore</button>
-        <button id="collectionNav" class="nav-button" aria-pressed="false" disabled>Collection <span id="collectionCount" class="nav-count">0</span></button>
-      </nav>
-      <span class="header-note">Open scholarly metadata</span>
-      <button id="aboutToggle" class="about-button" aria-expanded="false" aria-controls="aboutPanel">About the data</button>
-    </div>
-  </header>
-  <section id="aboutPanel" class="about-panel" aria-labelledby="aboutTitle" hidden>
-    <div class="shell"><div class="about-content">
-      <h2 id="aboutTitle">A starting point for your research.</h2>
-      <p>This independent tool helps you discover and reuse metadata deposited with <a href="https://www.crossref.org/" target="_blank" rel="noopener noreferrer">Crossref</a>. It covers ancient Egypt from the Predynastic to Roman Egypt.</p>
-      <ul>
-        <li>Crossref is not a comprehensive Egyptology bibliography. Older books, non-DOI scholarship, and some journals may be absent.</li>
-        <li>Historical periods are search presets, not verified classifications of each publication. Queries are relevance ranked, not exact-phrase or controlled-vocabulary searches. Check titles and abstracts.</li>
-        <li>Missing abstracts, ORCIDs, or references mean they were not supplied in this record. A DOI links to the publication; access to full text may be restricted.</li>
-        <li>Your collection stays in this browser. Export it to keep a copy or use it elsewhere.</li>
-        <li>Book covers, when available, are requested from Open Library using the ISBN deposited in the record. Chapter covers show the containing book. No cover is inferred from a title.</li>
-      </ul>
-      <p>Approximate historical ranges follow the <a href="https://www.ees.ac.uk/static/102ae8e9-31ea-432d-a8d7434e3c65917d/EES-Chronology-of-Egypt.pdf" target="_blank" rel="noopener noreferrer">Egypt Exploration Society chronology</a>. Scholarly chronologies can differ.</p>
-      <p>Built by <a href="https://github.com/watrall/crossref-predynastic" target="_blank" rel="noopener noreferrer">Ethan Watrall</a>. An independent project, not an official Crossref service.</p>
-    </div></div>
-  </section>
-  <main class="shell">
-    <section class="intro" aria-labelledby="pageTitle">
-      <div class="intro-top"><div><p class="eyebrow">Ancient worlds. New questions.</p><h1 id="pageTitle">Follow the research.</h1></div><p class="intro-description">Scholarship across ancient Egypt.<br>Discover, connect, and collect.</p></div>
-      <form id="searchForm" class="search-form" role="search">
-        <label class="search-label" for="searchInput">Search publications</label>
-        <div class="search-field"><svg class="icon" aria-hidden="true"><use href="assets/icons.svg#search"/></svg><input id="searchInput" name="q" type="search" value="ancient egypt" maxlength="500" placeholder="A topic, author, site, or DOI" autocomplete="off"></div>
-        <button class="button button-primary search-submit" type="submit">Search</button>
-      </form>
-      <p class="search-hint">Try a site, an author, or a question. Paste a DOI to open its record directly.</p>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta
+      name="description"
+      content="Discover ancient Egyptian scholarship, inspect Crossref metadata, follow references, and build a research bibliography."
+    />
+    <meta name="theme-color" content="#b8321e" />
+    <title>Ancient Egypt Research Explorer</title>
+    <link rel="icon" href="assets/mark.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/workspace.css" />
+    <script type="module" src="js/main.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#research">Skip to publications</a>
+    <header class="masthead">
+      <div class="shell masthead-inner">
+        <a class="brand" href="./" aria-label="Ancient Egypt Research Explorer home">
+          <img class="brand-mark" src="assets/mark.svg" width="42" height="43" alt="" />
+          <span class="brand-name">Ancient Egypt<span>Research Explorer</span></span>
+        </a>
+        <nav class="main-nav" aria-label="Research workspace">
+          <button id="exploreNav" class="nav-button" aria-pressed="true">Explore</button>
+          <button id="collectionNav" class="nav-button" aria-pressed="false" disabled>
+            Collection <span id="collectionCount" class="nav-count">0</span>
+          </button>
+        </nav>
+        <span class="header-note">Open scholarly metadata</span>
+        <button
+          id="aboutToggle"
+          class="about-button"
+          aria-label="About the data"
+          aria-expanded="false"
+          aria-controls="aboutPanel"
+        >
+          <span class="about-label">About the data</span
+          ><svg class="icon about-icon" aria-hidden="true">
+            <use href="assets/icons.svg#info" />
+          </svg>
+        </button>
+      </div>
+    </header>
+    <section id="aboutPanel" class="about-panel" aria-labelledby="aboutTitle" hidden>
+      <div class="shell">
+        <div class="about-content">
+          <h2 id="aboutTitle">A starting point for your research.</h2>
+          <p>
+            This independent tool helps you discover and reuse metadata deposited with
+            <a href="https://www.crossref.org/" target="_blank" rel="noopener noreferrer"
+              >Crossref</a
+            >. It covers ancient Egypt from the Predynastic to Roman Egypt.
+          </p>
+          <ul>
+            <li>
+              Crossref is not a comprehensive Egyptology bibliography. Older books, non-DOI
+              scholarship, and some journals may be absent.
+            </li>
+            <li>
+              Historical periods are search presets, not verified classifications of each
+              publication. Queries are relevance ranked, not exact-phrase or controlled-vocabulary
+              searches. Check titles and abstracts.
+            </li>
+            <li>
+              Missing abstracts, ORCIDs, or references mean they were not supplied in this record. A
+              DOI links to the publication; access to full text may be restricted.
+            </li>
+            <li>
+              Your collection stays in this browser. Export it to keep a copy or use it elsewhere.
+            </li>
+            <li>
+              Book covers, when available, are requested from Open Library using the ISBN deposited
+              in the record. Chapter covers show the containing book. No cover is inferred from a
+              title.
+            </li>
+          </ul>
+          <p>
+            Approximate historical ranges follow the
+            <a
+              href="https://www.ees.ac.uk/static/102ae8e9-31ea-432d-a8d7434e3c65917d/EES-Chronology-of-Egypt.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Egypt Exploration Society chronology</a
+            >. Scholarly chronologies can differ.
+          </p>
+          <p>
+            Built by
+            <a
+              href="https://github.com/watrall/crossref-predynastic"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Ethan Watrall</a
+            >. An independent project, not an official Crossref service.
+          </p>
+        </div>
+      </div>
     </section>
-    <section id="chronology" class="chronology" aria-label="Historical period search presets">
-      <div class="chronology-heading"><label for="periodSelect">Historical period</label><select id="periodSelect"><option value="">All periods</option></select></div>
-      <div id="periodButtons" class="periods" aria-label="Choose a historical period"></div>
-      <p class="period-note"><span id="periodDates" class="period-dates">All ancient Egypt</span><span>Topic search presets. Publication dates are separate.</span></p>
-    </section>
-    <section id="research" class="workspace" aria-label="Research workspace" tabindex="-1">
-      <details id="refinements" class="refinements" open>
-        <summary>Refine results</summary>
-        <form id="filterForm" class="filter-form">
-          <fieldset class="filter-group"><legend>Publication year</legend><div class="year-fields"><label for="yearFrom">From<input id="yearFrom" type="number" min="1000" max="2100" placeholder="Any"></label><label for="yearTo">To<input id="yearTo" type="number" min="1000" max="2100" placeholder="Any"></label></div></fieldset>
-          <fieldset class="filter-group"><legend>Publication type</legend><label class="sr-only" for="typeFilter">Publication type</label><select id="typeFilter"><option value="">All publications</option><option value="journal-article">Journal articles</option><option value="book">Books</option><option value="book-chapter">Book chapters</option><option value="proceedings-article">Conference papers</option><option value="dissertation">Dissertations</option><option value="report">Reports</option></select></fieldset>
-          <fieldset class="filter-group"><legend>Metadata available</legend><div class="filter-options"><label class="check-label"><input id="hasAbstract" type="checkbox">Abstract</label><label class="check-label"><input id="hasOrcid" type="checkbox">Author ORCID</label><label class="check-label"><input id="hasReferences" type="checkbox">References</label></div></fieldset>
-          <div class="filter-actions"><button class="button" type="submit">Apply filters</button><button id="clearFilters" class="text-button" type="button">Reset filters</button><p id="filterError" class="filter-error" role="alert" hidden></p></div>
+    <main class="shell">
+      <section class="intro" aria-labelledby="pageTitle">
+        <div class="intro-top">
+          <div>
+            <p class="eyebrow">Ancient worlds. New questions.</p>
+            <h1 id="pageTitle">Follow the research.</h1>
+          </div>
+          <p class="intro-description">
+            Scholarship across ancient Egypt.<br />Discover, connect, and collect.
+          </p>
+        </div>
+        <form id="searchForm" class="search-form" role="search">
+          <label class="search-label" for="searchInput">Search publications</label>
+          <div class="search-field">
+            <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#search" /></svg
+            ><input
+              id="searchInput"
+              name="q"
+              type="search"
+              value="ancient egypt"
+              maxlength="500"
+              placeholder="A topic, author, site, or DOI"
+              autocomplete="off"
+            />
+          </div>
+          <button class="button button-primary search-submit" type="submit">Search</button>
         </form>
-      </details>
-      <section class="results-column" aria-labelledby="resultsTitle">
-        <div class="results-toolbar"><div><h2 id="resultsTitle" class="results-title">Publications</h2><p id="resultCount" class="result-count" role="status" aria-live="polite">Searching Crossref…</p></div><div class="sort-control"><label for="sortSelect">Sort</label><select id="sortSelect"><option value="relevance">Relevance</option><option value="newest">Newest first</option><option value="oldest">Oldest first</option></select></div></div>
-        <p id="scopeNote" class="scope-note">Bibliographic matches in Crossref, not a complete subject bibliography.</p>
-        <div id="activeQuery" class="active-query" aria-label="Current search"></div>
-        <div id="requestNotice" role="alert" hidden></div><div id="collectionTools" hidden></div>
-        <ol id="resultList" class="result-list" aria-label="Publications" aria-busy="true"></ol>
-        <div id="resultsFooter" class="results-footer"></div>
+        <p class="search-hint">Search topics, sites, authors, or a DOI.</p>
       </section>
-      <aside id="inspector" class="inspector" tabindex="-1" aria-label="Publication details"></aside>
-    </section>
-  </main>
-  <footer class="site-footer"><div class="shell footer-inner"><p>Member-deposited metadata via Crossref. A record’s presence does not imply relevance, peer review, or full-text access.</p><a href="https://github.com/watrall/crossref-predynastic" target="_blank" rel="noopener noreferrer">About this project</a></div></footer>
-  <div id="announcement" class="sr-only" role="status" aria-live="polite"></div><div id="toast" class="toast" role="status" hidden></div>
-  <noscript><p class="shell">JavaScript is needed to search Crossref and manage a collection. You can also use <a href="https://search.crossref.org/">Crossref Metadata Search</a>.</p></noscript>
-</body>
+      <section id="chronology" class="chronology" aria-label="Historical period search presets">
+        <div class="chronology-heading">
+          <label for="periodSelect">Historical period</label
+          ><select id="periodSelect">
+            <option value="">All periods</option>
+          </select>
+        </div>
+        <div id="periodButtons" class="periods" aria-label="Choose a historical period"></div>
+        <p class="period-note">
+          <span id="periodDates" class="period-dates">All ancient Egypt</span
+          ><span>Topic presets; not publication dates.</span>
+        </p>
+      </section>
+      <section id="research" class="workspace" aria-label="Research workspace" tabindex="-1">
+        <details id="refinements" class="refinements" open>
+          <summary>Refine results</summary>
+          <form id="filterForm" class="filter-form">
+            <fieldset class="filter-group">
+              <legend>Publication year</legend>
+              <div class="year-fields">
+                <label for="yearFrom"
+                  >From<input
+                    id="yearFrom"
+                    type="number"
+                    min="1000"
+                    max="2100"
+                    placeholder="Any" /></label
+                ><label for="yearTo"
+                  >To<input id="yearTo" type="number" min="1000" max="2100" placeholder="Any"
+                /></label>
+              </div>
+            </fieldset>
+            <fieldset class="filter-group">
+              <legend>Publication type</legend>
+              <label class="sr-only" for="typeFilter">Publication type</label
+              ><select id="typeFilter">
+                <option value="">All publications</option>
+                <option value="journal-article">Journal articles</option>
+                <option value="book">Books</option>
+                <option value="book-chapter">Book chapters</option>
+                <option value="proceedings-article">Conference papers</option>
+                <option value="dissertation">Dissertations</option>
+                <option value="report">Reports</option>
+              </select>
+            </fieldset>
+            <fieldset class="filter-group">
+              <legend>Metadata available</legend>
+              <div class="filter-options">
+                <label class="check-label"><input id="hasAbstract" type="checkbox" />Abstract</label
+                ><label class="check-label"
+                  ><input id="hasOrcid" type="checkbox" />Author ORCID</label
+                ><label class="check-label"
+                  ><input id="hasReferences" type="checkbox" />References</label
+                >
+              </div>
+            </fieldset>
+            <div class="filter-actions">
+              <button class="button" type="submit">Apply filters</button
+              ><button id="clearFilters" class="text-button" type="button">Reset filters</button>
+              <p id="filterError" class="filter-error" role="alert" hidden></p>
+            </div>
+          </form>
+        </details>
+        <section class="results-column" aria-labelledby="resultsTitle">
+          <div class="results-toolbar">
+            <div>
+              <h2 id="resultsTitle" class="results-title">Publications</h2>
+              <p id="resultCount" class="result-count" role="status" aria-live="polite">
+                Searching Crossref…
+              </p>
+            </div>
+            <div class="sort-control">
+              <label for="sortSelect">Sort</label
+              ><select id="sortSelect">
+                <option value="relevance">Relevance</option>
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+              </select>
+            </div>
+          </div>
+          <p id="scopeNote" class="scope-note">
+            Bibliographic matches in Crossref, not a complete subject bibliography.
+          </p>
+          <div id="activeQuery" class="active-query" aria-label="Current search"></div>
+          <div id="requestNotice" role="alert" hidden></div>
+          <div id="collectionTools" hidden></div>
+          <ol id="resultList" class="result-list" aria-label="Publications" aria-busy="true"></ol>
+          <div id="resultsFooter" class="results-footer"></div>
+        </section>
+        <aside
+          id="inspector"
+          class="inspector"
+          tabindex="-1"
+          aria-label="Publication details"
+        ></aside>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <div class="shell footer-inner">
+        <p>
+          Member-deposited metadata via Crossref. A record’s presence does not imply relevance, peer
+          review, or full-text access.
+        </p>
+        <a
+          href="https://github.com/watrall/crossref-predynastic"
+          target="_blank"
+          rel="noopener noreferrer"
+          >About this project</a
+        >
+      </div>
+    </footer>
+    <div id="announcement" class="sr-only" role="status" aria-live="polite"></div>
+    <div id="toast" class="toast" role="status" hidden></div>
+    <noscript
+      ><p class="shell">
+        JavaScript is needed to search Crossref and manage a collection. You can also use
+        <a href="https://search.crossref.org/">Crossref Metadata Search</a>.
+      </p></noscript
+    >
+  </body>
 </html>
