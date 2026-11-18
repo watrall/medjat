@@ -1,13 +1,8 @@
 import { PERIODS, TYPES, readQuery, queryString, authorLine, doiURL } from './data.js';
 import { searchWorks } from './crossref.js';
 import { createInspector } from './inspector.js';
-import {
-  readCollection,
-  writeCollection,
-  MAX_SAVED,
-  parseCollection,
-  mergeCollections,
-} from './collection.js';
+import { parseCollection } from './collection.js';
+import { createCollectionStore } from './collection-store.js';
 import { EXPORT_FORMATS, exportCollection, downloadFile } from './export.js';
 import { el, icon, externalLink, emptyState, notify, skeletons } from './dom.js';
 
@@ -16,7 +11,8 @@ let storage;
 try {
   storage = localStorage;
 } catch {}
-const saved = readCollection(storage);
+const collectionStore = createCollectionStore({ storage });
+const saved = await collectionStore.ready;
 const state = {
   view: 'explore',
   collection: saved.records,
@@ -88,23 +84,26 @@ function visibleWorks() {
           .includes(query),
     );
 }
-function toggleSave(work) {
+const saving = new Set();
+async function toggleSave(work) {
+  if (saving.has(work.id)) return;
   const focusedRecord = document.activeElement?.closest('.result-row')?.dataset.record;
   const removing = state.collection.has(work.id);
-  if (!removing && state.collection.size >= MAX_SAVED) {
-    notify(
-      `Your collection supports ${MAX_SAVED} publications. Export a copy and remove some before adding more.`,
+  saving.add(work.id);
+  try {
+    const result = await collectionStore.change(
+      removing ? { remove: work.id } : { add: { work, savedAt: new Date().toISOString() } },
     );
+    state.collection = result.records;
+    state.storageWarning = result.warning;
+  } catch (error) {
+    notify(error.message);
     return;
+  } finally {
+    saving.delete(work.id);
   }
-  if (removing) state.collection.delete(work.id);
-  else state.collection.set(work.id, { work, savedAt: new Date().toISOString() });
-  const persisted = writeCollection(state.collection, storage);
-  if (!persisted)
-    state.storageWarning =
-      'Browser storage is unavailable. Your collection is kept for this visit only. Export it to keep a copy.';
   notify(
-    persisted
+    !state.storageWarning
       ? removing
         ? 'Publication removed from your collection.'
         : 'Publication saved to your collection.'
@@ -213,12 +212,10 @@ function renderCollectionTools() {
         if (selected.size > 10 * 1024 * 1024)
           throw new Error('Choose a collection file smaller than 10 MB.');
         const imported = parseCollection(await selected.text());
-        const before = state.collection.size;
-        state.collection = mergeCollections(state.collection, imported);
-        if (!writeCollection(state.collection, storage))
-          state.storageWarning =
-            'Browser storage is unavailable. Export your collection to keep a copy.';
-        status.textContent = `Added ${state.collection.size - before} publications. Existing records are matched by DOI.`;
+        const result = await collectionStore.change({ import: imported });
+        state.collection = result.records;
+        state.storageWarning = result.warning;
+        status.textContent = `Imported collection. ${state.collection.size} publications saved. Existing records are matched by DOI.${result.warning ? ' Changes are kept for this visit only.' : ''}`;
         renderList();
         renderStatus();
       } catch (error) {
@@ -543,6 +540,13 @@ $('aboutToggle').addEventListener('click', () => {
 $('exploreNav').addEventListener('click', () => setView('explore'));
 $('collectionNav').disabled = false;
 $('collectionNav').addEventListener('click', () => setView('collection'));
+collectionStore.subscribe(({ records, warning }) => {
+  state.collection = records;
+  state.storageWarning = warning;
+  renderList();
+  renderStatus();
+  inspector.refresh();
+});
 window.addEventListener('popstate', () => {
   state.query = readQuery(location.search);
   runSearch();

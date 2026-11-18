@@ -260,3 +260,76 @@ test('untrusted metadata remains text instead of executable markup', async ({ pa
   await expect(page.locator('a[href^="javascript:"]')).toHaveCount(0);
   expect(await page.evaluate(() => window.crossrefInjection)).toBeUndefined();
 });
+
+test('simultaneous saves and removals stay consistent across research tabs', async ({
+  page,
+  context,
+}) => {
+  const other = await context.newPage();
+  await fixtures(page);
+  await fixtures(other);
+  await Promise.all([page.goto('/'), other.goto('/')]);
+  await Promise.all([
+    expect(page.locator('.result-row')).toHaveCount(25),
+    expect(other.locator('.result-row')).toHaveCount(25),
+  ]);
+  await Promise.all([
+    page.locator('.save-button').nth(0).click(),
+    other.locator('.save-button').nth(1).click(),
+  ]);
+  await expect(page.locator('#collectionCount')).toHaveText('2');
+  await expect(other.locator('#collectionCount')).toHaveText('2');
+  await Promise.all([
+    page.locator('.save-button').nth(0).click(),
+    other.locator('.save-button').nth(2).click(),
+  ]);
+  await expect(page.locator('#collectionCount')).toHaveText('2');
+  await expect(other.locator('.save-button').nth(0)).toHaveAttribute('aria-pressed', 'false');
+  await other.reload();
+  await expect(other.locator('#collectionCount')).toHaveText('2');
+  await expect(other.locator('.save-button').nth(1)).toHaveAttribute('aria-pressed', 'true');
+  await expect(other.locator('.save-button').nth(2)).toHaveAttribute('aria-pressed', 'true');
+  await other.locator('#collectionNav').click();
+  await Promise.all([
+    page.locator('.save-button').nth(1).click(),
+    other.locator('#importCollection').setInputFiles({
+      name: 'additional-publication.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(JSON.stringify({ version: 1, records: [{ raw: publication(3) }] })),
+    }),
+  ]);
+  await expect(page.locator('#collectionCount')).toHaveText('2');
+  await expect(page.locator('.save-button').nth(1)).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('.save-button').nth(3)).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('legacy collection migrates once and cannot resurrect a removed publication', async ({
+  page,
+}) => {
+  await fixtures(page);
+  await page.addInitScript(
+    (raw) =>
+      localStorage.setItem(
+        'ancient-egypt-research-collection-v1',
+        JSON.stringify({ version: 1, records: [{ raw, savedAt: '2026-11-18T12:00:00Z' }] }),
+      ),
+    publication(0),
+  );
+  await page.goto('/');
+  await expect(page.locator('#collectionCount')).toHaveText('1');
+  await page.locator('.save-button').first().click();
+  await expect(page.locator('#collectionCount')).toHaveText('0');
+  await page.reload();
+  await expect(page.locator('#collectionCount')).toHaveText('0');
+});
+
+test('unavailable persistent storage keeps an explicit session collection', async ({ page }) => {
+  await page.addInitScript(() => Object.defineProperty(window, 'indexedDB', { value: undefined }));
+  await fixtures(page);
+  await page.goto('/');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await page.locator('.save-button').first().click();
+  await expect(page.locator('#collectionCount')).toHaveText('1');
+  await page.locator('#collectionNav').click();
+  await expect(page.locator('#requestNotice')).toContainText('for this visit only');
+});
