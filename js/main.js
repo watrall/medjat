@@ -1,10 +1,13 @@
 import {PERIODS,TYPES,readQuery,queryString,authorLine,doiURL} from './data.js';
 import {searchWorks} from './crossref.js';
 import {createInspector} from './inspector.js';
+import {readCollection,writeCollection,MAX_SAVED} from './collection.js';
 import {el,icon,externalLink,emptyState,notify,skeletons} from './dom.js';
 
 const $=id=>document.getElementById(id);
-const state={query:readQuery(location.search),items:[],total:0,nextCursor:null,selected:null,loading:false,retrievedAt:'',cached:false,error:'',requestId:0,controller:null,doiLookup:false};
+let storage;try{storage=localStorage;}catch{}
+const saved=readCollection(storage);
+const state={view:'explore',collection:saved.records,storageWarning:saved.warning,collectionQuery:'',query:readQuery(location.search),items:[],total:0,nextCursor:null,selected:null,loading:false,retrievedAt:'',cached:false,error:'',requestId:0,controller:null,doiLookup:false};
 
 function updateURL() { history.replaceState(null,'',`${location.pathname}?${queryString(state.query)}${location.hash}`); }
 function syncControls() {
@@ -18,7 +21,35 @@ function syncControls() {
   const chips=[state.query.q && `Search: ${state.query.q}`,period?.name,state.query.type && TYPES.get(state.query.type),state.query.from && `From ${state.query.from}`,state.query.to && `To ${state.query.to}`,state.query.abstract && 'Has abstract',state.query.orcid && 'Has ORCID',state.query.references && 'Has references'].filter(Boolean);
   $('activeQuery').replaceChildren(...chips.map(text=>el('span',{class:'query-chip'},text)));
 }
-const inspector=createInspector($('inspector'),{onClose:closeInspector});
+const inspector=createInspector($('inspector'),{onClose:closeInspector,onSave:toggleSave,isSaved:id=>state.collection.has(id)});
+function visibleWorks() {
+  if(state.view==='explore')return state.items;
+  const query=state.collectionQuery.toLowerCase();
+  return [...state.collection.values()].map(x=>x.work).filter(work=>!query||[work.title,authorLine(work,100),work.abstract,work.container].join(' ').toLowerCase().includes(query));
+}
+function toggleSave(work) {
+  const removing=state.collection.has(work.id);
+  if(!removing&&state.collection.size>=MAX_SAVED){notify(`Your collection supports ${MAX_SAVED} publications. Export a copy and remove some before adding more.`);return;}
+  if(removing)state.collection.delete(work.id);else state.collection.set(work.id,{work,savedAt:new Date().toISOString()});
+  const persisted=writeCollection(state.collection,storage);
+  if(!persisted)state.storageWarning='Browser storage is unavailable. Your collection is kept for this visit only. Export it to keep a copy.';
+  notify(persisted?(removing?'Publication removed from your collection.':'Publication saved to your collection.'):'Changed for this visit. Export your collection to keep a copy.');
+  renderList();renderStatus();inspector.refresh();
+}
+function setView(view) {
+  state.view=view;$('research').classList.remove('mobile-detail-open');
+  $('collectionNav').setAttribute('aria-pressed',String(view==='collection'));$('exploreNav').setAttribute('aria-pressed',String(view==='explore'));
+  $('refinements').hidden=view==='collection';$('chronology').hidden=view==='collection';
+  $('sortSelect').parentElement.hidden=view==='collection';$('activeQuery').hidden=view==='collection';
+  $('resultsTitle').textContent=view==='collection'?'Your collection':'Publications';
+  $('collectionTools').hidden=view!=='collection';
+  if(view==='collection')renderCollectionTools();
+  const work=visibleWorks().find(w=>w.id===state.selected)||visibleWorks()[0];state.selected=work?.id||null;renderInspector(work);renderList();renderStatus();
+}
+function renderCollectionTools() {
+  const input=el('input',{type:'search',id:'collectionSearch',placeholder:'Title, author, or keyword',value:state.collectionQuery,oninput:e=>{state.collectionQuery=e.target.value;renderList();renderStatus();}});
+  $('collectionTools').replaceChildren(el('div',{class:'collection-toolbar'},el('label',{for:'collectionSearch'},'Search your saved publications',input),el('p',{},'Saved in this browser. Your search results remain in Explore.')));
+}
 function renderInspector(work) { inspector.show(work); }
 function closeInspector() {
   $('research').classList.remove('mobile-detail-open');
@@ -30,15 +61,22 @@ function selectWork(work) {
 }
 function renderList() {
   const list=$('resultList');list.setAttribute('aria-busy',String(state.loading));
-  if (state.loading && !state.items.length) {list.replaceChildren(...skeletons());return;}
-  if (!state.items.length) {list.replaceChildren(el('li',{},emptyState(state.error?'Search is unavailable':'No publications found.',state.error?'Your search is still here. Retry when you are ready.':'Try a broader topic, another spelling, or fewer filters. Crossref may not contain the scholarship you need.')));return;}
-  list.replaceChildren(...state.items.map(work=>{
+  if (state.view==='explore' && state.loading && !state.items.length) {list.replaceChildren(...skeletons());return;}
+  if (!visibleWorks().length) {if(state.view==='collection'){const empty=emptyState(state.collection.size?'No saved publications match.':'Your next bibliography starts here.',state.collection.size?'Try another title, author, or keyword.':'Save useful publications from Explore. They will stay here when you return.','library-big');empty.append(el('button',{class:'button',onclick:()=>setView('explore')},'Explore publications'));list.replaceChildren(el('li',{},empty));return;}list.replaceChildren(el('li',{},emptyState(state.error?'Search is unavailable':'No publications found.',state.error?'Your search is still here. Retry when you are ready.':'Try a broader topic, another spelling, or fewer filters. Crossref may not contain the scholarship you need.')));return;}
+  list.replaceChildren(...visibleWorks().map(work=>{
     const title=el('button',{class:'result-open',onclick:()=>selectWork(work),'aria-label':`Inspect ${work.title}`},work.title);
     const badges=[work.abstract && ['file-text','Abstract'],work.authors.some(a=>a.orcid)&&['user-round','ORCID'],work.references.length>0&&['network',`${work.references.length} references`]].filter(Boolean);
-    return el('li',{class:`result-row${state.selected===work.id?' is-selected':''}`,'data-record':work.id},el('div',{class:'result-top'},el('h3',{},title)),el('p',{class:'result-meta'},[authorLine(work),work.year||'Date not supplied',work.container||work.publisher].filter(Boolean).join(' · ')),work.abstract&&el('p',{class:'result-snippet'},work.abstract),el('div',{class:'metadata-badges'},el('span',{},work.typeLabel),badges.map(([name,label])=>el('span',{class:'metadata-badge'},icon(name),label))));
+    return el('li',{class:`result-row${state.selected===work.id?' is-selected':''}`,'data-record':work.id},el('div',{class:'result-top'},el('h3',{},title),el('button',{class:'save-button','aria-pressed':String(state.collection.has(work.id)),'aria-label':`${state.collection.has(work.id)?'Remove from':'Save to'} collection: ${work.title}`,onclick:()=>toggleSave(work)},icon(state.collection.has(work.id)?'bookmark-check':'bookmark'),el('span',{},state.collection.has(work.id)?'Saved':'Save'))),el('p',{class:'result-meta'},[authorLine(work),work.year||'Date not supplied',work.container||work.publisher].filter(Boolean).join(' · ')),work.abstract&&el('p',{class:'result-snippet'},work.abstract),el('div',{class:'metadata-badges'},el('span',{},work.typeLabel),badges.map(([name,label])=>el('span',{class:'metadata-badge'},icon(name),label))));
   }));
 }
 function renderStatus() {
+  $('collectionCount').textContent=state.collection.size;
+  if(state.view==='collection') {
+    $('resultCount').textContent=`${visibleWorks().length} of ${state.collection.size} saved publications`;$('scopeNote').textContent='Your collection contains deposited records, not downloaded full texts.';
+    $('resultsFooter').replaceChildren();$('requestNotice').hidden=!state.storageWarning;
+    if(state.storageWarning)$('requestNotice').replaceChildren(el('div',{class:'notice'},icon('circle-alert'),el('p',{},state.storageWarning)));
+    return;
+  }
   $('resultCount').textContent=state.loading ? (state.items.length?'Loading more publications…':'Searching Crossref…') : `${state.items.length.toLocaleString()} records loaded${state.total ? ` of ${state.total.toLocaleString()} bibliographic matches` : ''}`;
   $('scopeNote').textContent=state.doiLookup?'DOI lookup opens one exact Crossref record; topic and publication filters do not apply.':`Relevance is ranked by Crossref.${state.retrievedAt?` ${state.cached?'Cached response':'Retrieved'} ${new Date(state.retrievedAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}.`:''} Matches are not a complete subject bibliography.`;
   const notice=$('requestNotice');notice.hidden=!state.error;
@@ -48,6 +86,7 @@ function renderStatus() {
   $('sortSelect').disabled=state.loading;
 }
 async function runSearch(append=false) {
+  if(state.view!=='explore')setView('explore');
   state.controller?.abort();const controller=new AbortController();state.controller=controller;
   const requestId=++state.requestId;state.loading=true;state.error='';
   if (!append) {state.items=[];state.selected=null;state.nextCursor=null;$('research').classList.remove('mobile-detail-open');renderInspector(null);}
@@ -79,7 +118,8 @@ $('filterForm').addEventListener('submit',e=>{
 });
 $('clearFilters').addEventListener('click',()=>{Object.assign(state.query,{from:'',to:'',type:'',abstract:false,orcid:false,references:false});$('filterError').hidden=true;runSearch();});
 $('aboutToggle').addEventListener('click',()=>{const open=$('aboutPanel').hidden;$('aboutPanel').hidden=!open;$('aboutToggle').setAttribute('aria-expanded',String(open));});
-$('exploreNav').addEventListener('click',()=>{$('research').classList.remove('mobile-detail-open');$('searchInput').focus();});
+$('exploreNav').addEventListener('click',()=>setView('explore'));
+$('collectionNav').disabled=false;$('collectionNav').addEventListener('click',()=>setView('collection'));
 window.addEventListener('popstate',()=>{state.query=readQuery(location.search);runSearch();});
 if (matchMedia('(max-width:1299px)').matches) $('refinements').open=false;
 runSearch();
