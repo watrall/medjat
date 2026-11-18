@@ -9,5 +9,10 @@
     "test": "node --test tests/*.test.js",
     "check": "node --check js/main.js && node --check js/data.js && node --check js/crossref.js && node --check js/collection.js && node --check js/export.js"
   },
-  "engines": { "node": ">=20" }
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "lucide-static": "^1.75.0"
+  }
 }
