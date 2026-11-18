@@ -1,7 +1,8 @@
 import {PERIODS,TYPES,readQuery,queryString,authorLine,doiURL} from './data.js';
 import {searchWorks} from './crossref.js';
 import {createInspector} from './inspector.js';
-import {readCollection,writeCollection,MAX_SAVED} from './collection.js';
+import {readCollection,writeCollection,MAX_SAVED,parseCollection,mergeCollections} from './collection.js';
+import {EXPORT_FORMATS,exportCollection,downloadFile} from './export.js';
 import {el,icon,externalLink,emptyState,notify,skeletons} from './dom.js';
 
 const $=id=>document.getElementById(id);
@@ -46,9 +47,35 @@ function setView(view) {
   if(view==='collection')renderCollectionTools();
   const work=visibleWorks().find(w=>w.id===state.selected)||visibleWorks()[0];state.selected=work?.id||null;renderInspector(work);renderList();renderStatus();
 }
+let exportController=null;
 function renderCollectionTools() {
   const input=el('input',{type:'search',id:'collectionSearch',placeholder:'Title, author, or keyword',value:state.collectionQuery,oninput:e=>{state.collectionQuery=e.target.value;renderList();renderStatus();}});
-  $('collectionTools').replaceChildren(el('div',{class:'collection-toolbar'},el('label',{for:'collectionSearch'},'Search your saved publications',input),el('p',{},'Saved in this browser. Your search results remain in Explore.')));
+  const formats=el('select',{id:'exportFormat'});
+  for(const [value,format]of Object.entries(EXPORT_FORMATS))formats.append(el('option',{value},format.label));
+  const status=el('p',{id:'exportStatus',role:'status'},'Export includes every saved publication, including those outside the current collection search.');
+  const cancel=el('button',{class:'text-button',hidden:true,onclick:()=>exportController?.abort()},'Cancel export');
+  const button=el('button',{class:'button button-primary',onclick:async()=>{
+    if(exportController)return;
+    const snapshot=new Map(state.collection);const format=formats.value;
+    exportController=new AbortController();button.disabled=true;formats.disabled=true;cancel.hidden=false;
+    status.textContent='Preparing your collection…';
+    try {
+      const text=await exportCollection(snapshot,format,{signal:exportController.signal,onProgress:(done,total)=>{status.textContent=`Formatted ${done} of ${total} publications…`;}});
+      downloadFile(text,format);status.textContent=`Exported ${snapshot.size} publications. Your saved collection is unchanged.`;notify('Collection exported.');
+    } catch(error){status.textContent=exportController.signal.aborted?'Export cancelled. Your collection is unchanged.':error.message;}
+    finally{exportController=null;button.disabled=false;formats.disabled=false;cancel.hidden=true;}
+  }},icon('download'),'Export collection');
+  const file=el('input',{type:'file',accept:'.json,application/json',class:'sr-only',id:'importCollection',onchange:async e=>{
+    const selected=e.target.files?.[0];if(!selected)return;
+    try {
+      if(selected.size>10*1024*1024)throw new Error('Choose a collection file smaller than 10 MB.');
+      const imported=parseCollection(await selected.text());const before=state.collection.size;state.collection=mergeCollections(state.collection,imported);
+      if(!writeCollection(state.collection,storage))state.storageWarning='Browser storage is unavailable. Export your collection to keep a copy.';
+      status.textContent=`Added ${state.collection.size-before} publications. Existing records are matched by DOI.`;renderList();renderStatus();
+    }catch(error){status.textContent=error.message;}
+    finally{file.value='';}
+  }});
+  $('collectionTools').replaceChildren(el('div',{class:'collection-toolbar'},el('label',{for:'collectionSearch'},'Search saved publications',input),el('label',{for:'exportFormat'},'Export format',formats),button,cancel,el('button',{class:'text-button',onclick:()=>file.click()},icon('library-big'),'Import collection'),file,status,el('p',{},'Saved in this browser. RIS and BibTeX use Crossref’s format conversion; JSON keeps the deposited metadata and can be imported here.')));
 }
 function renderInspector(work) { inspector.show(work); }
 function closeInspector() {
