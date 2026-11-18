@@ -124,7 +124,11 @@ test('period queries, filters, pagination, and browser back preserve research co
   const requests = await fixtures(page);
   await page.goto('/');
   await expect(page.locator('.result-row')).toHaveCount(25);
-  await page.getByRole('button', { name: 'New Kingdom', exact: true }).click();
+  await page
+    .getByRole('combobox', { name: 'Historical period', exact: true })
+    .selectOption('new-kingdom');
+  expect(requests.filter((url) => url.pathname === '/works')).toHaveLength(1);
+  await page.getByRole('button', { name: 'Update search', exact: true }).click();
   await expect(page).toHaveURL(/period=new-kingdom/);
   await expect(page.locator('.result-row')).toHaveCount(25);
   expect(requests.at(-1).searchParams.get('query.bibliographic')).toContain('New Kingdom Egypt');
@@ -132,7 +136,7 @@ test('period queries, filters, pagination, and browser back preserve research co
   await page.getByLabel('From', { exact: true }).fill('2000');
   await page.getByLabel('To', { exact: true }).fill('2025');
   await page.getByRole('checkbox', { name: 'Abstract', exact: true }).check();
-  await page.getByRole('button', { name: 'Apply filters', exact: true }).click();
+  await page.getByRole('button', { name: 'Update search', exact: true }).click();
   await expect(page).toHaveURL(/from=2000/);
   await expect(page.locator('.result-row')).toHaveCount(25);
   expect(requests.at(-1).searchParams.get('filter')).toContain('has-abstract:true');
@@ -141,6 +145,45 @@ test('period queries, filters, pagination, and browser back preserve research co
   await page.goBack();
   await expect(page).not.toHaveURL(/from=2000/);
   await expect(page.getByLabel('From', { exact: true })).toHaveValue('');
+});
+
+test('period refinements apply with either search action and reset with the other refinements', async ({
+  page,
+}) => {
+  const requests = await fixtures(page);
+  await page.goto('/?q=Deir+el-Medina');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  const period = page.getByRole('combobox', { name: 'Historical period', exact: true });
+  await expect(page.locator('#filterForm')).toContainText('Historical period');
+  await expect(page.locator('#periodButtons')).toHaveCount(0);
+  await period.selectOption('new-kingdom');
+  await expect(page.locator('#periodDates')).toHaveText('c. 1550–1069 BCE');
+  expect(requests.filter((url) => url.pathname === '/works')).toHaveLength(1);
+  await expect(page).not.toHaveURL(/period=/);
+
+  await page
+    .getByRole('searchbox', { name: 'Search publications', exact: true })
+    .fill('Hierakonpolis');
+  await page.getByRole('button', { name: 'Search', exact: true }).click();
+  await expect(page).toHaveURL(/period=new-kingdom/);
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  expect(requests.at(-1).searchParams.get('query.bibliographic')).toContain('Hierakonpolis');
+  await expect(page.locator('#activeQuery')).toContainText('Period keywords: New Kingdom');
+
+  await period.selectOption('old-kingdom');
+  await page.getByRole('combobox', { name: 'Publication type', exact: true }).selectOption('book');
+  await page.getByRole('button', { name: 'Update search', exact: true }).click();
+  await expect(page).toHaveURL(/period=old-kingdom/);
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  expect(requests.at(-1).searchParams.get('filter')).toContain('type:book');
+
+  await page.getByRole('button', { name: 'Reset refinements', exact: true }).click();
+  await expect(page).not.toHaveURL(/period=|type=/);
+  await expect(period).toHaveValue('');
+  await expect(page.locator('#periodDates')).toBeHidden();
+  await expect(
+    page.getByRole('searchbox', { name: 'Search publications', exact: true }),
+  ).toHaveValue('Hierakonpolis');
 });
 
 test('mobile detail navigation and long metadata reflow without overflow', async ({ page }) => {

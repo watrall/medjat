@@ -53,14 +53,10 @@ function syncControls() {
   $('hasOrcid').checked = state.query.orcid;
   $('hasReferences').checked = state.query.references;
   $('sortSelect').value = state.query.sort;
-  document
-    .querySelectorAll('[data-period]')
-    .forEach((button) =>
-      button.setAttribute('aria-pressed', String(button.dataset.period === state.query.period)),
-    );
+  updatePeriodHint();
   const period = PERIODS.find((p) => p.id === state.query.period);
-  $('periodDates').textContent = period ? `${period.name} · ${period.dates}` : 'All ancient Egypt';
   const chips = [
+    period && `Period keywords: ${period.name}`,
     state.query.type && TYPES.get(state.query.type),
     state.query.from && `From ${state.query.from}`,
     state.query.to && `To ${state.query.to}`,
@@ -130,7 +126,6 @@ function setView(view) {
   $('collectionNav').setAttribute('aria-pressed', String(view === 'collection'));
   $('exploreNav').setAttribute('aria-pressed', String(view === 'explore'));
   $('refinements').hidden = view === 'collection';
-  $('chronology').hidden = view === 'collection';
   $('sortSelect').parentElement.hidden = view === 'collection';
   $('activeQuery').hidden = view === 'collection' || !$('activeQuery').childElementCount;
   $('resultsTitle').textContent = view === 'collection' ? 'Your collection' : 'Publications';
@@ -492,38 +487,28 @@ async function runSearch(append = false) {
     }
   }
 }
-function choosePeriod(id) {
-  state.query.period = id;
-  runSearch();
+function updatePeriodHint() {
+  const period = PERIODS.find((p) => p.id === $('periodSelect').value);
+  $('periodDates').textContent = period?.dates || '';
+  $('periodDates').hidden = !period;
 }
 for (const period of PERIODS) {
   $('periodSelect').append(el('option', { value: period.id }, period.name));
-  $('periodButtons').append(
-    el(
-      'button',
-      {
-        class: 'period-button',
-        'data-period': period.id,
-        'aria-pressed': 'false',
-        title: `${period.name}: ${period.dates}`,
-        onclick: () => choosePeriod(period.id),
-      },
-      period.name,
-    ),
-  );
 }
-$('periodSelect').addEventListener('change', (e) => choosePeriod(e.target.value));
-$('searchForm').addEventListener('submit', (e) => {
-  e.preventDefault();
-  state.query.q = $('searchInput').value.trim() || 'ancient egypt';
-  runSearch();
-});
+$('periodSelect').addEventListener('change', updatePeriodHint);
 $('sortSelect').addEventListener('change', (e) => {
   state.query.sort = e.target.value;
   runSearch();
 });
-$('filterForm').addEventListener('submit', (e) => {
+function submitSearch(e) {
   e.preventDefault();
+  for (const control of $('filterForm').elements) {
+    if (!control.checkValidity()) {
+      $('refinements').open = true;
+      control.reportValidity();
+      return;
+    }
+  }
   const from = $('yearFrom').value;
   const to = $('yearTo').value;
   if (from && to && Number(from) > Number(to)) {
@@ -533,6 +518,8 @@ $('filterForm').addEventListener('submit', (e) => {
   }
   $('filterError').hidden = true;
   Object.assign(state.query, {
+    q: $('searchInput').value.trim() || 'ancient egypt',
+    period: $('periodSelect').value,
     from,
     to,
     type: $('typeFilter').value,
@@ -541,18 +528,12 @@ $('filterForm').addEventListener('submit', (e) => {
     references: $('hasReferences').checked,
   });
   runSearch();
-});
-$('clearFilters').addEventListener('click', () => {
-  Object.assign(state.query, {
-    from: '',
-    to: '',
-    type: '',
-    abstract: false,
-    orcid: false,
-    references: false,
-  });
-  $('filterError').hidden = true;
-  runSearch();
+}
+$('searchForm').addEventListener('submit', submitSearch);
+$('filterForm').addEventListener('submit', submitSearch);
+$('clearFilters').addEventListener('click', (e) => {
+  $('filterForm').reset();
+  submitSearch(e);
 });
 $('aboutToggle').addEventListener('click', () => {
   const open = $('aboutPanel').hidden;

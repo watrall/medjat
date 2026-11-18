@@ -147,23 +147,19 @@
         </form>
         <p class="search-hint">Search topics, sites, authors, or a DOI.</p>
       </section>
-      <section id="chronology" class="chronology" aria-label="Historical period search presets">
-        <div class="chronology-heading">
-          <label for="periodSelect">Historical period</label
-          ><select id="periodSelect">
-            <option value="">All periods</option>
-          </select>
-        </div>
-        <div id="periodButtons" class="periods" aria-label="Choose a historical period"></div>
-        <p class="period-note">
-          <span id="periodDates" class="period-dates">All ancient Egypt</span
-          ><span>Topic presets; not publication dates.</span>
-        </p>
-      </section>
       <section id="research" class="workspace" aria-label="Research workspace" tabindex="-1">
         <details id="refinements" class="refinements" open>
-          <summary>Refine results</summary>
+          <summary>Refine search</summary>
           <form id="filterForm" class="filter-form">
+            <fieldset class="filter-group">
+              <legend>Historical period</legend>
+              <label class="sr-only" for="periodSelect">Historical period</label>
+              <select id="periodSelect" aria-describedby="periodHelp periodDates">
+                <option value="">All periods</option>
+              </select>
+              <p id="periodDates" class="period-dates" hidden></p>
+              <p id="periodHelp" class="filter-help">Adds period keywords to your search.</p>
+            </fieldset>
             <fieldset class="filter-group">
               <legend>Publication year</legend>
               <div class="year-fields">
@@ -204,8 +200,10 @@
               </div>
             </fieldset>
             <div class="filter-actions">
-              <button class="button" type="submit">Apply filters</button
-              ><button id="clearFilters" class="text-button" type="button">Reset filters</button>
+              <button class="button" type="submit">Update search</button
+              ><button id="clearFilters" class="text-button" type="button">
+                Reset refinements
+              </button>
               <p id="filterError" class="filter-error" role="alert" hidden></p>
             </div>
           </form>

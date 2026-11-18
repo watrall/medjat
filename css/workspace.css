@@ -383,63 +383,21 @@ h1 {
   color: var(--color-muted);
   font-size: var(--text-caption);
 }
-.chronology {
-  padding-bottom: var(--space-lg);
-  border-bottom: 1px solid var(--color-line);
-}
-.chronology-heading {
-  display: flex;
-  align-items: center;
-  gap: var(--space-base);
-  flex-wrap: wrap;
-}
-.chronology label {
-  font-size: var(--text-label);
-  font-weight: 600;
-}
-.chronology select {
-  flex: 1;
-  font-size: var(--text-label);
-}
-.periods {
-  display: none;
-}
-.period-button {
-  min-height: 54px;
-  padding: 0.5rem 0.75rem;
-  font-size: var(--text-caption);
-  font-weight: 500;
-  text-align: left;
-  border-radius: var(--radius-sm);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  line-height: 1.25;
-  white-space: nowrap;
-  flex: none;
-}
-.period-button:hover {
-  background: var(--color-subtle);
-}
-.period-button[aria-pressed='true'] {
-  background: var(--color-selected);
-  color: var(--color-accent);
-}
-.period-note {
-  display: flex;
-  gap: var(--space-sm);
-  align-items: center;
-  flex-wrap: wrap;
+.filter-help {
   margin-top: var(--space-sm);
-  color: var(--color-muted);
   font-size: var(--text-caption);
+  line-height: 1.5;
+  color: var(--color-muted);
 }
 .period-dates {
+  margin-top: var(--space-sm);
+  font-size: var(--text-caption);
   color: var(--color-secondary);
   font-weight: 550;
 }
 .workspace {
   display: grid;
+  border-top: 1px solid var(--color-line);
   gap: var(--space-lg);
   padding-block: var(--space-lg) var(--space-2xl);
   min-height: 600px;
@@ -1046,9 +1004,6 @@ h1 {
   .search-submit {
     padding-inline: var(--space-xl);
   }
-  .chronology select {
-    flex: 0 1 230px;
-  }
   .save-button span {
     display: inline;
   }
@@ -1056,7 +1011,7 @@ h1 {
     padding: var(--space-lg) var(--space-base);
   }
   .filter-form {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .filter-actions {
     grid-column: 1/-1;
@@ -1106,16 +1061,6 @@ h1 {
   .inspector-top {
     min-height: 28px;
   }
-  .periods {
-    display: flex;
-    overflow-x: auto;
-    padding-block: var(--space-sm);
-    gap: 4px;
-    scrollbar-width: thin;
-  }
-  .period-note {
-    margin-top: 0;
-  }
   .result-open {
     font-size: 1.125rem;
   }
@@ -1125,7 +1070,7 @@ h1 {
     width: min(100% - 5rem, 1600px);
   }
   .workspace {
-    grid-template-columns: 192px minmax(0, 1.2fr) minmax(345px, 0.9fr);
+    grid-template-columns: 216px minmax(0, 1.2fr) minmax(345px, 0.9fr);
     gap: var(--space-xl);
   }
   .refinements {
@@ -1134,11 +1079,7 @@ h1 {
     border-right: 1px solid var(--color-line);
   }
   .refinements summary {
-    pointer-events: none;
     min-height: 28px;
-  }
-  .refinements summary::after {
-    display: none;
   }
   .filter-form {
     grid-template-columns: 1fr;
@@ -1150,35 +1091,6 @@ h1 {
   }
   .filter-actions .button {
     width: 100%;
-  }
-  .chronology {
-    display: grid;
-    grid-template-columns: 270px minmax(0, 1fr);
-    gap: var(--space-sm) var(--space-md);
-    align-items: center;
-  }
-  .chronology-heading {
-    flex-wrap: nowrap;
-  }
-  .chronology-heading label {
-    white-space: nowrap;
-  }
-  .chronology-heading select {
-    flex: 1;
-    min-width: 0;
-    width: 140px;
-    min-height: 46px;
-  }
-  .periods {
-    padding-top: 0;
-  }
-  .period-button {
-    padding: 0.4rem 0.6rem;
-    white-space: normal;
-    max-width: 100px;
-  }
-  .period-note {
-    grid-column: 1/-1;
   }
 }
 @media (max-width: 639px) {
