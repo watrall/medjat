@@ -13,15 +13,16 @@ export function createInspector(root,{onClose,onSave,isSaved=()=>false}={}) {
     render();
   }
   function actionButton(savedWork) {
-    return el('button',{class:'button button-primary','aria-pressed':String(isSaved(savedWork.id)),onclick:()=>onSave?.(savedWork)},icon(isSaved(savedWork.id)?'bookmark-check':'bookmark'),isSaved(savedWork.id)?'Saved to collection':'Save to collection');
+    return el('button',{class:'button button-primary','data-focus-key':'save','aria-pressed':String(isSaved(savedWork.id)),onclick:()=>onSave?.(savedWork)},icon(isSaved(savedWork.id)?'bookmark-check':'bookmark'),isSaved(savedWork.id)?'Saved to collection':'Save to collection');
   }
   function render() {
+    const focusKey=root.contains(document.activeElement)?document.activeElement?.dataset.focusKey:null;
     const top=el('div',{class:'inspector-top'},el('span',{class:'inspector-kicker'},'Publication details'),el('button',{class:'inspector-close','aria-label':'Back to publications',onclick:onClose},icon('x')));
     root.replaceChildren(top);
     if (!work) {root.append(emptyState('A closer look.','Choose a publication to inspect its metadata, follow deposited references, or save it to your collection.','book-open'));return;}
     if (trail.length) root.append(el('button',{class:'text-button',onclick:()=>{const previous=trail.pop();show(previous,{fromReference:true});}},icon('arrow-left'),'Back to previous publication'));
     const tabs=el('div',{class:'inspector-tabs','aria-label':'Publication detail views'});
-    for (const [id,label] of [['overview','Overview'],['connections','Connections'],['cite','Cite']]) tabs.append(el('button',{class:'inspector-tab','aria-pressed':String(tab===id),onclick:()=>{tab=id;render();if(id==='cite'&&!citation)loadCitation();}},label));
+    for (const [id,label] of [['overview','Overview'],['connections','Connections'],['cite','Cite']]) tabs.append(el('button',{class:'inspector-tab','data-focus-key':`tab-${id}`,'aria-pressed':String(tab===id),onclick:()=>{tab=id;render();if(id==='cite'&&!citation)loadCitation();}},label));
     root.append(tabs,el('h2',{class:'detail-title'},work.title));
     root.append(el('div',{class:'detail-authors'},work.authors.length?work.authors.map(author=>el('span',{},author.name,author.orcid&&externalLink(el('span',{class:'orcid-id'},'iD'),author.orcid,{class:'orcid-link','aria-label':`ORCID profile for ${author.name}`}))):'Authors not supplied'));
     root.append(el('p',{class:'detail-meta'},[work.year||'Date not supplied',work.container||work.publisher,work.typeLabel].filter(Boolean).join(' · ')));
@@ -34,6 +35,7 @@ export function createInspector(root,{onClose,onSave,isSaved=()=>false}={}) {
     if (onSave) actions.append(actionButton(work));
     actions.append(externalLink([icon('external-link'),'Open publication'],doiURL(work.doi),{class:'button'}));
     root.append(actions,el('p',{class:'detail-provenance'},'Member-deposited metadata via Crossref. Identifiers and relationships are shown only when supplied.'));
+    if(focusKey)root.querySelector(`[data-focus-key="${focusKey}"]`)?.focus({preventScroll:true});
   }
   function section(title,...children) {return el('section',{class:'detail-section'},el('h3',{},title),...children);}
   function overview(container) {
@@ -88,7 +90,7 @@ export function createInspector(root,{onClose,onSave,isSaved=()=>false}={}) {
     finally{if(id===generation){citationLoading=false;render();}}
   }
   function cite(container) {
-    const select=el('select',{id:'citationStyle',onchange:e=>{style=e.target.value;loadCitation();}});
+    const select=el('select',{id:'citationStyle','data-focus-key':'citation-style',onchange:e=>{style=e.target.value;loadCitation();}});
     for(const [value,label]of [['apa','APA'],['mla','MLA'],['chicago','Chicago author-date']])select.append(el('option',{value,selected:value===style},label));
     const block=section('Formatted citation',el('div',{class:'citation-controls'},el('label',{for:'citationStyle'},'Style'),select));
     if(citationLoading)block.append(el('p',{role:'status'},'Retrieving a formatted citation from Crossref…'));

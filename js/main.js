@@ -10,7 +10,12 @@ let storage;try{storage=localStorage;}catch{}
 const saved=readCollection(storage);
 const state={view:'explore',collection:saved.records,storageWarning:saved.warning,collectionQuery:'',query:readQuery(location.search),items:[],total:0,nextCursor:null,selected:null,loading:false,retrievedAt:'',cached:false,error:'',requestId:0,controller:null,doiLookup:false};
 
-function updateURL() { history.replaceState(null,'',`${location.pathname}?${queryString(state.query)}${location.hash}`); }
+let initialized=false;
+function updateURL() {
+  const next=`${location.pathname}?${queryString(state.query)}${location.hash}`;
+  if(next!==`${location.pathname}${location.search}${location.hash}`)history[initialized?'pushState':'replaceState'](null,'',next);
+  initialized=true;
+}
 function syncControls() {
   $('searchInput').value=state.query.q;$('periodSelect').value=state.query.period;
   $('yearFrom').value=state.query.from;$('yearTo').value=state.query.to;$('typeFilter').value=state.query.type;
@@ -29,6 +34,7 @@ function visibleWorks() {
   return [...state.collection.values()].map(x=>x.work).filter(work=>!query||[work.title,authorLine(work,100),work.abstract,work.container].join(' ').toLowerCase().includes(query));
 }
 function toggleSave(work) {
+  const focusedRecord=document.activeElement?.closest('.result-row')?.dataset.record;
   const removing=state.collection.has(work.id);
   if(!removing&&state.collection.size>=MAX_SAVED){notify(`Your collection supports ${MAX_SAVED} publications. Export a copy and remove some before adding more.`);return;}
   if(removing)state.collection.delete(work.id);else state.collection.set(work.id,{work,savedAt:new Date().toISOString()});
@@ -36,8 +42,11 @@ function toggleSave(work) {
   if(!persisted)state.storageWarning='Browser storage is unavailable. Your collection is kept for this visit only. Export it to keep a copy.';
   notify(persisted?(removing?'Publication removed from your collection.':'Publication saved to your collection.'):'Changed for this visit. Export your collection to keep a copy.');
   renderList();renderStatus();inspector.refresh();
+  if(focusedRecord)$('resultList').querySelector(`[data-record="${CSS.escape(focusedRecord)}"] .save-button`)?.focus({preventScroll:true});
 }
 function setView(view) {
+  if(view!=='collection')exportController?.abort();
+  $('research').classList.toggle('collection-view',view==='collection');
   state.view=view;$('research').classList.remove('mobile-detail-open');
   $('collectionNav').setAttribute('aria-pressed',String(view==='collection'));$('exploreNav').setAttribute('aria-pressed',String(view==='explore'));
   $('refinements').hidden=view==='collection';$('chronology').hidden=view==='collection';
@@ -65,7 +74,7 @@ function renderCollectionTools() {
     } catch(error){status.textContent=exportController.signal.aborted?'Export cancelled. Your collection is unchanged.':error.message;}
     finally{exportController=null;button.disabled=false;formats.disabled=false;cancel.hidden=true;}
   }},icon('download'),'Export collection');
-  const file=el('input',{type:'file',accept:'.json,application/json',class:'sr-only',id:'importCollection',onchange:async e=>{
+  const file=el('input',{type:'file',accept:'.json,application/json',hidden:true,id:'importCollection',onchange:async e=>{
     const selected=e.target.files?.[0];if(!selected)return;
     try {
       if(selected.size>10*1024*1024)throw new Error('Choose a collection file smaller than 10 MB.');
@@ -84,10 +93,11 @@ function closeInspector() {
 }
 function selectWork(work) {
   state.selected=work.id;renderList();renderInspector(work);
+  $('inspector').scrollTop=0;$('inspector').focus({preventScroll:true});
   if (matchMedia('(max-width:999px)').matches) {$('research').classList.add('mobile-detail-open');$('inspector').focus();$('research').scrollIntoView({block:'start'});}
 }
 function renderList() {
-  const list=$('resultList');list.setAttribute('aria-busy',String(state.loading));
+  const list=$('resultList');list.setAttribute('aria-busy',String(state.view==='explore'&&state.loading));
   if (state.view==='explore' && state.loading && !state.items.length) {list.replaceChildren(...skeletons());return;}
   if (!visibleWorks().length) {if(state.view==='collection'){const empty=emptyState(state.collection.size?'No saved publications match.':'Your next bibliography starts here.',state.collection.size?'Try another title, author, or keyword.':'Save useful publications from Explore. They will stay here when you return.','library-big');empty.append(el('button',{class:'button',onclick:()=>setView('explore')},'Explore publications'));list.replaceChildren(el('li',{},empty));return;}list.replaceChildren(el('li',{},emptyState(state.error?'Search is unavailable':'No publications found.',state.error?'Your search is still here. Retry when you are ready.':'Try a broader topic, another spelling, or fewer filters. Crossref may not contain the scholarship you need.')));return;}
   list.replaceChildren(...visibleWorks().map(work=>{
