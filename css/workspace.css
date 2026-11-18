@@ -132,6 +132,11 @@ h1 { font-size:2.25rem; letter-spacing:-.055em; font-weight:600; }
 .orcid-link { display:inline-flex; gap:4px; align-items:center; }
 .orcid-id { background:var(--color-success); color:var(--color-surface); border-radius:50%; width:18px; height:18px; font-size:10px; font-weight:600; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; }
 .detail-meta { color:var(--color-muted); font-size:var(--text-label); margin-top:var(--space-sm); }
+.publication-cover { display:flex; gap:var(--space-base); align-items:center; margin:var(--space-lg) 0 0; }
+.publication-cover img { width:84px; height:120px; object-fit:contain; object-position:left center; }
+.publication-cover figcaption { display:grid; gap:4px; font-size:var(--text-caption); color:var(--color-muted); }
+.publication-cover figcaption>span { color:var(--color-secondary); font-weight:550; }
+.publication-cover small { font-size:inherit; }
 .detail-section { margin-top:var(--space-lg); padding-top:var(--space-lg); border-top:1px solid var(--color-line); }
 .detail-section h3 { font-size:var(--text-body); font-weight:600; margin-bottom:var(--space-md); }
 .detail-section p { font-size:var(--text-label); color:var(--color-secondary); max-width:65ch; overflow-wrap:anywhere; }

@@ -1,13 +1,14 @@
 import {authorLine,doiURL,normalizeDOI,plainText,safeURL} from './data.js';
 import {getWork,getCitation} from './crossref.js';
 import {el,icon,externalLink,emptyState,notify} from './dom.js';
+import {createCover} from './covers.js';
 
 export function createInspector(root,{onClose,onSave,isSaved=()=>false}={}) {
   let work=null,tab='overview',style='apa',generation=0,citation='',citationError='',citationLoading=false;
   let trail=[],referenceLimit=20,followError='',following=false;
 
   function show(next,{fromReference=false}={}) {
-    generation++;work=next;tab='overview';referenceLimit=20;citation='';citationError='';followError='';following=false;
+    generation++;work=next;tab='overview';referenceLimit=20;citation='';citationError='';citationLoading=false;followError='';following=false;
     if (!fromReference) trail=[];
     render();
   }
@@ -36,6 +37,7 @@ export function createInspector(root,{onClose,onSave,isSaved=()=>false}={}) {
   }
   function section(title,...children) {return el('section',{class:'detail-section'},el('h3',{},title),...children);}
   function overview(container) {
+    const cover=createCover(work);if(cover)container.append(cover);
     container.append(section('Abstract',el('p',{class:'abstract-text'},work.abstract||'No abstract was deposited for this record. Open the publication for more information.')));
     const fields=[['DOI',externalLink(work.doi,doiURL(work.doi))],['Type',work.typeLabel],['Published',work.year||'Date not supplied'],['Publisher',work.publisher||'Not supplied']];
     if(work.volume)fields.push(['Volume',work.volume]);if(work.issue)fields.push(['Issue',work.issue]);if(work.pages)fields.push(['Pages',work.pages]);
