@@ -1,5 +1,6 @@
 import {PERIODS,TYPES,readQuery,queryString,authorLine,doiURL} from './data.js';
 import {searchWorks} from './crossref.js';
+import {createInspector} from './inspector.js';
 import {el,icon,externalLink,emptyState,notify,skeletons} from './dom.js';
 
 const $=id=>document.getElementById(id);
@@ -17,11 +18,8 @@ function syncControls() {
   const chips=[state.query.q && `Search: ${state.query.q}`,period?.name,state.query.type && TYPES.get(state.query.type),state.query.from && `From ${state.query.from}`,state.query.to && `To ${state.query.to}`,state.query.abstract && 'Has abstract',state.query.orcid && 'Has ORCID',state.query.references && 'Has references'].filter(Boolean);
   $('activeQuery').replaceChildren(...chips.map(text=>el('span',{class:'query-chip'},text)));
 }
-function renderInspector(work) {
-  const top=el('div',{class:'inspector-top'},el('span',{class:'inspector-kicker'},'Publication details'),el('button',{class:'inspector-close','aria-label':'Back to publications',onclick:closeInspector},icon('x')));
-  if (!work) {$('inspector').replaceChildren(top,emptyState('A closer look.','Choose a publication to read its abstract, inspect the source metadata, and follow the research.','book-open'));return;}
-  $('inspector').replaceChildren(top,el('h2',{class:'detail-title'},work.title),el('p',{class:'detail-meta'},authorLine(work,50)),el('p',{class:'detail-meta'},[work.year,work.typeLabel,work.container].filter(Boolean).join(' · ')),el('section',{class:'detail-section'},el('h3',{},'Abstract'),el('p',{},work.abstract||'No abstract was deposited for this record. Open the publication to investigate further.')),el('section',{class:'detail-section'},el('h3',{},'Source DOI'),externalLink(work.doi,doiURL(work.doi))),el('div',{class:'detail-actions'},externalLink('Open publication',doiURL(work.doi),{class:'button'})),el('p',{class:'detail-provenance'},'Member-deposited metadata, retrieved via Crossref.'));
-}
+const inspector=createInspector($('inspector'),{onClose:closeInspector});
+function renderInspector(work) { inspector.show(work); }
 function closeInspector() {
   $('research').classList.remove('mobile-detail-open');
   $('resultList').querySelector(`[data-record="${CSS.escape(state.selected || '')}"] .result-open`)?.focus();

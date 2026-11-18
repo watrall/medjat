@@ -88,8 +88,8 @@ export async function getCitation(doi, style='apa', options={}) {
   const normalized = normalizeDOI(doi);
   const styles = {apa:'apa',mla:'modern-language-association',chicago:'chicago-author-date'};
   if (!normalized || !styles[style]) throw new Error('Choose a supported citation style.');
-  const url = `${API}/works/${encodeURIComponent(normalized)}/transform/text/x-bibliography?style=${styles[style]}&locale=en-US&mailto=${encodeURIComponent(CONTACT)}`;
-  const result = await request(url,{...options,format:'text',headers:{Accept:'text/x-bibliography'}});
+  const url = `${API}/works/${encodeURIComponent(normalized)}/transform?mailto=${encodeURIComponent(CONTACT)}`;
+  const result = await request(url,{...options,format:'text',headers:{Accept:`text/x-bibliography; style=${styles[style]}; locale=en-US`}});
   if (!result.body.trim()) throw new Error('A formatted citation was not returned. You can still export the deposited metadata.');
   return result.body.trim();
 }
