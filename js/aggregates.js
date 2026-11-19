@@ -89,7 +89,17 @@ export function typeID(label) {
       Chapter: 'book-chapter',
       'Conference Paper': 'proceedings-article',
       Entry: 'reference-entry',
+      'Posted Content': 'posted-content',
     }[label] ||
     null
   );
+}
+export function decadeRows(rows) {
+  const bins = new Map();
+  for (const [year, count] of rows) {
+    if (!/^\d{4}$/.test(year)) continue;
+    const decade = String(Math.floor(Number(year) / 10) * 10);
+    bins.set(decade, (bins.get(decade) || 0) + count);
+  }
+  return [...bins].sort(([a], [b]) => Number(a) - Number(b));
 }

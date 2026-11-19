@@ -34,6 +34,14 @@ test('Visualize summarizes the entire applied search rather than its loaded page
   await expect(page.locator('#visualize')).toContainText('500,000');
   expect(aggregates).toHaveLength(5);
   expect(aggregates.every((url) => !url.searchParams.has('cursor'))).toBe(true);
+  await page.locator('#searchInput').fill('An unfinished topic');
+  await page.getByRole('button', { name: /2024 600,000/ }).click();
+  await page.getByRole('button', { name: 'Explore these publications' }).click();
+  await expect(page).toHaveURL(/from=2024/);
+  expect(new URL(page.url()).searchParams.get('to')).toBe('2024');
+  await expect(page.locator('#searchInput')).toHaveValue('An unfinished topic');
+  await expect(page.locator('#yearFrom')).toHaveValue('2024');
+  await page.locator('#visualizeNav').click();
   await page.reload();
   await expect(page.locator('#visualizeNav')).toHaveAttribute('aria-pressed', 'true');
   await page.locator('#exploreNav').click();

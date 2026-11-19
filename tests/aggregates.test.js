@@ -1,6 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { aggregateURL, aggregateKey, aggregateSearch, facetRows } from '../js/aggregates.js';
+import {
+  aggregateURL,
+  aggregateKey,
+  aggregateSearch,
+  facetRows,
+  decadeRows,
+} from '../js/aggregates.js';
 import { readQuery } from '../js/data.js';
 test('whole-search aggregation retains membership criteria and excludes pagination and sorting', () => {
   const q = {
@@ -15,6 +21,20 @@ test('whole-search aggregation retains membership criteria and excludes paginati
   assert.match(url.searchParams.get('filter'), /has-references:true/);
   assert.match(url.searchParams.get('query.bibliographic'), /New Kingdom/);
   assert.equal(aggregateKey(q), aggregateKey({ ...q, sort: 'oldest' }));
+});
+test('publication decade groups retain every returned year without filling missing years', () => {
+  assert.deepEqual(
+    decadeRows([
+      ['1899', 2],
+      ['2020', 100],
+      ['2024', 300],
+      ['unknown', 7],
+    ]),
+    [
+      ['1890', 2],
+      ['2020', 400],
+    ],
+  );
 });
 test('aggregation uses server totals for millions of candidates, limits concurrency, and preserves partial failures', async () => {
   let active = 0,

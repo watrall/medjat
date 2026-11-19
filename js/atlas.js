@@ -15,7 +15,7 @@ export function createAtlas(root, { getWorks, onInspect }) {
     mode = 'all';
   async function show() {
     root.replaceChildren(
-      el('h2', {}, 'Ancient Egypt research atlas'),
+      el('h1', {}, 'Ancient Egypt research atlas'),
       el('p', { role: 'status' }, 'Loading the attributed place gazetteer…'),
     );
     try {
@@ -51,6 +51,7 @@ export function createAtlas(root, { getWorks, onInspect }) {
         onchange: (event) => {
           site = event.target.value;
           render();
+          root.querySelector('#atlasSite').focus();
         },
       },
       el('option', { value: '' }, 'All 25 sites'),
@@ -65,6 +66,7 @@ export function createAtlas(root, { getWorks, onInspect }) {
         onchange: (event) => {
           mode = event.target.value;
           render();
+          root.querySelector('#atlasMode').focus();
         },
       },
       ['all', 'suggested', 'confirmed', 'rejected'].map((value) =>
@@ -81,7 +83,7 @@ export function createAtlas(root, { getWorks, onInspect }) {
         (mode === 'all' ? link.status !== 'rejected' : mode === link.status),
     );
     root.replaceChildren(
-      el('h2', {}, 'Ancient Egypt research atlas'),
+      el('h1', {}, 'Ancient Egypt research atlas'),
       el(
         'p',
         { class: 'analysis-intro' },
@@ -90,7 +92,7 @@ export function createAtlas(root, { getWorks, onInspect }) {
       el(
         'p',
         {},
-        'This is a reviewed research-set map, not a geographical summary of the whole Crossref search. Name matches are suggestions: they can refer to other places or historical contexts.',
+        'This maps your saved research set, not the whole Crossref search. Name matches are suggestions: they can refer to other places or historical contexts.',
       ),
       el(
         'div',
@@ -132,14 +134,20 @@ export function createAtlas(root, { getWorks, onInspect }) {
         `${lon}°E`,
       );
     }
-    for (const place of gazetteer.sites) {
+    const activeSites = new Set(visible.map((link) => link.place.id));
+    // Draw active places last so adjacent sites cannot conceal their evidence.
+    for (const place of [...gazetteer.sites].sort(
+      (a, b) => Number(activeSites.has(a.id)) - Number(activeSites.has(b.id)),
+    )) {
       const active = visible.some((link) => link.place.id === place.id);
       const x = 50 + (place.longitude - 25) * 50,
         y = 510 - (place.latitude - 23) * 48;
       shape('circle', {
         cx: x,
         cy: y,
-        r: site === place.id ? 9 : 5,
+        r: site === place.id ? 9 : active ? 7 : 5,
+        stroke: 'var(--color-surface)',
+        'stroke-width': active ? 1.5 : 0,
         fill: active ? 'var(--color-accent)' : 'var(--color-control)',
       });
       if (site === place.id)
@@ -167,11 +175,11 @@ export function createAtlas(root, { getWorks, onInspect }) {
       ),
     );
     const list = el('ol', { class: 'review-list' });
-    for (const link of visible)
+    for (const link of visible.slice(0, 200))
       list.append(
         el(
           'li',
-          {},
+          { 'data-association': link.key },
           el('h3', {}, link.place.name),
           el('p', {}, link.work.title),
           el('blockquote', {}, link.evidence),
@@ -191,6 +199,7 @@ export function createAtlas(root, { getWorks, onInspect }) {
               'button',
               {
                 class: 'text-button',
+                'data-decision': decision,
                 onclick: () => {
                   if (
                     !reviewDecision(link.key, {
@@ -203,6 +212,13 @@ export function createAtlas(root, { getWorks, onInspect }) {
                   )
                     notify('Place review kept for this visit only. Export a backup.');
                   render();
+                  const row = [...root.querySelectorAll('[data-association]')].find(
+                    (row) => row.dataset.association === link.key,
+                  );
+                  (
+                    row?.querySelector(`[data-decision="${decision}"]`) ||
+                    root.querySelector('#atlasMode')
+                  ).focus();
                 },
               },
               decision === 'confirmed'
@@ -215,7 +231,11 @@ export function createAtlas(root, { getWorks, onInspect }) {
         ),
       );
     root.append(
-      el('h3', {}, `Publication-place evidence (${visible.length})`),
+      el(
+        'h3',
+        {},
+        `Publication-place evidence (${visible.length}${visible.length > 200 ? '; first 200 shown, narrow the place selection' : ''})`,
+      ),
       visible.length
         ? list
         : el(

@@ -1,7 +1,23 @@
-import { aggregateSearch, facetRows, typeID } from './aggregates.js';
+import { aggregateSearch, facetRows, typeID, decadeRows } from './aggregates.js';
 import { bibliographicTerms } from './crossref.js';
 import { el, icon } from './dom.js';
 import { csvCell } from './export.js';
+import { TYPES } from './data.js';
+function filterDescription(query) {
+  return (
+    [
+      (query.from || query.to) &&
+        `Publication years: ${query.from || 'any'} to ${query.to || 'any'}`,
+      query.type && `Type: ${TYPES.get(query.type) || query.type}`,
+      query.container && `Venue: ${query.container}`,
+      query.abstract && 'Abstract required',
+      query.orcid && 'Author ORCID required',
+      query.references && 'References required',
+    ]
+      .filter(Boolean)
+      .join(' · ') || 'No additional publication filters'
+  );
+}
 export function createVisualize(root, { onRefine }) {
   let controller,
     generation = 0,
@@ -13,6 +29,7 @@ export function createVisualize(root, { onRefine }) {
         'Query',
         'Historical period',
         'Filters',
+        'Retrieval started',
         'Retrieved',
         'Chart',
         'Category',
@@ -24,15 +41,24 @@ export function createVisualize(root, { onRefine }) {
         result.query.q,
         result.query.period,
         JSON.stringify(result.query),
+        result.startedAt,
         result.finishedAt,
         chart,
         label,
         value,
       ]);
+    add('query total', 'Crossref candidates', result.total ?? 'Unavailable');
     for (const [key, facet] of Object.entries(result.facets))
       for (const [label, count] of facetRows(facet)) add(key, label, count);
     for (const [label, count] of Object.entries(result.availability))
       add('metadata availability', label, count);
+    for (const [name, error] of Object.entries(result.errors))
+      add('unavailable summary', name, error);
+    add(
+      'interpretation',
+      'Scope',
+      'Whole applied Crossref query; approximate facets; missing buckets are not zero; keyword candidates are not a verified subject corpus.',
+    );
     const url = URL.createObjectURL(
       new Blob([rows.map((row) => row.map(csvCell).join(',')).join('\r\n')], {
         type: 'text/csv;charset=utf-8',
@@ -42,7 +68,7 @@ export function createVisualize(root, { onRefine }) {
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
-  function panel(title, rows, { note, refine = () => null } = {}) {
+  function panel(title, rows, { note, refine = () => null, denominator = null } = {}) {
     const section = el(
       'section',
       { class: 'chart-panel' },
@@ -53,13 +79,17 @@ export function createVisualize(root, { onRefine }) {
       section.append(el('p', {}, 'No aggregate values were supplied for this chart.'));
       return section;
     }
-    const max = Math.max(...rows.map(([, count]) => count), 1);
+    const max = Math.max(...rows.map(([, count]) => count), denominator || 1);
     const list = el('ul', { class: 'chart-bars', 'aria-label': title });
     for (const [label, count] of rows) {
       const filter = refine(label);
       const content = [
         el('span', { class: 'chart-label' }, label),
-        el('span', { class: 'chart-count' }, number(count)),
+        el(
+          'span',
+          { class: 'chart-count' },
+          `${number(count)}${denominator > 0 ? ` (${((100 * count) / denominator).toFixed(1)}%)` : ''}`,
+        ),
         el(
           'span',
           { class: 'chart-track', 'aria-hidden': 'true' },
@@ -166,6 +196,7 @@ export function createVisualize(root, { onRefine }) {
           `${result.total === null ? 'Candidate total unavailable' : `${number(result.total)} Crossref candidates`}. Whole applied search, not loaded records.`,
         ),
         el('p', {}, `Keywords: ${bibliographicTerms(query)}`),
+        el('p', { class: 'scope-note' }, filterDescription(query)),
         el(
           'p',
           { class: 'scope-note' },
@@ -190,15 +221,54 @@ export function createVisualize(root, { onRefine }) {
       );
       for (const [key, message] of Object.entries(result.errors))
         root.append(
-          el('p', { class: 'notice notice-error', role: 'status' }, `${key}: ${message}`),
+          el(
+            'p',
+            { class: 'notice notice-error', role: 'status' },
+            `${{ facets: 'Search charts', abstract: 'Abstract count', references: 'Reference count', orcid: 'ORCID count', license: 'License count' }[key] || key} unavailable. ${message === 'Failed to fetch' ? 'Crossref could not be reached. Use Refresh summaries to retry.' : message}`,
+          ),
         );
       const grid = el('div', { class: 'chart-grid' });
-      grid.append(
-        panel('Publication years', facetRows(result.facets.published, true), {
-          note: 'Modern publication dates, not historical periods. Up to 1,000 returned year buckets; missing buckets are not asserted to be zero.',
-          refine: (year) => (/^\d{4}$/.test(year) ? { from: year, to: year } : null),
-        }),
-      );
+      const years = facetRows(result.facets.published, true),
+        yearView = el('div');
+      let annual = years.length <= 40;
+      function renderYears() {
+        const chart = panel(
+          annual ? 'Publication years' : 'Publication decades',
+          annual
+            ? [...years].reverse()
+            : decadeRows(years)
+                .map(([year, count]) => [`${year}s`, count])
+                .reverse(),
+          {
+            note: 'Modern publication dates, newest first. Up to 1,000 returned year buckets; missing buckets are not asserted to be zero. Decades sum the returned approximate year counts. CSV retains individual years.',
+            refine: (label) => {
+              const year = label.replace(/s$/, '');
+              return /^\d{4}$/.test(year)
+                ? { from: year, to: annual ? year : String(Number(year) + 9) }
+                : null;
+            },
+          },
+        );
+        if (years.length > 1)
+          chart.insertBefore(
+            el(
+              'button',
+              {
+                class: 'text-button',
+                onclick: () => {
+                  annual = !annual;
+                  renderYears();
+                  yearView.querySelector('button').focus();
+                },
+              },
+              annual ? 'Group by decade' : 'View individual years',
+            ),
+            chart.querySelector('.chart-bars'),
+          );
+        yearView.replaceChildren(chart);
+      }
+      renderYears();
+      grid.append(yearView);
       grid.append(
         panel('Publication types', facetRows(result.facets['type-name']), {
           note: 'Types reported for the complete query. Select a supported category to refine Explore.',
@@ -207,8 +277,8 @@ export function createVisualize(root, { onRefine }) {
       );
       grid.append(
         panel('Leading publication venues', facetRows(result.facets['container-title']), {
-          note: 'Top ten returned venues. This is not an exhaustive distribution; records may have multiple container titles.',
-          refine: (container) => ({ container }),
+          note: 'Top ten returned venues. This is not an exhaustive distribution; records may have multiple container titles. Venues containing commas cannot be refined through the API filter.',
+          refine: (container) => (container.includes(',') ? null : { container }),
         }),
       );
       const names = {
@@ -220,15 +290,19 @@ export function createVisualize(root, { onRefine }) {
       grid.append(
         panel(
           'Metadata availability',
-          Object.entries(result.availability).map(([name, count]) => [names[name], count]),
+          Object.keys(names)
+            .filter((name) => name in result.availability)
+            .map((name) => [names[name], result.availability[name]]),
           {
-            note: 'Separate whole-query presence counts. Categories overlap and do not sum to the total. Missing metadata does not indicate poor research quality.',
+            note: 'Counts and percentages of the whole query. Categories overlap and do not sum to the total. Missing metadata does not indicate poor research quality.',
+            denominator: result.total,
           },
         ),
       );
       root.append(grid);
     } catch (error) {
       if (id !== generation || controller.signal.aborted) return;
+      root.querySelector('[role="status"]')?.remove();
       root.append(
         el('p', { class: 'notice notice-error', role: 'alert' }, error.message),
         el('button', { class: 'button', onclick: () => show(query, true) }, 'Retry summaries'),

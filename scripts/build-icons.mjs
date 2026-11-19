@@ -1,6 +1,7 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 const names = [
   'search',
+  'refresh-cw',
   'bookmark',
   'bookmark-check',
   'library-big',

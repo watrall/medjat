@@ -301,6 +301,14 @@ const visualizer = createVisualize($('visualize'), {
 });
 function setView(view, { navigate = true, syncURL = true, load = true } = {}) {
   if (navigate) cancelRestoration();
+  const skip = document.querySelector('.skip-link');
+  skip.href = `#${['visualize', 'atlas'].includes(view) ? view : 'research'}`;
+  skip.textContent =
+    view === 'atlas'
+      ? 'Skip to atlas'
+      : view === 'visualize'
+        ? 'Skip to visualizations'
+        : 'Skip to publications';
   if (view !== 'collection') {
     changeReview.cancel();
     researcher.cancel();

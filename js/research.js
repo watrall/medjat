@@ -268,6 +268,11 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
       'details',
       {},
       el('summary', {}, 'View citation network (up to 150 nodes and 500 edges)'),
+      el(
+        'p',
+        { class: 'scope-note' },
+        'Solid lines are deposited DOI citations; dashed lines are researcher-confirmed matches. Connection lists below retain source provenance.',
+      ),
       network(data),
     );
     root.append(graph);
