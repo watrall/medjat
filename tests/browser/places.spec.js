@@ -366,3 +366,44 @@ test('search and review updates preserve keyboard position without stealing back
   await page.getByRole('button', { name: 'Undo removal', exact: true }).click();
   expect(await page.evaluate(() => document.activeElement.tagName)).not.toBe('BODY');
 });
+test('mobile Places compacts geography, retains expansion choice and brings publications forward', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route('https://tile.openstreetmap.org/**', (r) =>
+    r.fulfill({
+      status: 200,
+      contentType: 'image/png',
+      body: Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=',
+        'base64',
+      ),
+    }),
+  );
+  await page.route('https://api.crossref.org/**', (r) =>
+    r.fulfill({ json: { message: { items: [source], 'total-results': 1 } } }),
+  );
+  await page.goto('/?view=places&place=756512');
+  await expect(page.locator('.place-results-status')).toBeVisible();
+  expect((await page.locator('#placeMap').boundingBox()).height).toBe(160);
+  const firstY = await page
+    .locator('.place-publication')
+    .first()
+    .evaluate((el) => el.getBoundingClientRect().top + window.scrollY);
+  expect(firstY).toBeLessThan(1266);
+  await page.screenshot({ path: test.info().outputPath('places-mobile.png'), fullPage: true });
+  await page.getByRole('button', { name: 'Expand map', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Compact map', exact: true })).toHaveAttribute(
+    'aria-expanded',
+    'true',
+  );
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Compact map', exact: true })).toHaveAttribute(
+    'aria-expanded',
+    'true',
+  );
+  expect((await page.locator('#placeMap').boundingBox()).height).toBe(352);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
+});

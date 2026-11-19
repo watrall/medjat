@@ -1919,3 +1919,81 @@ p {
 .place-assignment-preview > p:first-child {
   font-weight: 650;
 }
+
+.places-map-toggle {
+  display: none;
+}
+.place-origin > summary {
+  min-block-size: 44px;
+  padding-block: var(--space-sm);
+  cursor: pointer;
+  font-weight: 650;
+}
+.place-undo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm) var(--space-base);
+  padding-block: var(--space-sm);
+  margin-block: var(--space-base);
+  border-block: 1px solid var(--color-line);
+}
+.place-undo p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.place-undo .text-button {
+  flex-shrink: 0;
+}
+@media (max-width: 899px) {
+  .places-heading {
+    margin-block-end: var(--space-base);
+    gap: var(--space-xs);
+  }
+  .places-heading h1 {
+    margin-block: 0 var(--space-xs);
+  }
+  .places-heading p {
+    margin: 0;
+  }
+  .places-modes {
+    margin-block-end: var(--space-base);
+    gap: var(--space-base);
+  }
+  .places-layout {
+    gap: var(--space-lg);
+  }
+  .places-map-tools {
+    gap: var(--space-xs) var(--space-sm);
+    margin-block-end: var(--space-sm);
+  }
+  .places-map-tools label {
+    flex-basis: 100%;
+  }
+  .places-map-toggle {
+    display: inline-flex;
+    min-block-size: 44px;
+    align-items: center;
+  }
+  #places[data-map-expanded='false'] .places-map {
+    height: 10rem;
+  }
+  .places-geography > .scope-note {
+    margin-block: var(--space-xs);
+    font-size: var(--text-caption);
+  }
+  .place-search-form {
+    padding-block: var(--space-base);
+    gap: var(--space-sm);
+  }
+  .place-origin {
+    padding-block: var(--space-xs);
+    margin-block: var(--space-sm);
+  }
+}
+.place-search-refinements > summary {
+  min-block-size: 44px;
+  padding-block: var(--space-sm);
+  cursor: pointer;
+  font-weight: 650;
+}

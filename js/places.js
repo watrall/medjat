@@ -39,7 +39,8 @@ export function createPlaces(
     origin = null;
   let searchDraft = { term: '', topic: '' };
   let evidenceStatus = 'all',
-    reading = null;
+    reading = null,
+    mapExpanded = null;
   const place = () => gazetteer?.sites.find((site) => site.id === selected);
   function cancel() {
     if (active) reading = capture();
@@ -58,6 +59,7 @@ export function createPlaces(
       collection: panels?.collection.capture(),
       ...location(),
       searchDraft,
+      mapExpanded,
       inspector: panels?.detail.hidden === false ? panels.inspector.capture() : null,
       scrollY: window.scrollY,
     };
@@ -85,6 +87,7 @@ export function createPlaces(
       ...(options.term !== undefined ? { term, topic } : {}),
     };
     reading = options.session || (Object.keys(options).length ? null : reading);
+    if (reading?.mapExpanded !== undefined) mapExpanded = reading.mapExpanded;
     origin = options.origin === undefined ? origin : options.origin;
     try {
       gazetteer ||= await loadGazetteer();
@@ -172,6 +175,15 @@ export function createPlaces(
         'Map of ancient places in Egypt. Use arrow keys to pan, plus and minus to zoom, or the place selector.',
     });
     const mapNotice = el('p', { class: 'notice', role: 'status', hidden: true });
+    const mapToggle = el('button', {
+      class: 'text-button places-map-toggle',
+      'aria-controls': 'placeMap',
+      onclick: () => {
+        mapExpanded = !(mapExpanded ?? !selected);
+        syncMapPresentation();
+        onSession();
+      },
+    });
     const publications = el('section', {
       id: 'placePublications',
       tabindex: '-1',
@@ -233,6 +245,7 @@ export function createPlaces(
       selector,
       map: mapRoot,
       mapNotice,
+      mapToggle,
       publications,
       detail,
       inspector,
@@ -242,22 +255,10 @@ export function createPlaces(
       el(
         'div',
         { class: 'places-heading' },
-        el(
-          'div',
-          {},
-          el('p', { class: 'eyebrow' }, 'PLEIADES × CROSSREF'),
-          el('h1', {}, 'Places'),
-          el(
-            'p',
-            {},
-            'Discover scholarship through ancient places. Build a bibliography with geographic context.',
-          ),
-        ),
-        externalLink(
-          ['Ancient places from Pleiades', icon('external-link')],
-          'https://pleiades.stoa.org/',
-          { class: 'text-button' },
-        ),
+        el('div', {}, el('h1', {}, 'Places'), el('p', {}, 'Explore scholarship by ancient place.')),
+        externalLink(['Pleiades gazetteer', icon('external-link')], 'https://pleiades.stoa.org/', {
+          class: 'text-button',
+        }),
       ),
       el(
         'div',
@@ -289,6 +290,7 @@ export function createPlaces(
             'div',
             { class: 'places-map-tools' },
             el('label', { for: 'placeSelect' }, 'Ancient place', selector),
+            mapToggle,
             el(
               'button',
               { class: 'button', onclick: () => map?.overview() },
@@ -312,11 +314,7 @@ export function createPlaces(
           ),
           mapNotice,
           mapRoot,
-          el(
-            'p',
-            { class: 'scope-note' },
-            'Numbers group nearby places, not publications. Fit map changes the view only. Select a place to change the publication scope.',
-          ),
+          el('p', { class: 'scope-note' }, 'Numbers group nearby places, not publications.'),
           el(
             'details',
             { class: 'places-source' },
@@ -324,7 +322,7 @@ export function createPlaces(
             el(
               'p',
               {},
-              'This starting index is a curated selection, not a complete gazetteer of ancient Egypt. Representative points do not describe site boundaries. Place names and locations come from Pleiades; publication metadata comes from Crossref.',
+              'Fit map changes the camera only. Select a place to change publication scope. This curated index does not cover all ancient Egypt; points are not site boundaries. Place names and locations come from Pleiades; publication metadata comes from Crossref.',
             ),
             el(
               'p',
@@ -348,6 +346,17 @@ export function createPlaces(
       );
     renderPublications();
     syncUndo();
+    syncMapPresentation();
+  }
+  function syncMapPresentation() {
+    const expanded = mapExpanded ?? !selected;
+    root.dataset.mapExpanded = String(expanded);
+    panels.mapToggle.setAttribute('aria-expanded', String(expanded));
+    panels.mapToggle.replaceChildren(
+      icon(expanded ? 'minus' : 'expand'),
+      expanded ? 'Compact map' : 'Expand map',
+    );
+    map?.resize();
   }
   function syncUndo() {
     const entry = getRemoved();
@@ -364,6 +373,7 @@ export function createPlaces(
                   event.currentTarget.disabled = true;
                   try {
                     await onUndo();
+                    panels.publications.querySelector('h2')?.focus({ preventScroll: true });
                   } finally {
                     syncUndo();
                   }
@@ -405,6 +415,7 @@ export function createPlaces(
     term = place()?.name || '';
     searchDraft = { term, topic: '' };
     panels.selector.value = selected;
+    syncMapPresentation();
     panels.detail.hidden = true;
     panels.publications.hidden = false;
     map?.select(selected, { focus: true });
@@ -543,12 +554,24 @@ export function createPlaces(
     const aliases = [...new Set([current.name, ...current.aliases])].filter(
       (name) => name.length >= 4 && name.length <= 60,
     );
+    const refinementOpen =
+      root.querySelector('.place-search-refinements')?.open ??
+      !matchMedia('(max-width:899px)').matches;
+    const refinementSummary = el('summary');
+    function draftStatus() {
+      const pending =
+        (searchDraft.term || term || current.name) !== (term || current.name) ||
+        searchDraft.topic.trim() !== topic;
+      refinementSummary.textContent = `Refine place search${pending ? ' · unapplied changes' : ''}`;
+    }
+    draftStatus();
     const name = el(
       'select',
       {
         id: 'placeSearchName',
         onchange: (event) => {
           searchDraft.term = event.target.value;
+          draftStatus();
           onSession();
         },
       },
@@ -566,12 +589,12 @@ export function createPlaces(
       value: searchDraft.topic,
       oninput: (event) => {
         searchDraft.topic = event.target.value;
+        draftStatus();
         onSession();
       },
       placeholder: 'e.g. burial, ceramics, settlement',
     });
     root.replaceChildren(
-      el('p', { class: 'eyebrow' }, 'DISCOVER IN CROSSREF'),
       el('h2', { tabindex: '-1' }, current.name),
       el(
         'p',
@@ -580,41 +603,56 @@ export function createPlaces(
         ` · ${current.latitude.toFixed(3)}°N, ${current.longitude.toFixed(3)}°E`,
       ),
       el(
-        'form',
-        {
-          class: 'place-search-form',
-          onsubmit: (event) => {
-            event.preventDefault();
-            term = name.value;
-            topic = topicInput.value.trim();
-            works = [];
-            next = null;
-            onLocation(location());
-            search();
-          },
-        },
-        el('label', { for: 'placeSearchName' }, 'Search name', name),
-        el('label', { for: 'placeTopic' }, 'Topic (optional)', topicInput),
+        'details',
+        { class: 'place-search-refinements', open: refinementOpen },
+        refinementSummary,
         el(
-          'button',
-          { class: 'button button-primary', type: 'submit', disabled: loading },
-          icon('search'),
-          'Search Crossref',
+          'form',
+          {
+            class: 'place-search-form',
+            onsubmit: (event) => {
+              event.preventDefault();
+              term = name.value;
+              topic = topicInput.value.trim();
+              works = [];
+              next = null;
+              onLocation(location());
+              search();
+            },
+          },
+          el('label', { for: 'placeSearchName' }, 'Search name', name),
+          el('label', { for: 'placeTopic' }, 'Topic (optional)', topicInput),
+          el(
+            'button',
+            { class: 'button button-primary', type: 'submit', disabled: loading },
+            icon('search'),
+            'Search Crossref',
+          ),
         ),
       ),
       el(
         'p',
         { class: 'scope-note' },
-        `Applied search: ${term || current.name} · ${topic || 'Any topic'}. Candidates require review; a name mention is not a verified subject classification.`,
+        `Applied search: ${term || current.name} · ${topic || 'Any topic'}`,
+      ),
+      el(
+        'details',
+        { class: 'places-source' },
+        el('summary', {}, 'How place discovery works'),
+        el(
+          'p',
+          {},
+          'Crossref keyword searches return ranked candidates, not an exhaustive bibliography. A name mention in a title or supplied abstract is a suggestion to review, not a verified geographic subject. Search names come from reviewed Pleiades variants and can refer to different periods or locations.',
+        ),
       ),
     );
     if (origin) {
       const evidence = placeEvidence(origin.work, current);
       root.insertBefore(
         el(
-          'section',
+          'details',
           { class: 'place-origin' },
-          el('p', { class: 'eyebrow' }, 'FROM YOUR PUBLICATION'),
+          el('summary', {}, 'From your publication'),
           el(
             'button',
             { class: 'place-publication-title', onclick: () => inspect(origin.work) },
@@ -629,7 +667,7 @@ export function createPlaces(
           ),
           evidence && el('blockquote', {}, evidence.text),
         ),
-        root.querySelector('form'),
+        root.querySelector('.place-search-refinements'),
       );
     }
     if (loading)

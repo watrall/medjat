@@ -216,7 +216,6 @@ export function createPlaceCollection(
       ].map(([value, label]) => el('option', { value, selected: value === status }, label)),
     );
     root.replaceChildren(
-      el('p', { class: 'eyebrow' }, 'YOUR CROSSREF COLLECTION'),
       el(
         'h2',
         { tabindex: '-1' },
@@ -228,11 +227,6 @@ export function createPlaceCollection(
         `${getSaved().size} saved ${noun(getSaved().size)} · ${snapshot.mapped} with place associations · ${snapshot.unassigned.length} with no place assigned · ${snapshot.notSpecific.length} marked not place-specific`,
       ),
       el(
-        'p',
-        { class: 'scope-note' },
-        'Associations describe your saved bibliography, not the distribution of all scholarship. Publications may concern several places. Suggestions require your judgment.',
-      ),
-      el(
         'label',
         { class: 'place-status-control', for: 'placeAssociationStatus' },
         'Association evidence',
@@ -241,9 +235,14 @@ export function createPlaceCollection(
     );
     root.append(
       el(
-        'p',
-        { id: 'placeScopeHelp', class: 'scope-note' },
-        'Not place-specific hides all associations for a work without deleting your reviews. Reset classification restores them.',
+        'details',
+        { class: 'places-source' },
+        el('summary', {}, 'Evidence and classification'),
+        el(
+          'p',
+          { id: 'placeScopeHelp' },
+          'Associations describe your saved bibliography, not all scholarship. Suggestions need your review; a work can concern several places. Not place-specific hides its associations without deleting your reviews. Reset classification restores them.',
+        ),
       ),
     );
     if (scopeUndo)
@@ -404,8 +403,8 @@ export function createPlaceCollection(
           'p',
           {},
           getSaved().size
-            ? 'No saved publications match these place and evidence controls. Assign a place below or switch to Discover in Crossref.'
-            : 'Save publications from Explore or Discover in Crossref to build a place-based bibliography.',
+            ? 'No saved publications match this scope. Choose All places, change the evidence filter, or assign a publication below.'
+            : 'This browser has no saved publications. Save works from Explore or Discover in Crossref, or import a backup in Collection.',
         ),
       );
     const savedWorks = [...getSaved().values()].map(({ work }) => work);
