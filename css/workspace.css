@@ -970,7 +970,7 @@ h1 {
   height: 18px;
   accent-color: var(--color-accent);
 }
-.result-top h3 {
+.result-top :is(h2, h3) {
   flex: 1;
 }
 .collection-toolbar select {

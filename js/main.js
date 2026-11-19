@@ -403,7 +403,7 @@ function renderList() {
                 },
               }),
             ),
-          el('h3', {}, title),
+          el(state.view === 'collection' ? 'h2' : 'h3', {}, title),
           el(
             'button',
             {

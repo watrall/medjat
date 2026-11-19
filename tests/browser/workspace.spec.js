@@ -327,6 +327,7 @@ test('search, inspect, save, reload, cite, and export a collection', async ({ pa
   );
   await expect(page.getByRole('button', { name: 'Cite', exact: true })).toBeFocused();
   await page.getByRole('button', { name: 'Collection 1', exact: true }).click();
+  await expect(page.locator('.result-top h2')).toHaveCount(1);
   const rowWidth = await page
     .locator('.result-row')
     .first()
