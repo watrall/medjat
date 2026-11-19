@@ -13,6 +13,7 @@ export function createInspector(
     onChange = () => {},
     onNavigate = () => {},
     isSaved = () => false,
+    savedLabel = 'Saved to collection',
   } = {},
 ) {
   let work = null,
@@ -90,7 +91,7 @@ export function createInspector(
         onclick: () => onSave?.(savedWork),
       },
       icon(isSaved(savedWork.id) ? 'bookmark-check' : 'bookmark'),
-      isSaved(savedWork.id) ? 'Saved to collection' : 'Save to collection',
+      isSaved(savedWork.id) ? savedLabel : 'Save to collection',
     );
   }
   function render() {

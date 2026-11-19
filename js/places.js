@@ -8,7 +8,14 @@ import { el, icon, externalLink, skeletons } from './dom.js';
 
 export function createPlaces(
   root,
-  { getSaved, onSave, onLocation = () => {}, onSession = () => {} },
+  {
+    getSaved,
+    onSave,
+    onLocation = () => {},
+    onSession = () => {},
+    getRemoved = () => null,
+    onUndo = async () => {},
+  },
 ) {
   let gazetteer,
     map,
@@ -179,6 +186,7 @@ export function createPlaces(
     const resultPane = el('div', { class: 'places-results' }, publications, detail);
     const inspector = createInspector(detail, {
       onChange: onSession,
+      savedLabel: 'Remove from collection',
       onPlace: (site, work) =>
         show({ place: site.id, origin: { work, return: () => inspect(work) } }),
       onClose: () => {
@@ -190,6 +198,7 @@ export function createPlaces(
       onSave: async (work) => {
         await onSave(work);
         inspector.refresh();
+        syncUndo();
       },
       isSaved: (id) => getSaved().has(id),
     });
@@ -197,6 +206,10 @@ export function createPlaces(
       sites: gazetteer.sites,
       getSaved,
       onInspect: inspect,
+      onRemove: async (work) => {
+        await onSave(work);
+        syncUndo();
+      },
       onChoose: choose,
       onRefresh: () => map?.refresh(),
       initialDraft: reading?.collection,
@@ -207,7 +220,17 @@ export function createPlaces(
         onLocation(location());
       },
     });
-    panels = { selector, map: mapRoot, mapNotice, publications, detail, inspector, collection };
+    const undo = el('div', { class: 'place-undo', hidden: true });
+    panels = {
+      undo,
+      selector,
+      map: mapRoot,
+      mapNotice,
+      publications,
+      detail,
+      inspector,
+      collection,
+    };
     root.replaceChildren(
       el(
         'div',
@@ -248,6 +271,7 @@ export function createPlaces(
           ),
         ),
       ),
+      undo,
       el(
         'div',
         { class: 'places-layout' },
@@ -316,6 +340,33 @@ export function createPlaces(
         ),
       );
     renderPublications();
+    syncUndo();
+  }
+  function syncUndo() {
+    const entry = getRemoved();
+    panels.undo.hidden = !entry;
+    panels.undo.replaceChildren(
+      ...(entry
+        ? [
+            el('p', { role: 'status' }, `Removed “${entry.work.title}”.`),
+            el(
+              'button',
+              {
+                class: 'text-button',
+                onclick: async (event) => {
+                  event.currentTarget.disabled = true;
+                  try {
+                    await onUndo();
+                  } finally {
+                    syncUndo();
+                  }
+                },
+              },
+              'Undo removal',
+            ),
+          ]
+        : []),
+    );
   }
   function switchMode(value) {
     controller?.abort();
@@ -404,16 +455,17 @@ export function createPlaces(
           try {
             await onSave(work);
             save.textContent = getSaved().has(work.id)
-              ? 'Saved to collection'
+              ? 'Remove from collection'
               : 'Save to collection';
             save.setAttribute('aria-pressed', String(getSaved().has(work.id)));
           } finally {
             save.disabled = false;
+            syncUndo();
           }
         },
       },
       icon(getSaved().has(work.id) ? 'bookmark-check' : 'bookmark'),
-      getSaved().has(work.id) ? 'Saved to collection' : 'Save to collection',
+      getSaved().has(work.id) ? 'Remove from collection' : 'Save to collection',
     );
     return el(
       'li',
@@ -637,6 +689,7 @@ export function createPlaces(
       if (active) {
         renderPublications();
         panels.inspector.refresh();
+        syncUndo();
       }
     },
   };

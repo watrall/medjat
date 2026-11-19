@@ -88,7 +88,10 @@ test('place bibliographies export their exact saved scope and retain manual rese
   await expect(page.locator('#placeSelect')).toHaveValue('786017');
   await expect(page.locator('.place-association')).toContainText('assigned manually');
   await page.getByText('No place assigned (1)', { exact: true }).click();
-  await page.getByRole('button', { name: 'Not place-specific', exact: true }).click();
+  await page
+    .locator('.place-review-works')
+    .getByRole('button', { name: 'Not place-specific', exact: true })
+    .click();
   await expect(page.locator('.place-collection-coverage')).toContainText(
     '0 with no place assigned · 1 marked not place-specific',
   );
@@ -274,4 +277,28 @@ test('assignment identifies duplicate titles, searches without changing selectio
   await page.reload();
   await expect(page.locator('#assignPlaceSearch')).toHaveValue('Ahmed');
   await expect(page.locator('#assignPlaceWork')).toHaveValue('10.1234/intro-b');
+});
+test('Places reverses classification and removal without losing association reviews', async ({
+  page,
+}) => {
+  await page.route('https://tile.openstreetmap.org/**', (r) => r.abort());
+  await page.route('https://api.crossref.org/**', (r) =>
+    r.fulfill({ json: { message: { items: [source], 'total-results': 1 } } }),
+  );
+  await page.goto('/');
+  await page.locator('.save-button').click();
+  await page.locator('#placesNav').click();
+  await page.getByRole('button', { name: 'Your collection', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm association', exact: true }).click();
+  await page.getByRole('button', { name: 'Not place-specific', exact: true }).click();
+  await expect(page.locator('.place-collection-coverage')).toContainText(
+    '1 marked not place-specific',
+  );
+  await page.getByRole('button', { name: 'Undo classification', exact: true }).click();
+  await expect(page.locator('.place-association')).toContainText('Researcher-confirmed');
+  await page.getByRole('button', { name: 'Remove from collection', exact: true }).click();
+  await expect(page.locator('.place-undo')).toContainText('Removed');
+  await page.getByRole('button', { name: 'Undo removal', exact: true }).click();
+  await expect(page.locator('.place-association')).toContainText('Researcher-confirmed');
+  await expect(page.locator('#collectionCount')).toHaveText('1');
 });

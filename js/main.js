@@ -312,6 +312,8 @@ async function toggleSave(work) {
 const places = createPlaces($('places'), {
   getSaved: () => state.collection,
   onSave: toggleSave,
+  getRemoved: () => state.lastRemoved,
+  onUndo: restoreRemoved,
   onLocation: () => updateURL({ push: true }),
   onSession: saveSession,
 });
@@ -815,7 +817,7 @@ $('dismissUndo').addEventListener('click', () => {
   $('resultsTitle').setAttribute('tabindex', '-1');
   $('resultsTitle').focus();
 });
-$('undoRemoval').addEventListener('click', async () => {
+async function restoreRemoved() {
   const entry = state.lastRemoved;
   if (!entry || $('undoRemoval').disabled) return;
   $('undoRemoval').disabled = true;
@@ -828,6 +830,7 @@ $('undoRemoval').addEventListener('click', async () => {
     renderList();
     renderStatus();
     inspector.refresh();
+    if (state.view === 'places') places.refresh();
     $('resultList')
       .querySelector(`[data-record="${CSS.escape(entry.work.id)}"] .save-button`)
       ?.focus();
@@ -841,7 +844,8 @@ $('undoRemoval').addEventListener('click', async () => {
   } finally {
     $('undoRemoval').disabled = false;
   }
-});
+}
+$('undoRemoval').addEventListener('click', restoreRemoved);
 collectionStore.subscribe(({ records, warning }) => {
   state.collection = records;
   state.storageWarning = warning;

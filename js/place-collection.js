@@ -56,6 +56,7 @@ export function createPlaceCollection(
     sites,
     getSaved,
     onInspect,
+    onRemove,
     onChoose,
     onRefresh,
     getStatus = () => 'all',
@@ -70,6 +71,17 @@ export function createPlaceCollection(
     exportJob = null,
     exporting = false,
     exportMessage = '';
+  let scopeUndo = null;
+  function classify(work) {
+    const key = `place-scope:${work.id}`;
+    const previous = researchData()[key];
+    scopeUndo = { key, previous: previous || { decision: 'place-specific' }, work };
+    decide(key, {
+      decision: 'not-place-specific',
+      previousDecision: previous?.decision || 'place-specific',
+    });
+    refresh();
+  }
   let draft = initialDraft || {};
   function capture() {
     draft = {
@@ -219,6 +231,33 @@ export function createPlaceCollection(
         filter,
       ),
     );
+    root.append(
+      el(
+        'p',
+        { id: 'placeScopeHelp', class: 'scope-note' },
+        'Not place-specific hides all associations for a work without deleting your reviews. Reset classification restores them.',
+      ),
+    );
+    if (scopeUndo)
+      root.append(
+        el(
+          'div',
+          { class: 'place-undo' },
+          el('p', { role: 'status' }, `Marked “${scopeUndo.work.title}” not place-specific.`),
+          el(
+            'button',
+            {
+              class: 'text-button',
+              onclick: () => {
+                decide(scopeUndo.key, scopeUndo.previous);
+                scopeUndo = null;
+                refresh();
+              },
+            },
+            'Undo classification',
+          ),
+        ),
+      );
     const format = el(
       'select',
       { id: 'placeExportFormat' },
@@ -280,6 +319,33 @@ export function createPlaceCollection(
           work.title,
         ),
         publicationMetadata(work),
+      );
+      row.append(
+        el(
+          'div',
+          { class: 'place-publication-actions' },
+          el(
+            'button',
+            {
+              class: 'text-button',
+              'aria-describedby': 'placeScopeHelp',
+              onclick: () => classify(work),
+            },
+            'Not place-specific',
+          ),
+          el(
+            'button',
+            {
+              class: 'text-button',
+              onclick: async (event) => {
+                event.currentTarget.disabled = true;
+                await onRemove?.(work);
+                refresh();
+              },
+            },
+            'Remove from collection',
+          ),
+        ),
       );
       for (const link of associations)
         row.append(
@@ -478,7 +544,10 @@ export function createPlaceCollection(
                     filterAssignments();
                     target.focus();
                   } else {
-                    decide(`place-scope:${work.id}`, { decision: 'unassigned' });
+                    const prior = researchData()[`place-scope:${work.id}`];
+                    decide(`place-scope:${work.id}`, {
+                      decision: prior?.previousDecision || 'place-specific',
+                    });
                     refresh();
                   }
                 },
@@ -491,8 +560,7 @@ export function createPlaceCollection(
                 {
                   class: 'text-button',
                   onclick: () => {
-                    decide(`place-scope:${work.id}`, { decision: 'not-place-specific' });
-                    refresh();
+                    classify(work);
                   },
                 },
                 'Not place-specific',
