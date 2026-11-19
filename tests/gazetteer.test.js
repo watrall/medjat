@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { placeEvidence } from '../js/place-data.js';
 const data = JSON.parse(readFileSync(new URL('../data/sites.json', import.meta.url)));
-test('atlas bundles 25 attributed, geographically validated site records', () => {
+test('gazetteer bundles 25 attributed, geographically validated site records', () => {
   assert.equal(data.sites.length, 25);
   assert.equal(new Set(data.sites.map((site) => site.id)).size, 25);
   for (const site of data.sites) {

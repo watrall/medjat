@@ -71,8 +71,24 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
           onSelect: (id) => choose(id),
           onError: () => {
             panels.mapNotice.hidden = false;
-            panels.mapNotice.textContent =
-              'Map tiles could not be fully loaded. You can still choose a place and use the publication list.';
+            panels.mapNotice.replaceChildren(
+              el(
+                'p',
+                {},
+                'Map tiles could not be fully loaded. You can still choose a place and use the publication list.',
+              ),
+              el(
+                'button',
+                {
+                  class: 'text-button',
+                  onclick: () => {
+                    panels.mapNotice.hidden = true;
+                    map?.retryTiles();
+                  },
+                },
+                'Retry map tiles',
+              ),
+            );
           },
         });
         if (!active || current !== mountGeneration) {

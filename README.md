@@ -24,7 +24,9 @@ Crossref facet counts are approximate. Year buckets are limited to 1,000 returne
 
 For a citation without a DOI, request up to three possible Crossref matches, inspect a candidate, and explicitly confirm it. Rebuilding discovery incorporates confirmed links with separate researcher provenance. Matches can be undone. References and unresolved citations support deferred/dismissed review decisions; saving a reference adds its actual Crossref record to Collection.
 
-**Atlas** uses 25 attributed Pleiades sites to suggest associations in the titles and abstracts of saved publications. Each association includes its matched text and source record, with Confirm, Reject, and Reset actions. The coordinate plot shows representative gazetteer points, not excavation boundaries or the geographical distribution of the whole search. Unlocated publications remain visible. Ambiguous names require judgment; absence of a match does not establish that a publication has no geographical subject. At most 200 association rows are displayed at once; narrow the place/status controls for larger sets.
+**Places** connects a real interactive map to Crossref research. Choose one of 25 curated Pleiades places to search Crossref by a place name and optional topic, inspect ranked candidates, and save useful publications. Explicit title/abstract mentions are shown with their evidence; other candidates stay available in a disclosure. Place mentions in publication details link directly to Places and retain the originating publication, unfinished search, and return path.
+
+Switch to **Your collection** to inspect place associations in saved Crossref records. Confirm or reject suggestions, assign places using your reading, mark nonspatial scholarship as not place-specific, and export the exact place/evidence subset in RIS, BibTeX, CSV, or JSON. Publications may have multiple places. The interface accounts for unassigned and nonspatial records; it never claims to map the entire Crossref query.
 
 **Living bibliography**, inside Collection, checks saved DOIs against current Crossref metadata on request. Compare changed fields, inspect the current record, and accept or defer each update. Accepted changes preserve the original save time and retain previous metadata in the research backup. Concurrent changes or removals in another tab prevent stale acceptance. Update notices expose their deposited type, source, and DOI; read the notice to establish its meaning. A check finding no notices is not proof that a work has no correction or retraction.
 
@@ -69,7 +71,7 @@ Searches go directly from the browser to Crossref. Requests identify the applica
 
 The collection is stored in IndexedDB on the current browser and origin. Read/write transactions protect concurrent saves, removals, and imports; open tabs refresh through change notifications. Existing localStorage collections migrate once without deleting the original backup. The collection is not synchronized between devices or between localhost and a hosted deployment. Private browsing, clearing browser data, and storage limits can remove it. The interface reports storage failures and keeps changes in memory for the visit when persistence is unavailable; export a JSON backup to keep a portable copy. Collections support up to 500 publications.
 
-Research review decisions are stored per item in localStorage, with a session fallback when storage is unavailable. JSON version 2 backups include these decisions and remain compatible with version 1 publication-only imports. Scoped JSON exports include the scoped publications and the current decisions for the single reading list. Research backups preserve review dates; they are not an immutable audit log. Atlas reads a bundled Pleiades gazetteer without sending saved publications to another service.
+Research review decisions are stored per item in localStorage, with a session fallback when storage is unavailable. JSON version 2 backups include these decisions and remain compatible with version 1 publication-only imports. Scoped JSON exports include the scoped publications and the current decisions for the single reading list. Research backups preserve review dates; they are not an immutable audit log. Places reads a bundled Pleiades gazetteer. Place-name/topic searches are sent to Crossref. OpenStreetMap supplies map tiles and receives map-area requests, the normal browser Referer, and network information; publication records and review decisions are not sent to the tile provider. Local name matching does not send publication text to Pleiades. The map can be used through its place selector and publication list if tiles are unavailable.
 
 The current view and inspected DOI are addressable in the URL. Per-tab session storage retains unfinished query changes, collection search, and the reference reading trail, including expanded references and focus position. This is reading-position convenience, not a backup. Search results are retrieved again on refresh and may change; saved publications remain independent of those results.
 
@@ -98,7 +100,10 @@ Quicksand typography, Lucide icons, and the supplied papyrus mark define the int
 | `js/research.js`         | Reference review, manual matching, and worker coordination                         |
 | `js/research-worker.js`  | Bounded local reference computation                                                |
 | `js/research-store.js`   | Per-item review persistence and portable decisions                                 |
-| `js/atlas.js`            | Attributed place evidence and coordinate plotting                                  |
+| `js/place-data.js`       | Pleiades index, metadata mention evidence, and Crossref place queries              |
+| `js/place-map.js`        | Lazy-loaded Leaflet map, clustering, and geographic navigation                     |
+| `js/places.js`           | Linked place discovery, publication inspector, and return context                  |
+| `js/place-collection.js` | Reviewed saved-place associations and scoped bibliography export                   |
 | `js/changes.js`          | Explicit saved-metadata comparison and acceptance                                  |
 | `js/covers.js`           | ISBN validation and attributed Open Library covers                                 |
 | `js/dom.js`              | Text-safe DOM construction and shared interface helpers                            |
@@ -126,12 +131,7 @@ An optional live integration check makes a small number of real Crossref request
 npm run test:live
 ```
 
-The live check is deliberately separate from CI because service availability and deposited records can change. To capture real-data responsive previews while the app is served:
-
-```sh
-node scripts/capture-previews.mjs
-```
-
+The live check is deliberately separate from CI because service availability and deposited records can change. 
 The checked-in Lucide sprite contains only the icons used by the interface. Regenerate it after changing the icon list:
 
 ```sh
@@ -140,6 +140,6 @@ npm run build:icons
 
 ## Sources and licenses
 
-Application code: [MIT](LICENSE). Lucide icons: [ISC](assets/LUCIDE-LICENSE). The papyrus logo was supplied by the project owner. Publication metadata is retrieved from Crossref; book cover images are provided by Open Library and are not relicensed by this repository. The bundled Pleiades site data is attributed to Pleiades contributors, the Ancient World Mapping Center, and the Institute for the Study of the Ancient World under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/); each site retains its canonical source link.
+Application code: [MIT](LICENSE). Lucide icons: [ISC](assets/LUCIDE-LICENSE). Leaflet 1.9.4: [BSD-2-Clause](assets/vendor/leaflet/LICENSE), vendored for static hosting. Map tiles: [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), with visible attribution and standard browser caching. The map is modern geographic context, not a reconstruction of ancient boundaries or landscapes. The papyrus logo was supplied by the project owner. Publication metadata is retrieved from Crossref; book cover images are provided by Open Library and are not relicensed by this repository. The bundled Pleiades site data is attributed to Pleiades contributors, the Ancient World Mapping Center, and the Institute for the Study of the Ancient World under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/); each site retains its canonical source link.
 
 Service documentation: [Crossref API guidance](https://www.crossref.org/documentation/retrieve-metadata/rest-api/tips-for-using-the-crossref-rest-api/), [content negotiation](https://www.crossref.org/documentation/retrieve-metadata/content-negotiation/), and [Open Library cover service](https://openlibrary.org/dev/docs/api/covers).

@@ -3,6 +3,8 @@ const names = [
   'search',
   'map-pin',
   'expand',
+  'plus',
+  'minus',
   'refresh-cw',
   'bookmark',
   'bookmark-check',

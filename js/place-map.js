@@ -1,4 +1,5 @@
 // Loaded only when Places opens. Geographic data and tiles have separate provenance.
+import { icon } from './dom.js';
 export async function createPlaceMap(
   root,
   { sites, onSelect, onError, isVisible = () => true, getCount = () => null },
@@ -19,6 +20,9 @@ export async function createPlaceMap(
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     className: 'places-basemap',
   }).addTo(map);
+  map.attributionControl.setPrefix(false);
+  root.querySelector('.leaflet-control-zoom-in').replaceChildren(icon('plus'));
+  root.querySelector('.leaflet-control-zoom-out').replaceChildren(icon('minus'));
   let failed = false,
     destroyed = false;
   tiles.on('tileerror', () => {
@@ -31,7 +35,7 @@ export async function createPlaceMap(
     const visible = sites.filter((site) => isVisible(site.id));
     map.fitBounds(
       (visible.length ? visible : sites).map((site) => [site.latitude, site.longitude]),
-      { padding: [35, 35], animate: false },
+      { padding: [35, 35], maxZoom: 7, animate: false },
     );
   };
   overview();
@@ -130,6 +134,10 @@ export async function createPlaceMap(
     },
     overview,
     refresh: draw,
+    retryTiles() {
+      failed = false;
+      tiles.redraw();
+    },
     resize: () => map.invalidateSize(),
     destroy() {
       destroyed = true;
