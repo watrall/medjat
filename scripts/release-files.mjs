@@ -43,6 +43,7 @@ export const siteFiles = [
   'js/result-row.js',
   'js/search-status.js',
   'js/session.js',
+  'js/view-config.js',
   'js/visualize.js',
 ];
 
@@ -98,6 +99,7 @@ export const repositoryFiles = [
   'js/result-row.js',
   'js/search-status.js',
   'js/session.js',
+  'js/view-config.js',
   'js/visualize.js',
   'package-lock.json',
   'package.json',

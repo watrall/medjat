@@ -21,6 +21,7 @@ import { createCollectionStore } from './collection-store.js';
 import { createCollectionTools } from './collection-tools.js';
 import { createResultRow } from './result-row.js';
 import { renderSearchFooter, renderSearchNotice } from './search-status.js';
+import { VIEW_CONFIG } from './view-config.js';
 import { el, icon, emptyState, notify, skeletons } from './dom.js';
 
 const $ = (id) => document.getElementById(id);
@@ -353,28 +354,28 @@ const visualizer = createVisualize($('visualize'), {
 });
 function setView(view, { navigate = true, syncURL = true, load = true, placeOptions } = {}) {
   if (navigate) cancelRestoration();
+  const config = VIEW_CONFIG[view];
   const skip = document.querySelector('.skip-link');
-  skip.href = `#${['visualize', 'places'].includes(view) ? view : 'research'}`;
-  skip.textContent =
-    view === 'places'
-      ? 'Skip to places'
-      : view === 'visualize'
-        ? 'Skip to visualizations'
-        : 'Skip to publications';
+  skip.href = `#${config.skipTarget}`;
+  skip.textContent = config.skipLabel;
+  for (const [id, name] of [
+    ['exploreNav', 'explore'],
+    ['collectionNav', 'collection'],
+    ['visualizeNav', 'visualize'],
+    ['placesNav', 'places'],
+  ])
+    $(id).setAttribute('aria-pressed', String(view === name));
+  document.body.classList.toggle('is-collection', view === 'collection' || view === 'places');
+  $('places').hidden = view !== 'places';
+  $('visualize').hidden = view !== 'visualize';
+  $('research').hidden = view === 'places' || view === 'visualize';
   if (view !== 'places') places.cancel();
   if (view !== 'collection') {
     changeReview.cancel();
     researcher.cancel();
   }
-  $('places').hidden = view !== 'places';
-  $('placesNav').setAttribute('aria-pressed', String(view === 'places'));
   if (view === 'places') {
     state.view = view;
-    $('research').hidden = true;
-    $('visualize').hidden = true;
-    for (const id of ['exploreNav', 'collectionNav', 'visualizeNav'])
-      $(id).setAttribute('aria-pressed', 'false');
-    document.body.classList.add('is-collection');
     collectionTools.cancel();
     visualizer.cancel();
     renderStatus();
@@ -382,14 +383,8 @@ function setView(view, { navigate = true, syncURL = true, load = true, placeOpti
     if (syncURL) updateURL({ push: navigate });
     return;
   }
-  $('visualize').hidden = view !== 'visualize';
-  $('research').hidden = view === 'visualize';
-  $('visualizeNav').setAttribute('aria-pressed', String(view === 'visualize'));
   if (view === 'visualize') {
     state.view = view;
-    document.body.classList.remove('is-collection');
-    $('exploreNav').setAttribute('aria-pressed', 'false');
-    $('collectionNav').setAttribute('aria-pressed', 'false');
     collectionTools.cancel();
     visualizer.show({ ...(state.resultQuery || state.query) });
     if (syncURL) updateURL({ push: navigate });
@@ -398,12 +393,9 @@ function setView(view, { navigate = true, syncURL = true, load = true, placeOpti
   visualizer.cancel();
   if (view !== 'collection') collectionTools.cancel();
   $('research').classList.toggle('collection-view', view === 'collection');
-  document.body.classList.toggle('is-collection', view === 'collection');
   state.view = view;
   renderDraftStatus();
   $('research').classList.remove('mobile-detail-open');
-  $('collectionNav').setAttribute('aria-pressed', String(view === 'collection'));
-  $('exploreNav').setAttribute('aria-pressed', String(view === 'explore'));
   $('refinements').hidden = view === 'collection';
   $('sortSelect').parentElement.hidden = view === 'collection';
   $('activeQuery').hidden = view === 'collection' || !$('activeQuery').childElementCount;
