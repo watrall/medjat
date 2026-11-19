@@ -128,4 +128,5 @@ export const repositoryFiles = [
   'tests/place-data.test.js',
   'tests/references.test.js',
   'tests/research-backup.test.js',
+  'tests/research-store.test.js',
 ];
