@@ -40,21 +40,20 @@ const records = new Map([[work.id, { work, savedAt: new Date().toISOString() }]]
 report.ris = (await exportCollection(records, 'ris')).slice(0, 80);
 report.bibtex = (await exportCollection(records, 'bibtex')).slice(0, 80);
 const summary = await aggregateSearch(query, { fresh: true });
-assert.deepEqual(summary.errors, {});
-assert.ok(summary.total > first.items.length, 'Aggregates must describe more than the loaded page');
-assert.ok(Object.keys(summary.facets.published.values).length > 0);
-assert.ok(Object.keys(summary.facets['type-name'].values).length > 0);
-assert.ok(Object.keys(summary.facets['container-title'].values).length > 0);
-const container = Object.keys(summary.facets['container-title'].values).find(
-  (name) => !name.includes(','),
-);
-assert.ok(container);
+assert.ok(summary.window > 0, 'The ranked window must contain records');
+assert.ok(summary.total >= summary.window, 'Ranked matches cannot be fewer than the window');
+assert.ok(summary.types.length > 0, 'The ranked window must report publication types');
+assert.ok(summary.venues.length > 0, 'The ranked window must report venues');
+const container = summary.venues.map(([name]) => name).find((name) => !name.includes(','));
+assert.ok(container, 'The ranked window must supply a refinable venue');
 const venue = await searchWorks({ ...query, container });
 assert.ok(venue.items.length > 0);
 assert.ok(venue.items.every((item) => item.raw['container-title'].includes(container)));
-report.wholeSearch = {
+report.rankedWindow = {
   total: summary.total,
-  yearBuckets: Object.keys(summary.facets.published.values).length,
+  window: summary.window,
+  types: summary.types.length,
+  venues: summary.venues.length,
   availability: summary.availability,
   venueRefinement: container,
 };
