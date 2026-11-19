@@ -35,7 +35,19 @@ test('applied query chips retain their labels', () => {
     'Has abstract',
     'Has references',
   ]);
-  assert.deepEqual(filterChips({}), []);
+  assert.deepEqual(
+    filterChips({
+      period: '',
+      type: '',
+      container: '',
+      from: '',
+      to: '',
+      abstract: false,
+      orcid: false,
+      references: false,
+    }),
+    [],
+  );
 });
 
 test('filter descriptions retain their labels and fallback', () => {

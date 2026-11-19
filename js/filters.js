@@ -72,7 +72,7 @@ export function filterChips(query) {
     query.abstract && 'Has abstract',
     query.orcid && 'Has ORCID',
     query.references && 'Has references',
-  ].filter((label) => typeof label === 'string');
+  ].filter((label) => typeof label === 'string' && label.length > 0);
 }
 
 /** @param {Query} query @returns {string} */
