@@ -256,7 +256,7 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
         {
           class: 'text-button',
           onclick: () =>
-            downloadText(serializeCollection(getSaved()), {
+            downloadText(serializeCollection(getSaved(), researchData()), {
               type: 'application/json',
               filename: 'medjat-research-backup.json',
             }),

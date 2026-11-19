@@ -35,12 +35,12 @@ export function metadataCSV(records) {
 export async function exportCollection(
   records,
   format,
-  { signal, onProgress = () => {}, fetcher } = {},
+  { signal, onProgress = () => {}, fetcher, research = {} } = {},
 ) {
   if (!EXPORT_FORMATS[format]) throw new Error('Choose an export format.');
   if (!records.size) throw new Error('Save some publications before exporting.');
   signal?.throwIfAborted();
-  if (format === 'json') return serializeCollection(records);
+  if (format === 'json') return serializeCollection(records, research);
   if (format === 'csv') return metadataCSV(records);
   const parts = [];
   let index = 0;

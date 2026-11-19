@@ -1,5 +1,4 @@
 import { normalizeWork } from './data.js';
-import { researchData } from './research-store.js';
 const COLLECTION_KEY = 'ancient-egypt-research-collection-v1';
 export const MAX_SAVED = 500;
 export const MAX_IMPORT_BYTES = 10 * 1024 * 1024;
@@ -28,21 +27,21 @@ export function parseCollection(text) {
       savedAt: typeof item.savedAt === 'string' ? item.savedAt : new Date().toISOString(),
     });
   }
-  if (
+  const research =
     data.version === 2 &&
     data.research &&
     typeof data.research === 'object' &&
     !Array.isArray(data.research)
-  )
-    records.research = data.research;
-  return records;
+      ? data.research
+      : {};
+  return { records, research };
 }
-export function serializeCollection(records) {
+export function serializeCollection(records, research = {}) {
   return JSON.stringify(
     {
       format: 'Medjat collection',
-      version: Object.keys(researchData()).length ? 2 : 1,
-      research: researchData(),
+      version: Object.keys(research).length ? 2 : 1,
+      research,
       exportedAt: new Date().toISOString(),
       source: 'Crossref member-deposited metadata',
       records: [...records.values()].map(({ work, savedAt }) => ({ raw: work.raw, savedAt })),
@@ -54,7 +53,7 @@ export function serializeCollection(records) {
 export function readCollection(storage) {
   try {
     const text = storage.getItem(COLLECTION_KEY);
-    return { records: text ? parseCollection(text) : new Map(), warning: '' };
+    return { records: text ? parseCollection(text).records : new Map(), warning: '' };
   } catch {
     return {
       records: new Map(),

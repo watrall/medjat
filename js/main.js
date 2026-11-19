@@ -218,7 +218,7 @@ const collectionTools = createCollectionTools($('collectionTools'), {
     saveSession();
   },
   async onImport(imported) {
-    const result = await collectionStore.change({ import: imported });
+    const result = await collectionStore.change({ import: imported.records });
     state.collection = result.records;
     if (imported.research) importResearch(imported.research);
     state.storageWarning = result.warning;

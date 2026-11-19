@@ -165,6 +165,7 @@ export function createPlaceCollection(
     try {
       const text = await exportCollection(job.records, job.format, {
         signal: controller.signal,
+        research: researchData(),
         onProgress: (done, total) => {
           exportMessage = `Preparing ${done} of ${total} publications for ${label}…`;
           syncExport();

@@ -1,5 +1,6 @@
 import { el, icon } from './dom.js';
 import { MAX_IMPORT_BYTES, parseCollection } from './collection.js';
+import { researchData } from './research-store.js';
 import { EXPORT_FORMATS, exportCollection, downloadFile, scopedRecords } from './export.js';
 
 export function createCollectionTools(
@@ -205,6 +206,7 @@ export function createCollectionTools(
     try {
       const text = await exportCollection(snapshot, outputFormat, {
         signal: active.signal,
+        research: researchData(),
         onProgress: (done, total) => {
           status.textContent = `Formatted ${done} of ${total} publications…`;
         },

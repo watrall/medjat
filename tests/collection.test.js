@@ -15,8 +15,9 @@ const work = normalizeWork({
 const records = new Map([[work.id, { work, savedAt: '2026-11-18T12:00:00Z' }]]);
 test('collection export round-trips source metadata and save time', () => {
   const restored = parseCollection(serializeCollection(records));
-  assert.deepEqual(restored.get(work.id), records.get(work.id));
-  assert.equal(mergeCollections(records, restored).size, 1);
+  assert.deepEqual(restored.records.get(work.id), records.get(work.id));
+  assert.deepEqual(restored.research, {});
+  assert.equal(mergeCollections(records, restored.records).size, 1);
 });
 test('storage errors are explicit', () => {
   const storage = {
