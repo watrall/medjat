@@ -1,4 +1,5 @@
 import { normalizeWork } from './data.js';
+import { researchData } from './research-store.js';
 export const COLLECTION_KEY = 'ancient-egypt-research-collection-v1';
 export const MAX_SAVED = 500;
 export function parseCollection(text) {
@@ -10,7 +11,7 @@ export function parseCollection(text) {
   } catch {
     throw new Error('This file is not valid JSON. Choose an exported collection.');
   }
-  if (data?.version !== 1 || !Array.isArray(data.records))
+  if (![1, 2].includes(data?.version) || !Array.isArray(data.records))
     throw new Error('This file is not an Ancient Egypt Research Explorer collection.');
   if (data.records.length > MAX_SAVED)
     throw new Error(
@@ -24,13 +25,21 @@ export function parseCollection(text) {
       savedAt: typeof item.savedAt === 'string' ? item.savedAt : new Date().toISOString(),
     });
   }
+  if (
+    data.version === 2 &&
+    data.research &&
+    typeof data.research === 'object' &&
+    !Array.isArray(data.research)
+  )
+    records.research = data.research;
   return records;
 }
 export function serializeCollection(records) {
   return JSON.stringify(
     {
       format: 'Ancient Egypt Research Explorer collection',
-      version: 1,
+      version: Object.keys(researchData()).length ? 2 : 1,
+      research: researchData(),
       exportedAt: new Date().toISOString(),
       source: 'Crossref member-deposited metadata',
       records: [...records.values()].map(({ work, savedAt }) => ({ raw: work.raw, savedAt })),

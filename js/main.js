@@ -1,3 +1,5 @@
+import { createResearch } from './research.js';
+import { importResearch } from './research-store.js';
 import { createVisualize } from './visualize.js';
 import { PERIODS, TYPES, readQuery, queryString, authorLine, doiURL } from './data.js';
 import { searchWorks, getWork, bibliographicTerms, DATE_BROWSE_LIMIT } from './crossref.js';
@@ -183,12 +185,24 @@ const collectionTools = createCollectionTools($('collectionTools'), {
   async onImport(imported) {
     const result = await collectionStore.change({ import: imported });
     state.collection = result.records;
+    if (imported.research) importResearch(imported.research);
     state.storageWarning = result.warning;
     reconcileCollection();
     renderList();
     renderStatus();
     return `Imported collection. ${state.collection.size} publications saved. Records are matched by DOI.${result.warning ? ' Changes are kept for this visit only.' : ''}`;
   },
+});
+const researcher = createResearch($('researchTools'), {
+  getSeeds: () =>
+    [...state.collection.values()]
+      .map((entry) => entry.work)
+      .filter((work) => !state.exportSelection.size || state.exportSelection.has(work.id)),
+  getSaved: () => state.collection,
+  onSave: async (work) => {
+    if (!state.collection.has(work.id)) await toggleSave(work);
+  },
+  onInspect: selectWork,
 });
 function reconcileCollection() {
   for (const id of state.exportSelection)
@@ -295,6 +309,7 @@ function setView(view, { navigate = true, syncURL = true, load = true } = {}) {
     );
   else $('resultsTitle').textContent = title;
   $('collectionTools').hidden = view !== 'collection';
+  $('researchTools').hidden = view !== 'collection';
   $('searchExplanation').hidden = view === 'collection';
   if (view === 'collection') renderCollectionTools();
   const work = visibleWorks().find((w) => w.id === state.selected) || visibleWorks()[0];
@@ -306,6 +321,14 @@ function setView(view, { navigate = true, syncURL = true, load = true } = {}) {
   if (view === 'explore' && !state.resultQuery && !state.loading && load) runSearch();
 }
 function renderCollectionTools() {
+  $('researchTools').hidden = false;
+  $('researchTools').replaceChildren(
+    el(
+      'button',
+      { class: 'button', onclick: () => researcher.run() },
+      'Discover references from selected or saved publications',
+    ),
+  );
   collectionTools.sync();
 }
 function renderInspector(work) {
