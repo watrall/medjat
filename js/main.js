@@ -14,18 +14,13 @@ import {
   doiURL,
   normalizeWork,
 } from './data.js';
-import {
-  searchWorks,
-  getWork,
-  bibliographicTerms,
-  DATE_BROWSE_LIMIT,
-  PAGE_SIZE,
-} from './crossref.js';
+import { searchWorks, getWork, bibliographicTerms, DATE_BROWSE_LIMIT } from './crossref.js';
 import { readSession, writeSession } from './session.js';
 import { createInspector } from './inspector.js';
 import { createCollectionStore } from './collection-store.js';
 import { createCollectionTools } from './collection-tools.js';
 import { createResultRow } from './result-row.js';
+import { renderSearchFooter, renderSearchNotice } from './search-status.js';
 import { el, icon, emptyState, notify, skeletons } from './dom.js';
 
 const $ = (id) => document.getElementById(id);
@@ -589,53 +584,19 @@ function renderStatus() {
   $('scopeNote').textContent = state.doiLookup
     ? 'DOI lookup opens one exact Crossref record; topic and publication filters do not apply.'
     : `${previous ? `Showing the last successful search for “${resultQuery.q}”. ` : `Results for “${resultQuery.q}”. `}${ranking}${state.retrievedAt ? ` · ${state.cached ? 'cached' : 'retrieved'} ${new Date(state.retrievedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}. Relevance and coverage vary.${resultQuery.sort !== 'relevance' ? ` Date-sorted browsing covers the first ${DATE_BROWSE_LIMIT.toLocaleString()} candidates; narrow your search for more focused results.` : ''}`;
-  const notice = $('requestNotice');
-  notice.hidden = !state.error;
-  if (state.error)
-    notice.replaceChildren(
-      el(
-        'div',
-        { class: 'notice notice-error' },
-        icon('circle-alert'),
-        el(
-          'div',
-          {},
-          el('p', {}, state.error),
-          el(
-            'button',
-            {
-              class: 'button',
-              onclick: () =>
-                state.errorRetryable ? runSearch(state.failedAppend) : $('searchInput').focus(),
-            },
-            state.errorRetryable ? 'Retry search' : 'Edit search',
-          ),
-        ),
-      ),
-    );
-  const footer = $('resultsFooter');
-  footer.replaceChildren();
-  if (state.nextCursor && !previous)
-    footer.append(
-      el(
-        'button',
-        { class: 'button', disabled: state.loading, onclick: () => runSearch(true) },
-        state.loading ? 'Loading…' : `Load ${PAGE_SIZE} more publications`,
-      ),
-      el(
-        'p',
-        { class: 'scope-note' },
-        'Only loaded records are shown. Search more specifically to improve relevance.',
-      ),
-    );
-  if (state.browseLimited && !previous)
-    footer.append(
-      el(
-        'p',
-        { class: 'scope-note' },
-        'You have reached the publication-date browsing limit. Narrow the publication years or topic, or switch to relevance.',
-      ),
-    );
+  renderSearchNotice($('requestNotice'), {
+    error: state.error,
+    retryable: state.errorRetryable,
+    onAction: () =>
+      state.errorRetryable ? runSearch(state.failedAppend) : $('searchInput').focus(),
+  });
+  renderSearchFooter($('resultsFooter'), {
+    nextCursor: state.nextCursor,
+    browseLimited: state.browseLimited,
+    previous,
+    loading: state.loading,
+    onLoadMore: () => runSearch(true),
+  });
   $('sortSelect').disabled = state.loading;
 }
 async function runSearch(append = false) {
