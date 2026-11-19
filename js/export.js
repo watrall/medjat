@@ -53,6 +53,7 @@ export async function exportCollection(
     const response = await request(url, {
       signal,
       format: 'text',
+      fresh: true,
       headers: { Accept: EXPORT_FORMATS[format].mime },
       fetcher,
     });

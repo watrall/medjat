@@ -65,6 +65,9 @@ export function createPlaces(
     };
   }
   async function show(options = {}) {
+    const queryChanged =
+      ('term' in options && term !== options.term) ||
+      ('topic' in options && topic !== options.topic);
     controller?.abort();
     generation++;
     loading = false;
@@ -81,6 +84,12 @@ export function createPlaces(
     }
     if ('term' in options) term = options.term;
     if ('topic' in options) topic = options.topic;
+    if (queryChanged) {
+      works = [];
+      next = null;
+      total = null;
+      error = '';
+    }
     if ('status' in options) evidenceStatus = options.status;
     searchDraft = options.session?.searchDraft || {
       ...searchDraft,
