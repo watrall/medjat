@@ -1,5 +1,4 @@
 export const siteFiles = [
-  '.nojekyll',
   'LICENSE',
   'assets/LUCIDE-LICENSE',
   'assets/icons.svg',
@@ -46,7 +45,7 @@ export const siteFiles = [
 export const repositoryFiles = [
   '.github/workflows/checks.yml',
   '.gitignore',
-  '.nojekyll',
+  '.node-version',
   '.prettierrc.json',
   'LICENSE',
   'README.md',

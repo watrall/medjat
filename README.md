@@ -53,7 +53,7 @@ npm ci
 npm run dev
 ```
 
-Static hosts, including GitHub Pages, can serve the repository root directly. There is no compilation step. Relative asset paths support deployment under a repository subpath. `.nojekyll` keeps GitHub Pages in static-file mode.
+The source runs directly without compilation. For hosting, use `npm run build` to assemble the runtime files in `dist/`. Relative asset paths support deployment under a subpath.
 
 ## Coverage and interpretation
 
@@ -147,9 +147,11 @@ npm run build:icons
 
 ## Publishing
 
-`npm run build` creates `dist/` from an explicit runtime file list. GitHub Pages publishes only that directory. Tests, development scripts, source data snapshots, package metadata, and repository documentation are excluded from the website. Tests and CI remain in the source repository.
+[Medjat](https://medjat.wunderkammer.dev/) is hosted on Cloudflare Pages. `npm run build` creates `dist/` from an explicit runtime file list. Publish only that directory so tests, development scripts, source data snapshots, package metadata, and repository documentation are excluded from the website. Tests and CI remain in the source repository.
 
-`npm run check:repository` checks tracked paths throughout the reachable commit history against the repository file list. The publishing workflow runs this check, syntax checks, unit tests, browser tests, and the runtime build before deployment from `main`.
+The Cloudflare Pages project uses `main` as the production branch, `npm run build` as the build command, and `dist` as the build output directory. Leave the root directory at the repository root. `.node-version` pins the build to Node 24.
+
+`npm run check:repository` checks tracked paths throughout the reachable commit history against the repository file list. GitHub Actions runs this check, syntax checks, unit tests, browser tests, and the runtime build. The workflow only validates the repository; Cloudflare manages deployment separately. Cloudflare's automatic deployments do not wait for GitHub Actions to finish.
 
 ## Maintaining place names
 

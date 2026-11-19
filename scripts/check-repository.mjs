@@ -3,8 +3,9 @@ import { repositoryFiles } from './release-files.mjs';
 
 const git = (...args) => execFileSync('git', args, { encoding: 'utf8' });
 const allowed = new Set(repositoryFiles);
-// The original application stylesheet is permitted in legacy commits only.
+// Retired application and GitHub Pages files are permitted in legacy commits only.
 const legacy = new Set([
+  '.nojekyll',
   'css/style.css',
   'js/atlas.js',
   'tests/atlas.test.js',
