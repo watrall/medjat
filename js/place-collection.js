@@ -1,6 +1,7 @@
 import { preservePlaceFocus } from './place-focus.js';
 import { publicationMetadata, assignmentLabel } from './place-publication.js';
 import { placeEvidence } from './place-data.js';
+import { createPlaceReviewList } from './place-review-list.js';
 import { researchData, reviewDecision } from './research-store.js';
 import { placeKey, placeScopeKey } from './decision-keys.js';
 import { EXPORT_FORMATS, exportCollection, downloadFile } from './export.js';
@@ -567,60 +568,31 @@ export function createPlaceCollection(
     if (draftFormat) format.value = draftFormat;
     draft.target = target.value;
     draft.format = format.value;
-    function workList(title, rows, decision) {
-      const list = el('ul', { class: 'place-review-works' });
-      for (const work of rows)
-        list.append(
-          el(
-            'li',
-            { 'data-place-work': work.id },
-            el('button', { class: 'text-button', onclick: () => onInspect(work) }, work.title),
-            publicationMetadata(work),
-            el(
-              'button',
-              {
-                class: 'text-button',
-                onclick: () => {
-                  if (decision === 'assign') {
-                    assignment.open = true;
-                    chosen = work.id;
-                    filterAssignments();
-                    target.focus();
-                  } else {
-                    const prior = researchData()[placeScopeKey(work.id)];
-                    decide(placeScopeKey(work.id), {
-                      decision: prior?.previousDecision || 'place-specific',
-                    });
-                    refresh();
-                  }
-                },
-              },
-              decision === 'assign' ? 'Assign a place' : 'Reset classification',
-            ),
-            decision === 'assign' &&
-              el(
-                'button',
-                {
-                  class: 'text-button',
-                  onclick: () => {
-                    classify(work);
-                  },
-                },
-                'Not place-specific',
-              ),
-          ),
-        );
-      root.append(
-        el(
-          'details',
-          { class: 'places-source' },
-          el('summary', {}, `${title} (${rows.length})`),
-          list,
-        ),
-      );
-    }
-    workList('No place assigned', snapshot.unassigned, 'assign');
-    workList('Not place-specific', snapshot.notSpecific, 'reset');
+    const reviewList = (title, rows, mode) =>
+      createPlaceReviewList({
+        title,
+        rows,
+        mode,
+        onInspect,
+        onAssign: (work) => {
+          assignment.open = true;
+          chosen = work.id;
+          filterAssignments();
+          target.focus();
+        },
+        onReset: (work) => {
+          const prior = researchData()[placeScopeKey(work.id)];
+          decide(placeScopeKey(work.id), {
+            decision: prior?.previousDecision || 'place-specific',
+          });
+          refresh();
+        },
+        onClassify: classify,
+      });
+    root.append(
+      reviewList('No place assigned', snapshot.unassigned, 'assign'),
+      reviewList('Not place-specific', snapshot.notSpecific, 'reset'),
+    );
     if (snapshot.rejected.length)
       root.append(
         el(
