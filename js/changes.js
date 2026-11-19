@@ -52,6 +52,7 @@ export function createChangeReview(root, { getRecords, onAccept, onInspect }) {
       list,
     );
     const queue = [...records];
+    const decisions = researchData();
     async function worker() {
       while (queue.length && !active.signal.aborted) {
         const entry = queue.shift();
@@ -59,7 +60,7 @@ export function createChangeReview(root, { getRecords, onAccept, onInspect }) {
           const next = await getWork(entry.work.id, { signal: active.signal, fresh: true });
           if (active.signal.aborted) return;
           const changes = metadataChanges(entry.work.raw, next.raw),
-            history = researchData()[changesKey(next.id)];
+            history = decisions[changesKey(next.id)];
           if (changes.length) {
             const details = el(
               'details',
