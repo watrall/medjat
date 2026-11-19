@@ -61,9 +61,9 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
     if (!reviewDecision(key, value))
       notify('Review decision kept for this visit only. Download a research backup to retain it.');
   };
-  function referenceRow(ref) {
+  function referenceRow(ref, decisions) {
     const key = doiKey(ref.doi),
-      state = researchData()[key];
+      state = decisions[key];
     const row = el(
       'li',
       {},
@@ -151,13 +151,14 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
       );
     return row;
   }
-  function unresolvedRow(ref) {
-    const key = citationKey(ref.source, ref.label);
+  function unresolvedRow(ref, decisions) {
+    const key = citationKey(ref.source, ref.label),
+      decision = decisions[key]?.decision;
     const status = el(
       'p',
       { role: 'status' },
-      researchData()[key]?.decision
-        ? `Review: ${researchData()[key].decision}. No confirmed DOI match.`
+      decision
+        ? `Review: ${decision}. No confirmed DOI match.`
         : 'No DOI supplied. Matching requires your confirmation.',
     );
     const matches = el('div');
@@ -281,6 +282,7 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
       network(data),
     );
     root.append(graph);
+    const decisions = researchData();
     for (const [title, rows, builder] of [
       ['Shared foundations', data.shared, referenceRow],
       ['Missing from your bibliography', data.missing, referenceRow],
@@ -295,7 +297,7 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
             ? el(
                 'ol',
                 { class: 'review-list' },
-                rows.slice(0, RESEARCH_LIMITS.reviewRows).map(builder),
+                rows.slice(0, RESEARCH_LIMITS.reviewRows).map((row) => builder(row, decisions)),
               )
             : el(
                 'p',
