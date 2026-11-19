@@ -1,3 +1,4 @@
+import { readPlaceState, writePlaceState } from './place-state.js';
 import { createChangeReview } from './changes.js';
 import { createPlaces } from './places.js';
 import { createResearch } from './research.js';
@@ -76,6 +77,7 @@ function saveSession() {
     exportScope: state.exportScope,
     exportFormat: state.exportFormat,
     inspector: inspector.capture(),
+    places: places.capture(),
     placesOrigin: state.view === 'places' ? placeReturnContext : null,
   });
 }
@@ -83,8 +85,7 @@ function updateURL({ push = false } = {}) {
   const params = new URLSearchParams(queryString(state.query));
   if (state.view !== 'explore') params.set('view', state.view);
   if (state.view === 'places') {
-    if (places.location().place) params.set('place', places.location().place);
-    if (places.location().mode === 'collection') params.set('placesMode', 'collection');
+    writePlaceState(params, places.location());
   }
   const work = inspector.getCurrentWork();
   if (work) params.set('record', work.doi);
@@ -312,6 +313,7 @@ const places = createPlaces($('places'), {
   getSaved: () => state.collection,
   onSave: toggleSave,
   onLocation: () => updateURL({ push: true }),
+  onSession: saveSession,
 });
 function placeOrigin(context) {
   if (!context?.inspector?.current?.raw) return null;
@@ -369,6 +371,7 @@ function setView(view, { navigate = true, syncURL = true, load = true, placeOpti
     document.body.classList.add('is-collection');
     collectionTools.cancel();
     visualizer.cancel();
+    renderStatus();
     places.show(placeOptions);
     if (syncURL) updateURL({ push: navigate });
     return;
@@ -885,8 +888,8 @@ async function restoreLocation(resume = null) {
       syncURL: false,
       load: false,
       placeOptions: {
-        place: params.get('place') || '',
-        mode: params.get('placesMode') || 'discover',
+        ...readPlaceState(params),
+        session: resume?.places,
         origin: placeOrigin(placeReturnContext),
       },
     });

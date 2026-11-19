@@ -5,7 +5,10 @@ import { createPlaceCollection } from './place-collection.js';
 import { authorLine, doiURL } from './data.js';
 import { el, icon, externalLink, skeletons } from './dom.js';
 
-export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) {
+export function createPlaces(
+  root,
+  { getSaved, onSave, onLocation = () => {}, onSession = () => {} },
+) {
   let gazetteer,
     map,
     selected = '',
@@ -26,8 +29,11 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
   let panels,
     origin = null;
   let searchDraft = { term: '', topic: '' };
+  let evidenceStatus = 'all',
+    reading = null;
   const place = () => gazetteer?.sites.find((site) => site.id === selected);
   function cancel() {
+    if (active) reading = capture();
     active = false;
     loading = false;
     generation++;
@@ -36,7 +42,15 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
     panels?.collection?.cancel();
   }
   function location() {
-    return { place: selected, mode };
+    return { place: selected, mode, term, topic, status: evidenceStatus };
+  }
+  function capture() {
+    return {
+      ...location(),
+      searchDraft,
+      inspector: panels?.detail.hidden === false ? panels.inspector.capture() : null,
+      scrollY: window.scrollY,
+    };
   }
   async function show(options = {}) {
     controller?.abort();
@@ -53,11 +67,24 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
       topic = '';
       searchDraft = { term: '', topic: '' };
     }
-    origin = options.origin || null;
+    if ('term' in options) term = options.term;
+    if ('topic' in options) topic = options.topic;
+    if ('status' in options) evidenceStatus = options.status;
+    searchDraft = options.session?.searchDraft || {
+      ...searchDraft,
+      ...(options.term !== undefined ? { term, topic } : {}),
+    };
+    reading = options.session || (Object.keys(options).length ? null : reading);
+    origin = options.origin === undefined ? origin : options.origin;
     try {
       gazetteer ||= await loadGazetteer();
       if (!active) return;
-      if (!place()) selected = '';
+      if (!place()) {
+        selected = '';
+        term = '';
+        topic = '';
+        searchDraft = { term: '', topic: '' };
+      }
       panels?.collection?.cancel();
       map?.destroy();
       map = null;
@@ -103,6 +130,12 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
           'The map could not load. The place selector and Crossref search remain available.';
       }
       if (mode === 'discover' && selected && !works.length) await search();
+      if (reading?.inspector?.current?.raw) {
+        panels.publications.hidden = true;
+        panels.detail.hidden = false;
+        panels.inspector.restore(reading.inspector);
+      }
+      if (reading) window.scrollTo({ top: reading.scrollY || 0 });
     } catch (error) {
       if (active)
         root.replaceChildren(
@@ -143,6 +176,7 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
     });
     const resultPane = el('div', { class: 'places-results' }, publications, detail);
     const inspector = createInspector(detail, {
+      onChange: onSession,
       onPlace: (site, work) =>
         show({ place: site.id, origin: { work, return: () => inspect(work) } }),
       onClose: () => {
@@ -163,6 +197,11 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
       onInspect: inspect,
       onChoose: choose,
       onRefresh: () => map?.refresh(),
+      getStatus: () => evidenceStatus,
+      onStatus: (value) => {
+        evidenceStatus = value;
+        onLocation(location());
+      },
     });
     panels = { selector, map: mapRoot, mapNotice, publications, detail, inspector, collection };
     root.replaceChildren(
@@ -444,6 +483,7 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
         id: 'placeSearchName',
         onchange: (event) => {
           searchDraft.term = event.target.value;
+          onSession();
         },
       },
       aliases.map((alias) =>
@@ -460,6 +500,7 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
       value: searchDraft.topic,
       oninput: (event) => {
         searchDraft.topic = event.target.value;
+        onSession();
       },
       placeholder: 'e.g. burial, ceramics, settlement',
     });
@@ -482,6 +523,7 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
             topic = topicInput.value.trim();
             works = [];
             next = null;
+            onLocation(location());
             search();
           },
         },
@@ -497,7 +539,7 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
       el(
         'p',
         { class: 'scope-note' },
-        'Searches are ranked candidates, not an exhaustive bibliography of this place. A place name in metadata is evidence to inspect, not a verified subject classification.',
+        `Applied search: ${term || current.name} · ${topic || 'Any topic'}. Candidates require review; a name mention is not a verified subject classification.`,
       ),
     );
     if (origin) {
@@ -587,6 +629,7 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
   }
   return {
     show,
+    capture,
     cancel,
     location,
     choose,

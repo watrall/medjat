@@ -173,3 +173,28 @@ test('place pagination keeps its applied query while preserving unfinished topic
   await page.getByRole('button', { name: 'Discover in Crossref', exact: true }).click();
   await expect(page.locator('#placeTopic')).toHaveValue('An unfinished burial topic');
 });
+test('Places restores applied query, drafts, evidence scope and direct-entry collection count', async ({
+  page,
+}) => {
+  await page.route('https://tile.openstreetmap.org/**', (r) => r.abort());
+  await page.route('https://api.crossref.org/**', (r) =>
+    r.fulfill({ json: { message: { items: [source], 'total-results': 1 } } }),
+  );
+  await page.goto('/?view=places&place=756512&placeTopic=burial');
+  await expect(page.locator('.place-results-status')).toBeVisible();
+  await expect(page.locator('#placeTopic')).toHaveValue('burial');
+  await page.locator('#placeTopic').fill('unfinished pottery');
+  await page.reload();
+  await expect(page.locator('#placeTopic')).toHaveValue('unfinished pottery');
+  await expect(page.locator('#placePublications')).toContainText('Applied search: Abydos · burial');
+  await page.getByRole('button', { name: 'Save to collection', exact: true }).click();
+  await page.getByRole('button', { name: 'Your collection', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm association', exact: true }).click();
+  await page.locator('#placeAssociationStatus').selectOption('confirmed');
+  await page.reload();
+  await expect(page.locator('#collectionCount')).toHaveText('1');
+  await expect(page.locator('#placeAssociationStatus')).toHaveValue('confirmed');
+  await expect(
+    page.getByRole('button', { name: 'Export 1 publication', exact: true }),
+  ).toBeVisible();
+});

@@ -49,9 +49,12 @@ export function collectionPlaces(records, sites, decisions = {}) {
   };
 }
 
-export function createPlaceCollection(root, { sites, getSaved, onInspect, onChoose, onRefresh }) {
+export function createPlaceCollection(
+  root,
+  { sites, getSaved, onInspect, onChoose, onRefresh, getStatus = () => 'all', onStatus = () => {} },
+) {
   let selected = '',
-    status = 'all',
+    status = getStatus(),
     snapshot,
     exportJob = null,
     exporting = false,
@@ -153,6 +156,7 @@ export function createPlaceCollection(root, { sites, getSaved, onInspect, onChoo
         id: 'placeAssociationStatus',
         onchange: (event) => {
           status = event.target.value;
+          onStatus(status);
           refresh();
           root.querySelector('#placeAssociationStatus').focus();
         },
