@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir, stat } from 'node:fs/promises';
-import { siteFiles } from '../scripts/release-files.mjs';
+import { repositoryFiles, siteFiles } from '../scripts/release-files.mjs';
 import { DEFAULT_QUERY } from '../js/data.js';
 
 const root = new URL('../', import.meta.url);
@@ -20,6 +20,20 @@ test('every runtime module is listed and every listed file exists', async () => 
   for (const file of siteFiles) {
     const info = await stat(new URL(file, root));
     assert.ok(info.isFile(), `Listed runtime file is missing or not a file: ${file}`);
+  }
+});
+
+test('repository and runtime manifests stay consistent', async () => {
+  assert.equal(new Set(repositoryFiles).size, repositoryFiles.length);
+  for (const file of siteFiles)
+    assert.ok(
+      repositoryFiles.includes(file),
+      `Runtime file is missing from repositoryFiles: ${file}`,
+    );
+
+  for (const file of repositoryFiles) {
+    const info = await stat(new URL(file, root));
+    assert.ok(info.isFile(), `Listed repository file is missing or not a file: ${file}`);
   }
 });
 
