@@ -553,7 +553,7 @@ function renderStatus() {
     ? state.appending
       ? 'Loading more publications…'
       : 'Searching Crossref…'
-    : `${previous ? 'Previous results: ' : ''}${state.items.length.toLocaleString()} loaded${state.total ? ` · ${state.total.toLocaleString()} Crossref candidates` : ''}`;
+    : `${previous ? 'Previous results: ' : ''}${state.items.length.toLocaleString()} results loaded`;
   const resultQuery = state.resultQuery || state.query;
   const ranking =
     resultQuery.sort === 'relevance'

@@ -677,7 +677,7 @@ test('date sorts browse subsequent pages with supported pagination', async ({ pa
   for (const sort of ['newest', 'oldest']) {
     await page.locator('#sortSelect').selectOption(sort);
     await expect(page.locator('#scopeNote')).toContainText('Sorted by publication date');
-    await expect(page.locator('#resultCount')).toContainText('25 loaded');
+    await expect(page.locator('#resultCount')).toContainText('25 results loaded');
     await expect.poll(() => requests.at(-1).searchParams.get('offset')).toBe('0');
     await expect.poll(() => requests.at(-1).searchParams.has('cursor')).toBe(false);
     await page.getByRole('button', { name: 'Load 25 more publications' }).click();
