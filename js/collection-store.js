@@ -137,7 +137,7 @@ export function createCollectionStore({ storage, database = globalThis.indexedDB
           tx.onabort = () => reject(validationError || tx.error);
         });
         channel?.postMessage('changed');
-      } catch (error) {
+      } catch {
         if (validationError) throw validationError;
         sessionOnly = true;
         warning = SESSION_WARNING;

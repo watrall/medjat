@@ -11,7 +11,6 @@ import {
   readQuery,
   queryString,
   authorLine,
-  doiURL,
   normalizeWork,
 } from './data.js';
 import { searchWorks, getWork, bibliographicTerms, DATE_BROWSE_LIMIT } from './crossref.js';
@@ -166,7 +165,7 @@ function renderAppliedQuery() {
 const inspector = createInspector($('inspector'), {
   onClose: closeInspector,
   onSave: toggleSave,
-  onPlace: (place, work) => {
+  onPlace: (place) => {
     placeReturnContext = {
       view: state.view === 'collection' ? 'collection' : 'explore',
       inspector: inspector.capture(),

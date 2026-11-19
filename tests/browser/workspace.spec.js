@@ -342,7 +342,7 @@ test('search, inspect, save, reload, cite, and export a collection', async ({ pa
   await page.getByRole('button', { name: /^Export \d+ publications?$/ }).click();
   const download = await downloaded;
   expect(download.suggestedFilename()).toMatch(/\.ris$/);
-  expect(await readFile(await download.path(), 'utf8')).toMatch(/^TY  - CHAP/m);
+  expect(await readFile(await download.path(), 'utf8')).toMatch(/^TY {2}- CHAP/m);
   await page.getByRole('combobox', { name: 'Export format', exact: true }).selectOption('json');
   const backupDownload = page.waitForEvent('download');
   await page.getByRole('button', { name: /^Export \d+ publications?$/ }).click();

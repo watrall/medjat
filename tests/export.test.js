@@ -57,5 +57,5 @@ test('generic RIS chapters retain their deposited publication type', async () =>
   const result = await exportCollection(new Map([[chapter.id, { work: chapter }]]), 'ris', {
     fetcher: async () => new Response('TY  - GENERIC\nTI  - A chapter\nER  -'),
   });
-  assert.match(result, /^TY  - CHAP/m);
+  assert.match(result, /^TY {2}- CHAP/m);
 });

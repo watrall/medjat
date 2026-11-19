@@ -54,6 +54,7 @@ export const repositoryFiles = [
   '.gitignore',
   '.node-version',
   '.prettierrc.json',
+  'eslint.config.js',
   'LICENSE',
   'README.md',
   'assets/LUCIDE-LICENSE',

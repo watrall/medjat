@@ -8,6 +8,8 @@
     "dev": "python3 scripts/serve.py",
     "test": "node --test tests/*.test.js",
     "check": "node scripts/check-syntax.mjs",
+    "lint": "eslint .",
+    "format:check": "prettier --check index.html css scripts tests js package.json package-lock.json playwright.config.js eslint.config.js",
     "test:e2e": "playwright test",
     "test:live": "node scripts/smoke-crossref.mjs",
     "build:icons": "node scripts/build-icons.mjs",
@@ -19,7 +21,10 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.65.1",
+    "eslint": "^10.15.0",
+    "globals": "^17.14.0",
     "leaflet": "1.9.4",
     "lucide-static": "^1.75.0",
     "prettier": "^3.10.1"
