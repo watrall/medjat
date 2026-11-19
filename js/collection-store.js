@@ -96,7 +96,8 @@ export function createCollectionStore({ storage, database = globalThis.indexedDB
     };
     if (sessionOnly) records = apply(records);
     else {
-      let validationError;
+      let validationError,
+        latest = records;
       try {
         records = await new Promise((resolve, reject) => {
           const tx = db.transaction('publications', 'readwrite');
@@ -105,9 +106,11 @@ export function createCollectionStore({ storage, database = globalThis.indexedDB
           let next;
           request.onsuccess = () => {
             try {
-              next = apply(new Map(request.result.map((entry) => [entry.work.id, entry])));
-              store.clear();
-              for (const entry of next.values()) store.put(entry);
+              latest = new Map(request.result.map((entry) => [entry.work.id, entry]));
+              next = apply(latest);
+              if (operation.remove) store.delete(operation.remove);
+              if (operation.add) store.put(operation.add);
+              if (operation.import) for (const entry of operation.import.values()) store.put(entry);
             } catch (error) {
               validationError = error;
               tx.abort();
@@ -122,7 +125,7 @@ export function createCollectionStore({ storage, database = globalThis.indexedDB
         if (validationError) throw validationError;
         sessionOnly = true;
         warning = SESSION_WARNING;
-        records = apply(records);
+        records = apply(latest);
       }
     }
     return snapshot();
