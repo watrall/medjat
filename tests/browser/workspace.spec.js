@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import AxeBuilder from '@axe-core/playwright';
 
 // Synthetic records are isolated to tests. The application has no fixture mode.
@@ -501,6 +501,7 @@ test('search and collection views have no detected WCAG AA violations', async ({
   };
   await check();
   await page.getByRole('button', { name: 'Connections', exact: true }).click();
+  await measureTarget('Reference DOI', page.locator('.reference-list small a').first());
   await check();
   await page.getByRole('button', { name: 'Cite', exact: true }).click();
   await expect(page.getByRole('textbox', { name: 'Formatted citation' })).toBeVisible();
@@ -514,6 +515,18 @@ test('search and collection views have no detected WCAG AA violations', async ({
     measurements.widths.push({ width, documentWidth });
   }
   await check();
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = '200%';
+  });
+  measurements.widths.push({
+    width: 320,
+    documentWidth: await page.evaluate(() => document.documentElement.scrollWidth),
+    textScale: 2,
+    view: 'collection',
+  });
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = '';
+  });
   await page.locator('.result-open').first().click();
   await measureTarget('Mobile Cite', page.getByRole('button', { name: 'Cite', exact: true }));
   await check();
@@ -525,11 +538,16 @@ test('search and collection views have no detected WCAG AA violations', async ({
     documentWidth: await page.evaluate(() => document.documentElement.scrollWidth),
     textScale: 2,
   });
-  await test.info().attach('audit-measurements', {
-    body: JSON.stringify(measurements, null, 2),
-    contentType: 'application/json',
-  });
+  const evidencePath = test.info().outputPath('audit-measurements.json');
+  await writeFile(evidencePath, JSON.stringify(measurements, null, 2));
+  await test
+    .info()
+    .attach('audit-measurements', { path: evidencePath, contentType: 'application/json' });
   expect(measurements.scans.flatMap((scan) => scan.violations)).toEqual([]);
+  for (const target of measurements.targets) {
+    expect(target.box.width, target.label).toBeGreaterThanOrEqual(44);
+    expect(target.box.height, target.label).toBeGreaterThanOrEqual(44);
+  }
   for (const measure of measurements.widths)
     expect(measure.documentWidth).toBeLessThanOrEqual(measure.width);
 });

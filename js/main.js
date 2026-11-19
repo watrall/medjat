@@ -252,6 +252,7 @@ function setView(view, { navigate = true, syncURL = true, load = true } = {}) {
   if (navigate) cancelRestoration();
   if (view !== 'collection') collectionTools.cancel();
   $('research').classList.toggle('collection-view', view === 'collection');
+  document.body.classList.toggle('is-collection', view === 'collection');
   state.view = view;
   renderDraftStatus();
   $('research').classList.remove('mobile-detail-open');
@@ -260,7 +261,13 @@ function setView(view, { navigate = true, syncURL = true, load = true } = {}) {
   $('refinements').hidden = view === 'collection';
   $('sortSelect').parentElement.hidden = view === 'collection';
   $('activeQuery').hidden = view === 'collection' || !$('activeQuery').childElementCount;
-  $('resultsTitle').textContent = view === 'collection' ? 'Your collection' : 'Publications';
+  const heading = view === 'collection' ? 'h1' : 'h2';
+  const title = view === 'collection' ? 'Your collection' : 'Publications';
+  if ($('resultsTitle').tagName.toLowerCase() !== heading)
+    $('resultsTitle').replaceWith(
+      el(heading, { id: 'resultsTitle', class: 'results-title' }, title),
+    );
+  else $('resultsTitle').textContent = title;
   $('collectionTools').hidden = view !== 'collection';
   $('searchExplanation').hidden = view === 'collection';
   if (view === 'collection') renderCollectionTools();

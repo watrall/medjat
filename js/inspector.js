@@ -88,7 +88,8 @@ export function createInspector(
       el(
         'button',
         { class: 'inspector-close', 'aria-label': 'Back to publications', onclick: onClose },
-        icon('x'),
+        icon('arrow-left'),
+        el('span', {}, 'Back to publications'),
       ),
     );
     root.replaceChildren(top);

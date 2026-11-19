@@ -65,6 +65,7 @@ export function createCollectionTools(
     onchange: async () => {
       const selected = file.files?.[0];
       if (!selected) return;
+      exportOptions.open = true;
       try {
         if (selected.size > 10 * 1024 * 1024)
           throw new Error('Choose a collection file smaller than 10 MB.');
@@ -76,6 +77,32 @@ export function createCollectionTools(
         file.value = '';
       }
     },
+  });
+  const exportSummary = el('summary', {}, 'Export bibliography');
+  const exportLayout = matchMedia('(min-width:1000px)');
+  const exportOptions = el(
+    'details',
+    { class: 'collection-export-options', open: exportLayout.matches },
+    exportSummary,
+    el(
+      'div',
+      { class: 'export-controls' },
+      el('label', { for: 'exportScope' }, 'Export scope', scope),
+      el('label', { for: 'exportFormat' }, 'Export format', format),
+      button,
+      cancel,
+    ),
+    scopeHelp,
+    formatHelp,
+    status,
+    el(
+      'p',
+      { class: 'collection-backup-note' },
+      'Saved in this browser. Export a JSON backup to keep a portable copy.',
+    ),
+  );
+  exportLayout.addEventListener('change', (event) => {
+    if (!controller) exportOptions.open = event.matches;
   });
   root.replaceChildren(
     el(
@@ -89,19 +116,10 @@ export function createCollectionTools(
       ),
       el(
         'div',
-        { class: 'export-controls' },
-        el('label', { for: 'exportScope' }, 'Export scope', scope),
-        el('label', { for: 'exportFormat' }, 'Export format', format),
-        button,
-        cancel,
-      ),
-      scopeHelp,
-      formatHelp,
-      el('div', { class: 'selection-controls' }, selectionSummary, matching, clear),
-      status,
-      el(
-        'div',
-        { class: 'collection-backup' },
+        { class: 'selection-controls' },
+        selectionSummary,
+        matching,
+        clear,
         el(
           'button',
           { class: 'text-button', onclick: () => file.click() },
@@ -109,8 +127,8 @@ export function createCollectionTools(
           'Import collection',
         ),
         file,
-        el('p', {}, 'Saved in this browser. Export a JSON backup to keep a portable copy.'),
       ),
+      exportOptions,
     ),
   );
   function counts() {
@@ -137,6 +155,7 @@ export function createCollectionTools(
     format.value = state.format;
     scope.disabled = format.disabled = Boolean(controller);
     const count = totals[state.scope];
+    exportSummary.textContent = `Export bibliography (${count} ${state.scope === 'all' ? 'saved' : state.scope})`;
     button.disabled = Boolean(controller) || !count;
     button.replaceChildren(
       icon('download'),
@@ -160,7 +179,9 @@ export function createCollectionTools(
     ).length;
     selectionSummary.textContent = `${totals.selected} selected${hidden ? ` (${hidden} outside this search)` : ''}`;
     matching.disabled = !totals.matching;
+    matching.hidden = !totals.matching;
     clear.disabled = !totals.selected;
+    clear.hidden = !totals.selected;
   }
   async function runExport() {
     if (controller) return;
