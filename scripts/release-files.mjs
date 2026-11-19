@@ -55,6 +55,7 @@ export const repositoryFiles = [
   '.node-version',
   '.prettierrc.json',
   'eslint.config.js',
+  'jsconfig.json',
   'LICENSE',
   'README.md',
   'assets/LUCIDE-LICENSE',
