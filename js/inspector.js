@@ -5,6 +5,8 @@ import { downloadText } from './download.js';
 import { createCover } from './covers.js';
 import { loadGazetteer, placesForWork } from './place-data.js';
 
+let inspectorInstances = 0;
+
 export function createInspector(
   root,
   {
@@ -17,6 +19,7 @@ export function createInspector(
     savedLabel = 'Saved to collection',
   } = {},
 ) {
+  const citationStyleId = `citationStyle-${++inspectorInstances}`;
   let work = null,
     tab = 'overview',
     style = 'apa',
@@ -509,7 +512,7 @@ export function createInspector(
   }
   function cite(container) {
     const select = el('select', {
-      id: 'citationStyle',
+      id: citationStyleId,
       'data-focus-key': 'citation-style',
       onchange: (e) => {
         style = e.target.value;
@@ -527,7 +530,7 @@ export function createInspector(
       el(
         'div',
         { class: 'citation-controls' },
-        el('label', { for: 'citationStyle' }, 'Style'),
+        el('label', { for: citationStyleId }, 'Style'),
         select,
       ),
     );

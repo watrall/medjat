@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { readFile, writeFile } from 'node:fs/promises';
 import AxeBuilder from '@axe-core/playwright';
+import { blockTiles } from './fixtures.js';
 
 // Synthetic records are isolated to tests. The application has no fixture mode.
 const publication = (i) => ({
@@ -562,6 +563,30 @@ test('search and collection views have no detected WCAG AA violations', async ({
   for (const measure of measurements.widths)
     expect(measure.documentWidth).toBeLessThanOrEqual(measure.width);
 });
+test('the main and Places inspectors keep citation controls uniquely identified', async ({
+  page,
+}) => {
+  await fixtures(page);
+  await blockTiles(page);
+  await page.goto('/');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await page.locator('#inspector').getByRole('button', { name: 'Cite', exact: true }).click();
+  await page.locator('#placesNav').click();
+  await page.locator('#placeSelect').selectOption('756512');
+  await page.locator('.other-place-candidates > summary').click();
+  await expect(page.locator('.place-publication-title').first()).toBeVisible();
+  await page.locator('.place-publication-title').first().click();
+  await page
+    .locator('.places-inspector')
+    .getByRole('button', { name: 'Cite', exact: true })
+    .click();
+  const duplicates = await page.evaluate(() => {
+    const ids = [...document.querySelectorAll('[id]')].map((node) => node.id);
+    return ids.filter((id, index) => ids.indexOf(id) !== index);
+  });
+  expect(duplicates).toEqual([]);
+});
+
 test('untrusted metadata remains text instead of executable markup', async ({ page }) => {
   await fixtures(page, { hostile: true });
   await page.goto('/');
