@@ -334,3 +334,35 @@ test('Fit map changes only the camera while All places changes bibliography scop
     'Numbers group nearby places, not publications',
   );
 });
+test('search and review updates preserve keyboard position without stealing background focus', async ({
+  page,
+}) => {
+  let release;
+  const gate = new Promise((resolve) => {
+    release = resolve;
+  });
+  await page.route('https://tile.openstreetmap.org/**', (r) => r.abort());
+  await page.route('https://api.crossref.org/**', async (r) => {
+    if (new URL(r.request().url()).searchParams.get('query.bibliographic')?.includes('focus-test'))
+      await gate;
+    return r.fulfill({ json: { message: { items: [source], 'total-results': 1 } } });
+  });
+  await page.goto('/?view=places&place=756512');
+  await expect(page.locator('.place-results-status')).toBeVisible();
+  await page.locator('#placeTopic').fill('focus-test');
+  await page.locator('#placeTopic').press('Enter');
+  await expect(page.locator('#placeTopic')).toBeFocused();
+  await page.locator('#placeSelect').focus();
+  release();
+  await expect(page.locator('.place-results-status')).toBeVisible();
+  await expect(page.locator('#placeSelect')).toBeFocused();
+  await page.getByRole('button', { name: 'Save to collection', exact: true }).click();
+  await page.getByRole('button', { name: 'Your collection', exact: true }).click();
+  await page.getByRole('button', { name: 'Not place-specific', exact: true }).click();
+  expect(await page.evaluate(() => document.activeElement.tagName)).not.toBe('BODY');
+  await page.getByRole('button', { name: 'Undo classification', exact: true }).click();
+  expect(await page.evaluate(() => document.activeElement.tagName)).not.toBe('BODY');
+  await page.getByRole('button', { name: 'Remove from collection', exact: true }).click();
+  await page.getByRole('button', { name: 'Undo removal', exact: true }).click();
+  expect(await page.evaluate(() => document.activeElement.tagName)).not.toBe('BODY');
+});

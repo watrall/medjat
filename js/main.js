@@ -939,6 +939,8 @@ const savePosition = () => {
 };
 $('inspector').addEventListener('scroll', savePosition, { passive: true });
 $('inspector').addEventListener('focusin', savePosition);
+$('places').addEventListener('focusin', savePosition);
+$('places').addEventListener('scroll', savePosition, { passive: true, capture: true });
 window.addEventListener('scroll', savePosition, { passive: true });
 const filterLayout = matchMedia('(min-width:1300px)');
 $('refinements').open = filterLayout.matches;

@@ -1,3 +1,4 @@
+import { preservePlaceFocus } from './place-focus.js';
 import { publicationMetadata } from './place-publication.js';
 import { loadGazetteer, placeEvidence, placesForWork, searchPlaceWorks } from './place-data.js';
 import { createPlaceMap } from './place-map.js';
@@ -193,7 +194,13 @@ export function createPlaces(
         detail.hidden = true;
         publications.hidden = false;
         renderPublications();
-        publications.querySelector('h2')?.focus({ preventScroll: true });
+        const work = inspector.getCurrentWork();
+        const row = [...publications.querySelectorAll('[data-place-work]')].find(
+          (row) => row.dataset.placeWork === work?.id,
+        );
+        (row?.querySelector('.place-publication-title') || publications.querySelector('h2'))?.focus(
+          { preventScroll: true },
+        );
       },
       onSave: async (work) => {
         await onSave(work);
@@ -471,7 +478,7 @@ export function createPlaces(
     );
     return el(
       'li',
-      { class: 'place-publication' },
+      { class: 'place-publication', 'data-place-work': work.id },
       el('button', { class: 'place-publication-title', onclick: () => inspect(work) }, work.title),
       publicationMetadata(work),
       evidence &&
@@ -492,6 +499,11 @@ export function createPlaces(
   }
   function renderPublications() {
     if (!panels) return;
+    const restore = preservePlaceFocus(panels.publications);
+    renderPublicationContent();
+    restore();
+  }
+  function renderPublicationContent() {
     if (mode === 'collection') {
       panels.collection.render(selected);
       map?.refresh();

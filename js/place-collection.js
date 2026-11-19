@@ -1,3 +1,4 @@
+import { preservePlaceFocus } from './place-focus.js';
 import { publicationMetadata, assignmentLabel } from './place-publication.js';
 import { placeEvidence } from './place-data.js';
 import { researchData, reviewDecision } from './research-store.js';
@@ -81,6 +82,7 @@ export function createPlaceCollection(
       previousDecision: previous?.decision || 'place-specific',
     });
     refresh();
+    notify(`Marked “${work.title}” not place-specific. Your association reviews are retained.`);
   }
   let draft = initialDraft || {};
   function capture() {
@@ -111,6 +113,7 @@ export function createPlaceCollection(
       method: link.method,
     });
     refresh();
+    notify(`${link.place.name} association ${decision} for “${link.work.title}”.`);
     const row = [...root.querySelectorAll('[data-place-work]')].find(
       (row) => row.dataset.placeWork === link.work.id,
     );
@@ -179,6 +182,11 @@ export function createPlaceCollection(
     }
   }
   function render(placeID) {
+    const restore = preservePlaceFocus(root);
+    renderContent(placeID);
+    restore();
+  }
+  function renderContent(placeID) {
     const samePlace = selected === placeID;
     capture();
     const draftWork = draft.work;
@@ -355,7 +363,7 @@ export function createPlaceCollection(
         row.append(
           el(
             'div',
-            { class: 'place-association' },
+            { class: 'place-association', 'data-place-association': link.place.id },
             el(
               'button',
               { class: 'text-button', onclick: () => onChoose(link.place.id) },
@@ -401,7 +409,7 @@ export function createPlaceCollection(
         ),
       );
     const savedWorks = [...getSaved().values()].map(({ work }) => work);
-    const publication = el('select', { id: 'assignPlaceWork' });
+    const publication = el('select', { id: 'assignPlaceWork', required: true });
     let chosen = getSaved().has(draftWork) ? draftWork : savedWorks[0]?.id || '';
     const preview = el('div', {
       class: 'place-assignment-preview',
@@ -509,6 +517,8 @@ export function createPlaceCollection(
             });
             selected = place.id;
             onChoose(place.id);
+            root.querySelector('h2')?.focus({ preventScroll: true });
+            notify(`Assigned “${work.title}” to ${place.name}.`);
           },
         },
         el('label', { for: 'assignPlaceWork' }, 'Saved publication', publication),
@@ -534,7 +544,7 @@ export function createPlaceCollection(
         list.append(
           el(
             'li',
-            {},
+            { 'data-place-work': work.id },
             el('button', { class: 'text-button', onclick: () => onInspect(work) }, work.title),
             publicationMetadata(work),
             el(
