@@ -87,35 +87,42 @@ Open Library cover requests contain the deposited ISBN of the inspected book. Co
 
 Quicksand typography, Lucide icons, and the supplied papyrus mark define the interface. The layout moves from a refinement/list/inspector workspace on desktop to linked list and detail views on mobile.
 
-| Module                    | Responsibility                                                                     |
-| ------------------------- | ---------------------------------------------------------------------------------- |
-| `js/main.js`              | Query state, view transitions, result rendering, and collection actions            |
-| `js/data.js`              | Scholarly period presets, normalization, identifiers, and shareable query state    |
-| `js/crossref.js`          | API requests, cancellation, caching, retries, pagination, and citation negotiation |
-| `js/inspector.js`         | Publication metadata, references, relationships, and citation views                |
-| `js/collection.js`        | Collection validation, legacy storage input, and import/backup format              |
-| `js/collection-store.js`  | Transactional browser persistence and cross-tab change notifications               |
-| `js/collection-tools.js`  | Collection search, scoped export, selection feedback, and import                   |
-| `js/session.js`           | Per-tab reading-position persistence                                               |
-| `js/export.js`            | Bibliography conversion, CSV, JSON, and downloads                                  |
-| `js/aggregates.js`        | Whole-query Crossref facet and metadata-presence summaries                         |
-| `js/visualize.js`         | Accessible charts, refinement actions, and aggregate CSV                           |
-| `js/references.js`        | Pure reference overlap and provenance analysis                                     |
-| `js/research.js`          | Reference review, manual matching, and worker coordination                         |
-| `js/research-worker.js`   | Bounded local reference computation                                                |
-| `js/research-store.js`    | Per-item review persistence and portable decisions                                 |
-| `js/place-data.js`        | Pleiades index, metadata mention evidence, and Crossref place queries              |
-| `js/place-state.js`       | Applied Places URL parsing and serialization                                       |
-| `js/place-publication.js` | Shared bibliographic identity for place research                                   |
-| `js/place-focus.js`       | Focus continuity for updating place research surfaces                              |
-| `js/place-map.js`         | Lazy-loaded Leaflet map, clustering, and geographic navigation                     |
-| `js/places.js`            | Linked place discovery, publication inspector, and return context                  |
-| `js/place-collection.js`  | Reviewed saved-place associations and scoped bibliography export                   |
-| `js/changes.js`           | Explicit saved-metadata comparison and acceptance                                  |
-| `js/covers.js`            | ISBN validation and attributed Open Library covers                                 |
-| `js/dom.js`               | Text-safe DOM construction and shared interface helpers                            |
-| `css/tokens.css`          | Primitive and semantic design tokens                                               |
-| `css/workspace.css`       | Components, layout, responsive behavior, and interaction states                    |
+| Module                        | Responsibility                                                                     |
+| ----------------------------- | ---------------------------------------------------------------------------------- |
+| `js/main.js`                  | Query state, view transitions, result rendering, and collection actions            |
+| `js/view-config.js`           | View labels and skip-link targets                                                  |
+| `js/breakpoints.js`           | Shared JavaScript media-query values                                               |
+| `js/data.js`                  | Scholarly period presets, normalization, identifiers, and shareable query state    |
+| `js/crossref.js`              | API requests, cancellation, caching, retries, pagination, and citation negotiation |
+| `js/result-row.js`            | Result row rendering and row-level actions                                         |
+| `js/search-status.js`         | Search notices, retry actions, and pagination footer                               |
+| `js/inspector.js`             | Publication metadata, references, relationships, and citation views                |
+| `js/collection.js`            | Collection validation, legacy storage input, and import/backup format              |
+| `js/collection-store.js`      | Transactional browser persistence and cross-tab change notifications               |
+| `js/collection-tools.js`      | Collection search, scoped export, selection feedback, and import                   |
+| `js/decision-keys.js`         | Persisted review and change key contracts                                          |
+| `js/session.js`               | Per-tab reading-position persistence                                               |
+| `js/download.js`              | Shared text/blob download helper                                                   |
+| `js/export.js`                | Bibliography conversion, CSV, JSON, and downloads                                  |
+| `js/aggregates.js`            | Whole-query Crossref facet and metadata-presence summaries                         |
+| `js/visualize.js`             | Accessible charts, refinement actions, and aggregate CSV                           |
+| `js/references.js`            | Pure reference overlap and provenance analysis                                     |
+| `js/research.js`              | Reference review, manual matching, and worker coordination                         |
+| `js/research-worker.js`       | Bounded local reference computation                                                |
+| `js/research-store.js`        | Per-item review persistence and portable decisions                                 |
+| `js/place-data.js`            | Pleiades index, metadata mention evidence, and Crossref place queries              |
+| `js/place-state.js`           | Applied Places URL parsing and serialization                                       |
+| `js/place-publication.js`     | Shared bibliographic identity for place research                                   |
+| `js/place-publication-row.js` | Place publication row rendering and collection actions                             |
+| `js/place-focus.js`           | Focus continuity for updating place research surfaces                              |
+| `js/place-map.js`             | Lazy-loaded Leaflet map, clustering, and geographic navigation                     |
+| `js/places.js`                | Linked place discovery, publication inspector, and return context                  |
+| `js/place-collection.js`      | Reviewed saved-place associations and scoped bibliography export                   |
+| `js/changes.js`               | Explicit saved-metadata comparison and acceptance                                  |
+| `js/covers.js`                | ISBN validation and attributed Open Library covers                                 |
+| `js/dom.js`                   | Text-safe DOM construction and shared interface helpers                            |
+| `css/tokens.css`              | Primitive and semantic design tokens                                               |
+| `css/workspace.css`           | Components, layout, responsive behavior, and interaction states                    |
 
 API-supplied text is rendered through DOM text nodes. Data is not embedded in inline event handlers. DOI, ORCID, ISBN, and external URL handling have explicit validation. Raw deposited records remain available for download.
 
@@ -127,6 +134,7 @@ Use Node 24 and Python 3:
 npm ci
 npm run format:check
 npm run lint
+npm run typecheck
 npm run check
 npm test
 npm run test:e2e
