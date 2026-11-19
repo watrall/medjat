@@ -40,6 +40,7 @@ export const siteFiles = [
   'js/research-store.js',
   'js/research-worker.js',
   'js/research.js',
+  'js/result-row.js',
   'js/session.js',
   'js/visualize.js',
 ];
@@ -93,6 +94,7 @@ export const repositoryFiles = [
   'js/research-store.js',
   'js/research-worker.js',
   'js/research.js',
+  'js/result-row.js',
   'js/session.js',
   'js/visualize.js',
   'package-lock.json',

@@ -25,6 +25,7 @@ import { readSession, writeSession } from './session.js';
 import { createInspector } from './inspector.js';
 import { createCollectionStore } from './collection-store.js';
 import { createCollectionTools } from './collection-tools.js';
+import { createResultRow } from './result-row.js';
 import { el, icon, emptyState, notify, skeletons } from './dom.js';
 
 const $ = (id) => document.getElementById(id);
@@ -531,78 +532,26 @@ function renderList() {
     return;
   }
   list.replaceChildren(
-    ...visibleWorks().map((work) => {
-      const title = el(
-        'button',
-        {
-          class: 'result-open',
-          onclick: () => selectWork(work),
-          'aria-label': `Inspect ${work.title}`,
-        },
-        work.title,
-      );
-      const badges = [
-        work.abstract && ['file-text', 'Abstract'],
-        work.authors.some((a) => a.orcid) && ['user-round', 'ORCID'],
-        work.references.length > 0 && ['network', `${work.references.length} references`],
-      ].filter(Boolean);
-      return el(
-        'li',
-        {
-          class: `result-row${state.selected === work.id ? ' is-selected' : ''}`,
-          'data-record': work.id,
-        },
-        el(
-          'div',
-          { class: 'result-top' },
-          state.view === 'collection' &&
-            el(
-              'label',
-              { class: 'select-publication' },
-              el('input', {
-                type: 'checkbox',
-                checked: state.exportSelection.has(work.id),
-                'aria-label': `Select publication: ${work.title}`,
-                onchange: (event) => {
-                  if (event.target.checked) {
-                    state.exportSelection.add(work.id);
-                    state.exportScope = 'selected';
-                  } else state.exportSelection.delete(work.id);
-                  collectionTools.sync();
-                  saveSession();
-                },
-              }),
-            ),
-          el(state.view === 'collection' ? 'h2' : 'h3', {}, title),
-          el(
-            'button',
-            {
-              class: 'save-button',
-              'aria-pressed': String(state.collection.has(work.id)),
-              'aria-label': `${state.collection.has(work.id) ? 'Remove from' : 'Save to'} collection: ${work.title}`,
-              onclick: () => toggleSave(work),
-            },
-            icon(state.collection.has(work.id) ? 'bookmark-check' : 'bookmark'),
-            el('span', {}, state.collection.has(work.id) ? 'Saved' : 'Save'),
-          ),
-        ),
-        el(
-          'p',
-          { class: 'result-meta' },
-          [authorLine(work), work.year || 'Date not supplied', work.container || work.publisher]
-            .filter(Boolean)
-            .join(' · '),
-        ),
-        work.abstract && el('p', { class: 'result-snippet' }, work.abstract),
-        el(
-          'div',
-          { class: 'metadata-badges' },
-          el('span', {}, work.typeLabel),
-          badges.map(([name, label]) => el('span', { class: 'metadata-badge' }, icon(name), label)),
-        ),
-      );
-    }),
+    ...visibleWorks().map((work) =>
+      createResultRow(work, {
+        view: state.view,
+        selected: state.selected === work.id,
+        saved: state.collection.has(work.id),
+        selectedForExport: state.exportSelection.has(work.id),
+        onOpen: selectWork,
+        onSave: toggleSave,
+        onSelectionChange: toggleSelection,
+      }),
+    ),
   );
+}
+function toggleSelection(id, checked) {
+  if (checked) {
+    state.exportSelection.add(id);
+    state.exportScope = 'selected';
+  } else state.exportSelection.delete(id);
+  collectionTools.sync();
+  saveSession();
 }
 function renderStatus() {
   $('collectionUndo').hidden = !state.lastRemoved;
