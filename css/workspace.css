@@ -852,7 +852,7 @@ h1 {
   background: var(--color-warning-bg);
   color: var(--color-warning);
   padding: var(--space-base);
-  border: 1px solid oklch(85% 0.065 80);
+  border: 1px solid var(--color-warning-border);
   border-radius: var(--radius-sm);
   margin-bottom: var(--space-base);
 }
@@ -865,7 +865,7 @@ h1 {
 .notice-error {
   color: var(--color-error);
   background: var(--color-selected);
-  border-color: oklch(85% 0.06 29);
+  border-color: var(--color-error-border);
 }
 .toast {
   position: fixed;
@@ -879,7 +879,7 @@ h1 {
   border-radius: var(--radius-base);
   padding: 0.75rem 1rem;
   font-size: var(--text-label);
-  box-shadow: 0 4px 16px oklch(20% 0.025 330 / 0.12);
+  box-shadow: var(--shadow-raised);
 }
 .skeleton-row {
   padding: var(--space-lg) var(--space-md);
