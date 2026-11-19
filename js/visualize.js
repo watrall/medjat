@@ -3,22 +3,7 @@ import { bibliographicTerms } from './crossref.js';
 import { el, icon } from './dom.js';
 import { downloadText } from './download.js';
 import { csvCell } from './export.js';
-import { TYPES } from './data.js';
-function filterDescription(query) {
-  return (
-    [
-      (query.from || query.to) &&
-        `Publication years: ${query.from || 'any'} to ${query.to || 'any'}`,
-      query.type && `Type: ${TYPES.get(query.type) || query.type}`,
-      query.container && `Venue: ${query.container}`,
-      query.abstract && 'Abstract required',
-      query.orcid && 'Author ORCID required',
-      query.references && 'References required',
-    ]
-      .filter(Boolean)
-      .join(' · ') || 'No additional publication filters'
-  );
-}
+import { filterDescription } from './filters.js';
 export function createVisualize(root, { onRefine }) {
   let controller,
     generation = 0,

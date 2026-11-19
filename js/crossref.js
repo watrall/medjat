@@ -1,4 +1,5 @@
 import { DEFAULT_QUERY, PERIODS, normalizeDOI, normalizeWork } from './data.js';
+import { queryFilters } from './filters.js';
 
 export const API = 'https://api.crossref.org';
 export const CONTACT = 'ethan.watrall@gmail.com';
@@ -76,14 +77,7 @@ export function buildSearchURL(query, cursor = '*') {
       throw new Error('Narrow your search to continue browsing by publication date.');
     params.set('offset', String(offset));
   }
-  const filters = [];
-  if (query.container) filters.push(`container-title:${query.container}`);
-  if (query.type) filters.push(`type:${query.type}`);
-  if (query.from) filters.push(`from-pub-date:${query.from}-01-01`);
-  if (query.to) filters.push(`until-pub-date:${query.to}-12-31`);
-  if (query.abstract) filters.push('has-abstract:true');
-  if (query.orcid) filters.push('has-orcid:true');
-  if (query.references) filters.push('has-references:true');
+  const filters = queryFilters(query);
   if (filters.length) params.set('filter', filters.join(','));
   params.set('sort', query.sort === 'relevance' ? 'score' : 'published');
   params.set('order', query.sort === 'oldest' ? 'asc' : 'desc');

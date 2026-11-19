@@ -7,12 +7,12 @@ import { createVisualize } from './visualize.js';
 import {
   DEFAULT_QUERY,
   PERIODS,
-  TYPES,
   readQuery,
   queryString,
   authorLine,
   normalizeWork,
 } from './data.js';
+import { filterChips, readFilterControls, writeFilterControls } from './filters.js';
 import { searchWorks, getWork, bibliographicTerms, DATE_BROWSE_LIMIT } from './crossref.js';
 import { readSession, writeSession } from './session.js';
 import { createInspector } from './inspector.js';
@@ -106,29 +106,24 @@ function updateURL({ push = false } = {}) {
 }
 function syncControls() {
   $('searchInput').value = state.draft.q;
-  $('periodSelect').value = state.draft.period;
-  $('yearFrom').value = state.draft.from;
-  $('yearTo').value = state.draft.to;
-  $('typeFilter').value = state.draft.type;
-  $('hasAbstract').checked = state.draft.abstract;
-  $('hasOrcid').checked = state.draft.orcid;
-  $('hasReferences').checked = state.draft.references;
+  writeFilterControls(document, state.draft);
   $('sortSelect').value = state.query.sort;
   updatePeriodHint();
   renderAppliedQuery();
   renderDraftStatus();
 }
 function readDraft() {
+  const filters = readFilterControls(document);
   return {
     q: $('searchInput').value.trim() || DEFAULT_QUERY,
     container: state.draft.container || '',
-    period: $('periodSelect').value,
-    from: $('yearFrom').value,
-    to: $('yearTo').value,
-    type: $('typeFilter').value,
-    abstract: $('hasAbstract').checked,
-    orcid: $('hasOrcid').checked,
-    references: $('hasReferences').checked,
+    period: filters.period,
+    from: filters.from,
+    to: filters.to,
+    type: filters.type,
+    abstract: filters.abstract,
+    orcid: filters.orcid,
+    references: filters.references,
     sort: state.query.sort,
   };
 }
@@ -146,17 +141,7 @@ function renderAppliedQuery() {
   $('effectiveQuery').textContent = state.doiLookup
     ? `Exact DOI lookup: ${query.q}. Topic and publication refinements do not apply.`
     : `Keywords sent to Crossref: ${bibliographicTerms(query)}`;
-  const period = PERIODS.find((p) => p.id === query.period);
-  const chips = [
-    period && `Period keywords: ${period.name}`,
-    query.type && TYPES.get(query.type),
-    query.container && `Venue: ${query.container}`,
-    query.from && `From ${query.from}`,
-    query.to && `To ${query.to}`,
-    query.abstract && 'Has abstract',
-    query.orcid && 'Has ORCID',
-    query.references && 'Has references',
-  ].filter(Boolean);
+  const chips = filterChips(query);
   $('activeQuery').replaceChildren(
     ...chips.map((text) => el('span', { class: 'query-chip' }, text)),
   );
