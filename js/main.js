@@ -45,6 +45,13 @@ const state = {
 
 let initialized = false,
   restoringLocation = false;
+let navigationGeneration = 0,
+  locationController;
+function cancelRestoration() {
+  navigationGeneration++;
+  locationController?.abort();
+  restoringLocation = false;
+}
 function saveSession() {
   writeSession({
     view: state.view,
@@ -134,7 +141,10 @@ const inspector = createInspector($('inspector'), {
   onSave: toggleSave,
   isSaved: (id) => state.collection.has(id),
   onChange: saveSession,
-  onNavigate: () => updateURL({ push: true }),
+  onNavigate: () => {
+    cancelRestoration();
+    updateURL({ push: true });
+  },
 });
 const collectionTools = createCollectionTools($('collectionTools'), {
   getState: () => ({
@@ -239,6 +249,7 @@ async function toggleSave(work) {
     )?.focus({ preventScroll: true });
 }
 function setView(view, { navigate = true, syncURL = true, load = true } = {}) {
+  if (navigate) cancelRestoration();
   if (view !== 'collection') collectionTools.cancel();
   $('research').classList.toggle('collection-view', view === 'collection');
   state.view = view;
@@ -275,6 +286,7 @@ function closeInspector() {
   updateURL();
 }
 function selectWork(work) {
+  cancelRestoration();
   state.selected = work.id;
   renderList();
   renderInspector(work);
@@ -569,6 +581,7 @@ for (const period of PERIODS) {
 }
 $('periodSelect').addEventListener('change', updatePeriodHint);
 $('sortSelect').addEventListener('change', (e) => {
+  cancelRestoration();
   state.query.sort = e.target.value;
   state.draft = readDraft();
   runSearch();
@@ -585,11 +598,15 @@ function submitSearch(e) {
   const from = $('yearFrom').value;
   const to = $('yearTo').value;
   if (from && to && Number(from) > Number(to)) {
+    $('refinements').open = true;
     $('filterError').textContent = 'The start year must come before the end year.';
     $('filterError').hidden = false;
+    $('filterError').setAttribute('tabindex', '-1');
+    $('filterError').focus();
     return;
   }
   $('filterError').hidden = true;
+  cancelRestoration();
   state.draft = readDraft();
   state.query = { ...state.draft };
   runSearch();
@@ -660,6 +677,10 @@ collectionStore.subscribe(({ records, warning }) => {
   inspector.refresh();
 });
 async function restoreLocation(resume = null) {
+  locationController?.abort();
+  const controller = new AbortController();
+  locationController = controller;
+  const navigation = ++navigationGeneration;
   restoringLocation = true;
   const params = new URLSearchParams(location.search);
   const record = params.get('record');
@@ -689,12 +710,14 @@ async function restoreLocation(resume = null) {
       (!state.resultQuery || queryString(state.resultQuery) !== queryString(state.query))
     )
       await runSearch();
+    if (navigation !== navigationGeneration) return;
     if (resume?.inspector) inspector.restore(resume.inspector);
     else if (record) {
       const work =
         state.collection.get(record)?.work ||
         state.items.find((work) => work.id === record) ||
-        (await getWork(record));
+        (await getWork(record, { signal: controller.signal }));
+      if (navigation !== navigationGeneration) return;
       renderInspector(work);
       state.selected = work.id;
       renderList();
@@ -703,10 +726,15 @@ async function restoreLocation(resume = null) {
       $('research').classList.add('mobile-detail-open');
     else $('research').classList.remove('mobile-detail-open');
   } catch {
-    notify('The reading position could not be restored. Your saved collection is still available.');
+    if (navigation === navigationGeneration)
+      notify(
+        'The reading position could not be restored. Your saved collection is still available.',
+      );
   } finally {
-    restoringLocation = false;
-    updateURL();
+    if (navigation === navigationGeneration) {
+      restoringLocation = false;
+      updateURL();
+    }
   }
 }
 window.addEventListener('popstate', () => restoreLocation());

@@ -265,6 +265,48 @@ test('an export keeps its initial membership while the collection changes', asyn
   await expect(page.locator('#exportStatus')).toContainText('Exported 2 saved publications');
 });
 
+test('a slow record restoration never overrides a later publication choice', async ({ page }) => {
+  await fixtures(page);
+  let release;
+  const gate = new Promise((resolve) => {
+    release = resolve;
+  });
+  await page.route('https://api.crossref.org/works/10.1234%2Fslow?**', async (route) => {
+    await gate;
+    await route
+      .fulfill({
+        json: { message: { ...publication(0), DOI: '10.1234/slow', title: ['Old slow link'] } },
+      })
+      .catch(() => {});
+  });
+  await page.goto('/?record=10.1234%2Fslow', { waitUntil: 'commit' });
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await page.locator('.result-open').nth(1).click();
+  release();
+  await expect(page.locator('.detail-title')).toHaveText('Ancient Egyptian research 1');
+  await expect(page).toHaveURL(/record=10.1234%2Ftest-record-1/);
+});
+
+test('cross-field year errors open collapsed refinements and receive keyboard focus', async ({
+  page,
+}) => {
+  await fixtures(page);
+  await page.setViewportSize({ width: 768, height: 1000 });
+  await page.goto('/');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await page.locator('#refinements').evaluate((element) => {
+    element.open = true;
+  });
+  await page.locator('#yearFrom').fill('2025');
+  await page.locator('#yearTo').fill('2000');
+  await page.locator('#refinements').evaluate((element) => {
+    element.open = false;
+  });
+  await page.getByRole('button', { name: 'Search', exact: true }).click();
+  await expect(page.locator('#filterError')).toBeVisible();
+  await expect(page.locator('#filterError')).toBeFocused();
+});
+
 test('search, inspect, save, reload, cite, and export a collection', async ({ page }) => {
   const requests = await fixtures(page);
   await page.goto('/');
