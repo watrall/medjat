@@ -453,8 +453,20 @@ test('search and collection views have no detected WCAG AA violations', async ({
     expect(result.violations).toEqual([]);
   };
   await check();
+  await page.getByRole('button', { name: 'Connections', exact: true }).click();
+  await check();
+  await page.getByRole('button', { name: 'Cite', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: 'Formatted citation' })).toBeVisible();
+  await check();
   await page.getByRole('button', { name: /^Save to collection: Settlement/ }).click();
   await page.getByRole('button', { name: 'Collection 1', exact: true }).click();
+  await check();
+  for (const width of [1024, 768, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      width,
+    );
+  }
   await check();
 });
 test('untrusted metadata remains text instead of executable markup', async ({ page }) => {

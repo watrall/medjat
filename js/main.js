@@ -1,5 +1,5 @@
 import { PERIODS, TYPES, readQuery, queryString, authorLine, doiURL } from './data.js';
-import { searchWorks, getWork, DATE_BROWSE_LIMIT } from './crossref.js';
+import { searchWorks, getWork, bibliographicTerms, DATE_BROWSE_LIMIT } from './crossref.js';
 import { readSession, writeSession } from './session.js';
 import { createInspector } from './inspector.js';
 import { createCollectionStore } from './collection-store.js';
@@ -111,6 +111,9 @@ function captureDraft() {
 }
 function renderAppliedQuery() {
   const query = state.resultQuery || state.query;
+  $('effectiveQuery').textContent = state.doiLookup
+    ? `Exact DOI lookup: ${query.q}. Topic and publication refinements do not apply.`
+    : `Keywords sent to Crossref: ${bibliographicTerms(query)}`;
   const period = PERIODS.find((p) => p.id === query.period);
   const chips = [
     period && `Period keywords: ${period.name}`,
@@ -248,6 +251,7 @@ function setView(view, { navigate = true, syncURL = true, load = true } = {}) {
   $('activeQuery').hidden = view === 'collection' || !$('activeQuery').childElementCount;
   $('resultsTitle').textContent = view === 'collection' ? 'Your collection' : 'Publications';
   $('collectionTools').hidden = view !== 'collection';
+  $('searchExplanation').hidden = view === 'collection';
   if (view === 'collection') renderCollectionTools();
   const work = visibleWorks().find((w) => w.id === state.selected) || visibleWorks()[0];
   state.selected = work?.id || null;
@@ -304,8 +308,20 @@ function renderList() {
       empty.append(
         el(
           'button',
-          { class: 'button', onclick: () => setView('explore') },
-          'Explore publications',
+          {
+            class: 'button',
+            onclick: () => {
+              if (state.collection.size) {
+                state.collectionQuery = '';
+                reconcileCollection();
+                renderList();
+                renderStatus();
+                updateURL();
+                $('collectionSearch').focus();
+              } else setView('explore');
+            },
+          },
+          state.collection.size ? 'Clear collection search' : 'Explore publications',
         ),
       );
       list.replaceChildren(el('li', {}, empty));
@@ -434,7 +450,7 @@ function renderStatus() {
       : `Sorted by publication date, ${resultQuery.sort === 'oldest' ? 'oldest' : 'newest'} first`;
   $('scopeNote').textContent = state.doiLookup
     ? 'DOI lookup opens one exact Crossref record; topic and publication filters do not apply.'
-    : `${previous ? `Showing the last successful search for “${resultQuery.q}”. ` : ''}${ranking}${state.retrievedAt ? ` · ${state.cached ? 'cached' : 'retrieved'} ${new Date(state.retrievedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}. Relevance and coverage vary.${resultQuery.sort !== 'relevance' ? ` Date-sorted browsing covers the first ${DATE_BROWSE_LIMIT.toLocaleString()} candidates; narrow your search for more focused results.` : ''}`;
+    : `${previous ? `Showing the last successful search for “${resultQuery.q}”. ` : `Results for “${resultQuery.q}”. `}${ranking}${state.retrievedAt ? ` · ${state.cached ? 'cached' : 'retrieved'} ${new Date(state.retrievedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}. Relevance and coverage vary.${resultQuery.sort !== 'relevance' ? ` Date-sorted browsing covers the first ${DATE_BROWSE_LIMIT.toLocaleString()} candidates; narrow your search for more focused results.` : ''}`;
   const notice = $('requestNotice');
   notice.hidden = !state.error;
   if (state.error)

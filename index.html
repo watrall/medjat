@@ -145,7 +145,7 @@
           </div>
           <button class="button button-primary search-submit" type="submit">Search</button>
         </form>
-        <p class="search-hint">Search topics, sites, authors, or a DOI.</p>
+        <p class="search-hint">Try a site such as Hierakonpolis, a topic, an author, or a DOI.</p>
         <div id="pendingQuery" class="pending-query" hidden>
           <p>
             Search changes are pending. Use Search or Update search to apply them. Sorting keeps
@@ -165,7 +165,9 @@
                 <option value="">All periods</option>
               </select>
               <p id="periodDates" class="period-dates" hidden></p>
-              <p id="periodHelp" class="filter-help">Adds period keywords to your search.</p>
+              <p id="periodHelp" class="filter-help">
+                Adds keywords. Records are not classified by period.
+              </p>
             </fieldset>
             <fieldset class="filter-group">
               <legend>Publication year</legend>
@@ -235,6 +237,19 @@
           <p id="scopeNote" class="scope-note">
             Bibliographic matches in Crossref, not a complete subject bibliography.
           </p>
+          <details id="searchExplanation" class="search-explanation">
+            <summary>How these results were found</summary>
+            <p id="effectiveQuery"></p>
+            <p>
+              Crossref ranks keyword matches across deposited publication metadata. Adding period
+              words can broaden the candidates; it does not verify a publication's historical
+              subject. Publication year, type, and metadata controls apply separate filters.
+            </p>
+            <p>
+              Screen the titles and sources for relevance. Older and non-DOI scholarship may be
+              missing. Try alternative spellings and the language of the scholarship you need.
+            </p>
+          </details>
           <div id="activeQuery" class="active-query" aria-label="Current search"></div>
           <div id="requestNotice" role="alert" hidden></div>
           <div id="collectionTools" hidden></div>

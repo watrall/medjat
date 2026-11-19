@@ -6,6 +6,7 @@ export function createCollectionTools(
   root,
   { getState, onQuery, onSelect, onPreferences, onImport },
 ) {
+  const noun = (count) => (count === 1 ? 'publication' : 'publications');
   let controller = null,
     job = null;
   const search = el('input', {
@@ -144,10 +145,10 @@ export function createCollectionTools(
     scopeHelp.textContent =
       job ||
       (state.scope === 'all'
-        ? `Exports all ${count} saved publications${state.query ? `, including ${totals.all - totals.matching} outside this search` : ''}.`
+        ? `Exports all ${count} saved ${noun(count)}${state.query ? `, including ${totals.all - totals.matching} outside this search` : ''}.`
         : state.scope === 'matching'
-          ? `Exports ${count} publications matching your collection search.`
-          : `Exports ${count} selected publications, including selections outside this search.`);
+          ? `Exports ${count} ${noun(count)} matching your collection search.`
+          : `Exports ${count} selected ${noun(count)}, including selections outside this search.`);
     formatHelp.textContent =
       state.format === 'json'
         ? 'JSON preserves source metadata and can be imported here.'
@@ -175,7 +176,7 @@ export function createCollectionTools(
       outputScope = state.scope;
     const active = new AbortController();
     controller = active;
-    job = `Exporting a snapshot of ${snapshot.size} ${outputScope === 'all' ? 'saved' : outputScope} publications.`;
+    job = `Exporting a snapshot of ${snapshot.size} ${outputScope === 'all' ? 'saved' : outputScope} ${noun(snapshot.size)}.`;
     cancel.hidden = false;
     status.textContent = 'Preparing your bibliography…';
     sync();
@@ -188,11 +189,11 @@ export function createCollectionTools(
       });
       active.signal.throwIfAborted();
       downloadFile(text, outputFormat, { scope: outputScope, count: snapshot.size });
-      status.textContent = `Exported ${snapshot.size} ${outputScope === 'all' ? 'saved' : outputScope} publications. Your collection and selection are unchanged.`;
+      status.textContent = `Exported ${snapshot.size} ${outputScope === 'all' ? 'saved' : outputScope} ${noun(snapshot.size)}. Your collection and selection are unchanged.`;
     } catch (error) {
       status.textContent = active.signal.aborted
         ? 'Export cancelled. Your collection and selection are unchanged.'
-        : `Export failed. ${error.message} Your collection and selection are unchanged.`;
+        : `Export failed. ${error.status ? 'Crossref format conversion is unavailable for this export.' : error.message} Try CSV or JSON backup to keep your records. Your collection and selection are unchanged.`;
     } finally {
       controller = null;
       job = null;

@@ -7,14 +7,17 @@ export const DATE_BROWSE_LIMIT = 10000;
 const cache = new Map();
 const TTL = 5 * 60 * 1000;
 
-export function buildSearchURL(query, cursor = '*') {
+export function bibliographicTerms(query) {
   const period = PERIODS.find((p) => p.id === query.period);
   const text = query.q.trim();
   const terms = [text || 'ancient egypt'];
   if (period) terms.push(period.query);
   if (!/\begypt(?:ian)?\b/i.test(text) && !period) terms.push('ancient Egypt');
+  return terms.join(' ');
+}
+export function buildSearchURL(query, cursor = '*') {
   const params = new URLSearchParams({
-    'query.bibliographic': terms.join(' '),
+    'query.bibliographic': bibliographicTerms(query),
     rows: String(PAGE_SIZE),
     mailto: CONTACT,
   });

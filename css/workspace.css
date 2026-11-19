@@ -1242,3 +1242,17 @@ h1 {
   flex: 1 1 16rem;
   overflow-wrap: anywhere;
 }
+.search-explanation {
+  margin-block: var(--space-sm) var(--space-base);
+  font-size: var(--text-label);
+  color: var(--color-secondary);
+}
+.search-explanation summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding-block: var(--space-md);
+}
+.search-explanation p {
+  max-width: 70ch;
+  overflow-wrap: anywhere;
+}
