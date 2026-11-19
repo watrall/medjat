@@ -667,4 +667,9 @@ test('a rejected changed search preserves clearly identified previous results', 
   await expect(page.locator('#scopeNote')).toContainText(
     'last successful search for “ancient egypt”',
   );
+  await page.getByRole('button', { name: 'Discard changes', exact: true }).click();
+  await expect(page.locator('#searchInput')).toHaveValue('ancient egypt');
+  await expect(page.locator('#requestNotice')).toBeHidden();
+  await expect(page.locator('#resultCount')).not.toContainText('Previous results');
+  await expect(page).not.toHaveURL(/a\+changed\+search/);
 });

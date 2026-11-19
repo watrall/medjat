@@ -626,7 +626,11 @@ for (const form of [$('searchForm'), $('filterForm')]) {
 }
 $('discardDraft').addEventListener('click', () => {
   state.draft = { ...(state.resultQuery || state.query) };
+  state.query = { ...state.draft };
+  state.error = '';
   syncControls();
+  renderStatus();
+  updateURL();
   $('searchInput').focus();
 });
 $('clearFilters').addEventListener('click', (e) => {
