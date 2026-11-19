@@ -215,3 +215,21 @@ test('unsupported place URL values fall back to an explicit valid scope', async 
   await expect(page.locator('#toast')).toContainText('Using the primary place name');
   await expect(page).not.toHaveURL(/NotAnIndexedAlias/);
 });
+
+test('Places drafts survive leaving the view and refreshing elsewhere in the app', async ({
+  page,
+}) => {
+  await tiles(page);
+  await page.route('https://api.crossref.org/**', (r) =>
+    r.fulfill({ json: { message: { items: [work], 'total-results': 1 } } }),
+  );
+  await page.goto('/?view=places&place=756512&placeTopic=burial');
+  await expect(page.locator('.place-results-status')).toBeVisible();
+  await page.locator('#placeTopic').fill('Unfinished pottery question');
+  await page.locator('#exploreNav').click();
+  await page.reload();
+  await page.locator('#placesNav').click();
+  await expect(page.locator('#placeSelect')).toHaveValue('756512');
+  await expect(page.locator('#placeTopic')).toHaveValue('Unfinished pottery question');
+  await expect(page.locator('#placePublications')).toContainText('Applied search: Abydos · burial');
+});

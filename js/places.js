@@ -16,6 +16,7 @@ export function createPlaces(
     onSession = () => {},
     getRemoved = () => null,
     onUndo = async () => {},
+    initialSession = null,
   },
 ) {
   let gazetteer,
@@ -55,6 +56,7 @@ export function createPlaces(
     return { place: selected, mode, term, topic, status: evidenceStatus };
   }
   function capture() {
+    if (!active && (reading || initialSession)) return reading || initialSession;
     return {
       collection: panels?.collection.capture(),
       ...location(),
@@ -65,6 +67,9 @@ export function createPlaces(
     };
   }
   async function show(options = {}) {
+    if (!Object.keys(options).length && initialSession)
+      options = { ...initialSession, session: initialSession };
+    initialSession = null;
     const queryChanged =
       ('term' in options && term !== options.term) ||
       ('topic' in options && topic !== options.topic);

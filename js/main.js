@@ -310,6 +310,7 @@ async function toggleSave(work) {
     )?.focus({ preventScroll: true });
 }
 const places = createPlaces($('places'), {
+  initialSession: resumedSession?.places,
   getSaved: () => state.collection,
   onSave: toggleSave,
   getRemoved: () => state.lastRemoved,
