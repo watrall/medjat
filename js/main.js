@@ -1,5 +1,5 @@
 import { createChangeReview } from './changes.js';
-import { createAtlas } from './atlas.js';
+import { createPlaces } from './places.js';
 import { createResearch } from './research.js';
 import { importResearch } from './research-store.js';
 import { createVisualize } from './visualize.js';
@@ -72,6 +72,8 @@ function saveSession() {
 function updateURL({ push = false } = {}) {
   const params = new URLSearchParams(queryString(state.query));
   if (state.view !== 'explore') params.set('view', state.view);
+  if (state.view === 'places' && places.location().place)
+    params.set('place', places.location().place);
   const work = inspector.getCurrentWork();
   if (work) params.set('record', work.doi);
   if ($('research').classList.contains('mobile-detail-open')) params.set('detail', '1');
@@ -283,12 +285,10 @@ async function toggleSave(work) {
       $('undoRemoval')
     )?.focus({ preventScroll: true });
 }
-const atlas = createAtlas($('atlas'), {
-  getWorks: () => [...state.collection.values()].map((entry) => entry.work),
-  onInspect: (work) => {
-    setView('collection');
-    selectWork(work);
-  },
+const places = createPlaces($('places'), {
+  getSaved: () => state.collection,
+  onSave: toggleSave,
+  onLocation: () => updateURL({ push: true }),
 });
 const visualizer = createVisualize($('visualize'), {
   onRefine(filter) {
@@ -299,23 +299,24 @@ const visualizer = createVisualize($('visualize'), {
     runSearch();
   },
 });
-function setView(view, { navigate = true, syncURL = true, load = true } = {}) {
+function setView(view, { navigate = true, syncURL = true, load = true, placeOptions } = {}) {
   if (navigate) cancelRestoration();
   const skip = document.querySelector('.skip-link');
-  skip.href = `#${['visualize', 'atlas'].includes(view) ? view : 'research'}`;
+  skip.href = `#${['visualize', 'places'].includes(view) ? view : 'research'}`;
   skip.textContent =
-    view === 'atlas'
-      ? 'Skip to atlas'
+    view === 'places'
+      ? 'Skip to places'
       : view === 'visualize'
         ? 'Skip to visualizations'
         : 'Skip to publications';
+  if (view !== 'places') places.cancel();
   if (view !== 'collection') {
     changeReview.cancel();
     researcher.cancel();
   }
-  $('atlas').hidden = view !== 'atlas';
-  $('atlasNav').setAttribute('aria-pressed', String(view === 'atlas'));
-  if (view === 'atlas') {
+  $('places').hidden = view !== 'places';
+  $('placesNav').setAttribute('aria-pressed', String(view === 'places'));
+  if (view === 'places') {
     state.view = view;
     $('research').hidden = true;
     $('visualize').hidden = true;
@@ -324,7 +325,7 @@ function setView(view, { navigate = true, syncURL = true, load = true } = {}) {
     document.body.classList.add('is-collection');
     collectionTools.cancel();
     visualizer.cancel();
-    atlas.show();
+    places.show(placeOptions);
     if (syncURL) updateURL({ push: navigate });
     return;
   }
@@ -757,7 +758,7 @@ $('aboutToggle').addEventListener('click', () => {
   $('aboutToggle').setAttribute('aria-expanded', String(open));
 });
 $('exploreNav').addEventListener('click', () => setView('explore'));
-$('atlasNav').addEventListener('click', () => setView('atlas'));
+$('placesNav').addEventListener('click', () => setView('places'));
 $('visualizeNav').addEventListener('click', () => setView('visualize'));
 $('collectionNav').disabled = false;
 $('collectionNav').addEventListener('click', () => setView('collection'));
@@ -829,17 +830,23 @@ async function restoreLocation(resume = null) {
       : 'ris';
     state.selected = resume?.selected || record;
     syncControls();
-    const view = ['collection', 'visualize', 'atlas'].includes(params.get('view'))
+    if (params.get('view') === 'atlas') params.set('view', 'places');
+    const view = ['collection', 'visualize', 'places'].includes(params.get('view'))
       ? params.get('view')
       : 'explore';
-    setView(view, { navigate: false, syncURL: false, load: false });
+    setView(view, {
+      navigate: false,
+      syncURL: false,
+      load: false,
+      placeOptions: { place: params.get('place') || '' },
+    });
     if (
       view === 'explore' &&
       (!state.resultQuery || queryString(state.resultQuery) !== queryString(state.query))
     )
       await runSearch();
     if (navigation !== navigationGeneration) return;
-    if (view === 'visualize' || view === 'atlas') return;
+    if (view === 'visualize' || view === 'places') return;
     if (resume?.inspector) inspector.restore(resume.inspector);
     else if (record) {
       const work =

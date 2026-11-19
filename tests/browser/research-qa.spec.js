@@ -39,12 +39,16 @@ test('research views retain accessible controls and reflow across desktop and mo
   await page.goto('/');
   await expect(page.locator('.result-row')).toHaveCount(1);
   await page.locator('.save-button').click();
-  for (const view of ['visualize', 'atlas', 'collection']) {
+  await page.route('https://tile.openstreetmap.org/**', (route) => route.abort());
+  for (const view of ['visualize', 'places', 'collection']) {
     await page.locator(`#${view}Nav`).click();
     if (view === 'visualize')
       await expect(page.locator('#visualize')).toContainText('9,000,000 Crossref candidates');
-    if (view === 'atlas')
-      await expect(page.locator('#atlas')).toContainText('Publication-place evidence (2)');
+    if (view === 'places') {
+      await expect(page.locator('#placeMap .leaflet-marker-icon').first()).toBeVisible();
+      await page.locator('#placeSelect').selectOption('756512');
+      await expect(page.locator('.place-results-status')).toContainText('1 candidates loaded');
+    }
     if (view === 'collection') {
       await page
         .getByRole('button', { name: 'Discover references from selected or saved publications' })

@@ -1,7 +1,5 @@
 import { test, expect } from '@playwright/test';
-test('atlas reviews source evidence and metadata changes require explicit acceptance', async ({
-  page,
-}) => {
+test('metadata changes require explicit acceptance', async ({ page }) => {
   const old = { DOI: '10.1234/abydos', title: ['Excavations at Abydos'], type: 'journal-article' };
   await page.route('https://api.crossref.org/**', (route) =>
     route.fulfill({
@@ -20,10 +18,6 @@ test('atlas reviews source evidence and metadata changes require explicit accept
   await page.goto('/');
   await expect(page.locator('.result-row')).toHaveCount(1);
   await page.locator('.save-button').click();
-  await page.locator('#atlasNav').click();
-  await expect(page.locator('#atlas')).toContainText('Publication-place evidence (1)');
-  await page.getByRole('button', { name: 'Confirm association', exact: true }).click();
-  await expect(page.locator('#atlas')).toContainText('Association: confirmed');
   await page.locator('#collectionNav').click();
   await page.getByRole('button', { name: 'Check saved publications for metadata changes' }).click();
   await expect(page.locator('#changeReview')).toContainText('2 changed fields');
