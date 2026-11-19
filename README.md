@@ -18,9 +18,9 @@ Books and chapters can display an ISBN-matched cover from Open Library. A chapte
 
 ## Beyond search
 
-**Visualize** summarizes the entire applied Crossref query, including its period keywords and publication filters. Publication years, publication types, leading venues, and metadata availability come from server-side aggregates, not the first 25 results or the publications currently loaded. Select a supported chart category, then choose **Explore these publications** to refine the search. Unsubmitted topic edits remain in the search field. Tables provide the same chart values, and aggregate CSV includes the query, retrieval times, counts, and any unavailable summaries.
+**Visualize** summarizes the ranked matches for the applied Crossref query, including its period keywords and publication filters. Crossref's keyword total counts every record matching any word, so it cannot describe a discipline; the charts instead describe the first 250 relevance-ranked matches the API returns. Publication years, types, venues, and metadata availability come from that window, not from the first 25 loaded results, and the window follows the query and its filters rather than the Explore sort order. Select a supported chart category, then choose **Explore these publications** to refine the search. Unsubmitted topic edits remain in the search field. Tables provide the same chart values, and aggregate CSV includes the query, retrieval times, the window size, counts, and the sampling limit.
 
-Crossref facet counts are approximate. Year buckets are limited to 1,000 returned values, venues to ten, and unavailable buckets are not treated as zero. Availability counts overlap. Broad keyword results can include irrelevant scholarship; charts describe Crossref candidates, not a verified disciplinary corpus. Exact DOI lookup has a single-record summary instead of comparative charts.
+Crossref can return different records for two identical requests, so a refreshed window can shift by a few records. Years or venues absent from the window are not asserted to be zero, and availability categories overlap. Broad keyword results can include irrelevant scholarship; the charts describe ranked matches, not a verified disciplinary corpus. Exact DOI lookup has a single-record summary instead of comparative charts.
 
 **Reference discovery**, inside Collection, compares deposited references from your selected publications, or all saved publications when nothing is selected. It finds sources cited by multiple seed works, DOI references missing from your bibliography, unresolved citations, and deposited relationships. The network is a bounded reading aid with equivalent connection lists: at most 50 seed works, 100 referenced nodes, and 500 displayed edges. It does not reconstruct a complete Cited-by graph. Review lists display the first 100 items in each category; select a narrower seed set to control the analysis.
 
@@ -59,7 +59,7 @@ The source runs directly without compilation. For hosting, use `npm run build` t
 
 Crossref exposes metadata deposited for DOI-bearing research outputs. It is **not a complete Egyptology bibliography**. Older scholarship, non-DOI publications, and some books and journals may be absent.
 
-- Queries are relevance ranked; they are not exact-phrase or controlled-vocabulary searches. Candidate counts describe the Crossref query, not the size of a verified ancient Egyptian bibliography.
+- Queries are relevance ranked; they are not exact-phrase or controlled-vocabulary searches. Crossref keyword totals count records matching any word, so the charts sample the first 250 ranked matches instead of reporting those totals.
 - Periods are discoverability aids, not authoritative historical classifications attached to individual records. Publication dates refer to the modern publication, not the historical period it studies.
 - Missing abstracts, ORCIDs, references, or funding indicate missing deposited metadata. They do not indicate a publication's quality or the absence of relevant scholarship.
 - A DOI opens a publication's landing page. Full-text access may be restricted.
