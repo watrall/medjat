@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
+import { blockTiles } from './fixtures.js';
 const source = {
   DOI: '10.1234/abydos',
   title: ['Excavations at Abydos'],
@@ -12,7 +13,7 @@ test('Places discovers Crossref works from a Pleiades place without a saved coll
   const requests = [],
     errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.route('https://tile.openstreetmap.org/**', (route) => route.abort());
+  await blockTiles(page);
   await page.route('https://api.crossref.org/**', (route) => {
     requests.push(new URL(route.request().url()));
     return route.fulfill({
@@ -60,7 +61,7 @@ test('place bibliographies export their exact saved scope and retain manual rese
     { DOI: '10.1234/religion', title: ['Religion in ancient Egypt'] },
     { DOI: '10.1234/grammar', title: ['An Egyptian grammar'] },
   ];
-  await page.route('https://tile.openstreetmap.org/**', (route) => route.abort());
+  await blockTiles(page);
   await page.route('https://api.crossref.org/**', (route) =>
     route.fulfill({ json: { message: { items: records, 'total-results': 3 } } }),
   );
@@ -115,7 +116,7 @@ test('place bibliographies export their exact saved scope and retain manual rese
 test('publication place links retain evidence and return to the search draft after refresh', async ({
   page,
 }) => {
-  await page.route('https://tile.openstreetmap.org/**', (route) => route.abort());
+  await blockTiles(page);
   await page.route('https://api.crossref.org/**', (route) =>
     route.fulfill({
       json: {
@@ -147,7 +148,7 @@ test('place pagination keeps its applied query while preserving unfinished topic
   page,
 }) => {
   const requested = [];
-  await page.route('https://tile.openstreetmap.org/**', (route) => route.abort());
+  await blockTiles(page);
   await page.route('https://api.crossref.org/**', (route) => {
     const url = new URL(route.request().url());
     requested.push(url);
@@ -179,7 +180,7 @@ test('place pagination keeps its applied query while preserving unfinished topic
 test('Places restores applied query, drafts, evidence scope and direct-entry collection count', async ({
   page,
 }) => {
-  await page.route('https://tile.openstreetmap.org/**', (r) => r.abort());
+  await blockTiles(page);
   await page.route('https://api.crossref.org/**', (r) =>
     r.fulfill({ json: { message: { items: [source], 'total-results': 1 } } }),
   );
@@ -208,7 +209,7 @@ test('an export keeps its original place identity while another place is selecte
   const gate = new Promise((resolve) => {
     release = resolve;
   });
-  await page.route('https://tile.openstreetmap.org/**', (r) => r.abort());
+  await blockTiles(page);
   await page.route('https://api.crossref.org/**', async (r) => {
     if (r.request().url().includes('/transform')) {
       await gate;
@@ -249,7 +250,7 @@ test('assignment identifies duplicate titles, searches without changing selectio
       'container-title': ['Thebes studies'],
     },
   ];
-  await page.route('https://tile.openstreetmap.org/**', (r) => r.abort());
+  await blockTiles(page);
   await page.route('https://api.crossref.org/**', (r) =>
     r.fulfill({ json: { message: { items: records, 'total-results': 2 } } }),
   );
@@ -281,7 +282,7 @@ test('assignment identifies duplicate titles, searches without changing selectio
 test('Places reverses classification and removal without losing association reviews', async ({
   page,
 }) => {
-  await page.route('https://tile.openstreetmap.org/**', (r) => r.abort());
+  await blockTiles(page);
   await page.route('https://api.crossref.org/**', (r) =>
     r.fulfill({ json: { message: { items: [source], 'total-results': 1 } } }),
   );
@@ -305,7 +306,7 @@ test('Places reverses classification and removal without losing association revi
 test('Fit map changes only the camera while All places changes bibliography scope', async ({
   page,
 }) => {
-  await page.route('https://tile.openstreetmap.org/**', (r) => r.abort());
+  await blockTiles(page);
   await page.route('https://api.crossref.org/**', (r) =>
     r.fulfill({
       json: {
@@ -341,7 +342,7 @@ test('search and review updates preserve keyboard position without stealing back
   const gate = new Promise((resolve) => {
     release = resolve;
   });
-  await page.route('https://tile.openstreetmap.org/**', (r) => r.abort());
+  await blockTiles(page);
   await page.route('https://api.crossref.org/**', async (r) => {
     if (new URL(r.request().url()).searchParams.get('query.bibliographic')?.includes('focus-test'))
       await gate;

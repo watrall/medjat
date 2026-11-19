@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { blockTiles } from './fixtures.js';
 
 test('research views retain accessible controls and reflow across desktop and mobile', async ({
   page,
@@ -39,7 +40,7 @@ test('research views retain accessible controls and reflow across desktop and mo
   await page.goto('/');
   await expect(page.locator('.result-row')).toHaveCount(1);
   await page.locator('.save-button').click();
-  await page.route('https://tile.openstreetmap.org/**', (route) => route.abort());
+  await blockTiles(page);
   for (const view of ['visualize', 'places', 'places-collection', 'collection']) {
     await page.locator(`#${view === 'places-collection' ? 'places' : view}Nav`).click();
     if (view === 'places-collection') {
