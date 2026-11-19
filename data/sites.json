@@ -4,6 +4,9 @@
   "license": "CC BY 3.0",
   "licenseURL": "https://creativecommons.org/licenses/by/3.0/",
   "retrievedAt": "2026-11-19",
+  "namesReviewedAt": "2026-11-19",
+  "sourceSHA256": "84b1be29de50f70cbaa8f2952ef288ecd28ab88df75fd245f0d76f05dd2cc47d",
+  "namePolicy": "Only listed variants are used for candidate matching. Primary labels remain available. Names are not proof of publication subject or equivalent site boundaries. Short ambiguous names, textual fragments, generic descriptions and constituent-location names are excluded.",
   "sites": [
     {
       "id": "756512",
@@ -13,7 +16,45 @@
       "latitude": 26.185099,
       "aliases": [
         "Abydos",
-        "Abydos/Ebot"
+        "Abydos/Ebot",
+        "Ebot"
+      ],
+      "nameVariants": [
+        {
+          "name": "Abydos",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/756512/abydos"
+            }
+          ]
+        },
+        {
+          "name": "Abydos/Ebot",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "en",
+              "source": "https://pleiades.stoa.org/places/756512/abydos-ebot"
+            },
+            {
+              "field": "romanized",
+              "language": "en",
+              "source": "https://pleiades.stoa.org/places/756512/abydos-ebot"
+            }
+          ]
+        },
+        {
+          "name": "Ebot",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/756512/ebot"
+            }
+          ]
+        }
       ],
       "source": "https://pleiades.stoa.org/places/756512"
     },
@@ -24,8 +65,68 @@
       "longitude": 30.89818203754354,
       "latitude": 27.644099597341675,
       "aliases": [
+        "Al-‘Amārnah",
         "Amarna",
+        "Tell el-Amarna",
+        "el-Amarna",
         "العمارنة"
+      ],
+      "nameVariants": [
+        {
+          "name": "Al-‘Amārnah",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/149576487/al-2018amarnah"
+            }
+          ]
+        },
+        {
+          "name": "Amarna",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/149576487/el-amarna"
+            }
+          ]
+        },
+        {
+          "name": "Tell el-Amarna",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/149576487/el-amarna"
+            }
+          ]
+        },
+        {
+          "name": "el-Amarna",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/149576487/el-amarna"
+            }
+          ]
+        },
+        {
+          "name": "العمارنة",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/149576487/el-amarna"
+            },
+            {
+              "field": "attested",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/149576487/al-2018amarnah"
+            }
+          ]
+        }
       ],
       "source": "https://pleiades.stoa.org/places/149576487"
     },
@@ -37,7 +138,51 @@
       "latitude": 25.097743,
       "aliases": [
         "Hierakonpolis",
+        "Kom el-Ahmar",
+        "Nekhen",
         "Ἱεράκων πόλις"
+      ],
+      "nameVariants": [
+        {
+          "name": "Hierakonpolis",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/786037/hierakonpolis"
+            }
+          ]
+        },
+        {
+          "name": "Kom el-Ahmar",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/786037/kom-el-ahmar"
+            }
+          ]
+        },
+        {
+          "name": "Nekhen",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "egy",
+              "source": "https://pleiades.stoa.org/places/786037/nekhen"
+            }
+          ]
+        },
+        {
+          "name": "Ἱεράκων πόλις",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/786037/hierakonpolis"
+            }
+          ]
+        }
       ],
       "source": "https://pleiades.stoa.org/places/786037"
     },
@@ -48,8 +193,160 @@
       "longitude": 31.255061,
       "latitude": 29.849491,
       "aliases": [
+        "Ankh-Tawy",
+        "Hout-ka-Ptah",
+        "Hut-ka-Ptah",
+        "Ineb-hedj",
+        "Inebou-Hedjou",
         "Memphis",
-        "λευκὸν τεῖχος"
+        "Mempi",
+        "Men-nefer",
+        "Mit Rahina",
+        "Mit Rahinah",
+        "Mit Riheina",
+        "Mīt Ruhaina"
+      ],
+      "nameVariants": [
+        {
+          "name": "Ankh-Tawy",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "egy",
+              "source": "https://pleiades.stoa.org/places/736963/2bfnh-ta723wj"
+            }
+          ]
+        },
+        {
+          "name": "Hout-ka-Ptah",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "egy",
+              "source": "https://pleiades.stoa.org/places/736963/hwt-ka723-pth"
+            }
+          ]
+        },
+        {
+          "name": "Hut-ka-Ptah",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "egy",
+              "source": "https://pleiades.stoa.org/places/736963/hwt-ka723-pth"
+            }
+          ]
+        },
+        {
+          "name": "Ineb-hedj",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "egy",
+              "source": "https://pleiades.stoa.org/places/736963/jnb-w-hd"
+            },
+            {
+              "field": "romanized",
+              "language": "egy",
+              "source": "https://pleiades.stoa.org/places/736963/jnbw-hd"
+            }
+          ]
+        },
+        {
+          "name": "Inebou-Hedjou",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "egy",
+              "source": "https://pleiades.stoa.org/places/736963/jnb-w-hd"
+            },
+            {
+              "field": "romanized",
+              "language": "egy",
+              "source": "https://pleiades.stoa.org/places/736963/jnbw-hd"
+            }
+          ]
+        },
+        {
+          "name": "Memphis",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "la",
+              "source": "https://pleiades.stoa.org/places/736963/memphis"
+            },
+            {
+              "field": "romanized",
+              "language": "la",
+              "source": "https://pleiades.stoa.org/places/736963/memphis"
+            },
+            {
+              "field": "romanized",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/736963/memphis-1"
+            }
+          ]
+        },
+        {
+          "name": "Mempi",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "akk",
+              "source": "https://pleiades.stoa.org/places/736963/mempi"
+            }
+          ]
+        },
+        {
+          "name": "Men-nefer",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "egy",
+              "source": "https://pleiades.stoa.org/places/736963/mn-nfr"
+            }
+          ]
+        },
+        {
+          "name": "Mit Rahina",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/736963/mit-ruhaina"
+            }
+          ]
+        },
+        {
+          "name": "Mit Rahinah",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/736963/mit-ruhaina"
+            }
+          ]
+        },
+        {
+          "name": "Mit Riheina",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/736963/mit-ruhaina"
+            }
+          ]
+        },
+        {
+          "name": "Mīt Ruhaina",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/736963/mit-ruhaina"
+            }
+          ]
+        }
       ],
       "source": "https://pleiades.stoa.org/places/736963"
     },
@@ -60,8 +357,63 @@
       "longitude": 31.219354151151553,
       "latitude": 29.862380874013706,
       "aliases": [
+        "Sakkara",
+        "Saqara",
         "Saqqara",
+        "Saqqarah",
         "سقارة"
+      ],
+      "nameVariants": [
+        {
+          "name": "Sakkara",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/796289136/saqqarah"
+            }
+          ]
+        },
+        {
+          "name": "Saqara",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/796289136/saqqarah"
+            }
+          ]
+        },
+        {
+          "name": "Saqqara",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/796289136/saqqarah"
+            }
+          ]
+        },
+        {
+          "name": "Saqqarah",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/796289136/saqqarah"
+            }
+          ]
+        },
+        {
+          "name": "سقارة",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/796289136/saqqarah"
+            }
+          ]
+        }
       ],
       "source": "https://pleiades.stoa.org/places/796289136"
     },
@@ -72,8 +424,63 @@
       "longitude": 31.12668227565419,
       "latitude": 29.970055997040458,
       "aliases": [
+        "Giseh",
         "Giza",
+        "Gizah",
+        "Gizeh",
         "الجيزة‎"
+      ],
+      "nameVariants": [
+        {
+          "name": "Giseh",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/442962448/giza"
+            }
+          ]
+        },
+        {
+          "name": "Giza",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/442962448/giza"
+            }
+          ]
+        },
+        {
+          "name": "Gizah",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/442962448/giza"
+            }
+          ]
+        },
+        {
+          "name": "Gizeh",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/442962448/giza"
+            }
+          ]
+        },
+        {
+          "name": "الجيزة‎",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/442962448/giza"
+            }
+          ]
+        }
       ],
       "source": "https://pleiades.stoa.org/places/442962448"
     },
@@ -84,10 +491,242 @@
       "longitude": 32.631884,
       "latitude": 25.664780999999998,
       "aliases": [
-        "Diospoli Q[ - ? - ]tibe",
+        "Dios Polis Megale",
+        "Diospolis Magna",
+        "Diospolis Megale",
+        "Diospolis Megalē",
+        "Luxor",
+        "Thebai",
+        "Theben",
+        "Theben-West",
         "Thebes",
+        "Thebes east",
+        "Thēbai",
+        "Waset",
+        "West Thebes",
+        "al-Uqsur",
+        "al-Uqṣur",
+        "el-Uqsur",
+        "w3st",
+        "wꜣst",
         "أَلْأُقْصُر",
         "اقصر"
+      ],
+      "nameVariants": [
+        {
+          "name": "Dios Polis Megale",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/786017/diospolis-megale"
+            }
+          ]
+        },
+        {
+          "name": "Diospolis Magna",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/786017/diospolis-magna"
+            },
+            {
+              "field": "romanized",
+              "language": "ka",
+              "source": "https://pleiades.stoa.org/places/786017/diospolis-magna-1"
+            }
+          ]
+        },
+        {
+          "name": "Diospolis Megale",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/786017/diospolis-megale"
+            }
+          ]
+        },
+        {
+          "name": "Diospolis Megalē",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/786017/diospolis-megale"
+            }
+          ]
+        },
+        {
+          "name": "Luxor",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/786017/luxor"
+            },
+            {
+              "field": "romanized",
+              "language": "de",
+              "source": "https://pleiades.stoa.org/places/786017/luxor-1"
+            }
+          ]
+        },
+        {
+          "name": "Thebai",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/786017/thebai"
+            },
+            {
+              "field": "romanized",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/786017/thebai-1"
+            }
+          ]
+        },
+        {
+          "name": "Theben",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "de",
+              "source": "https://pleiades.stoa.org/places/786017/theben"
+            }
+          ]
+        },
+        {
+          "name": "Theben-West",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "de",
+              "source": "https://pleiades.stoa.org/places/786017/theben-west"
+            }
+          ]
+        },
+        {
+          "name": "Thebes",
+          "attestations": []
+        },
+        {
+          "name": "Thebes east",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/786017/thebes-east"
+            }
+          ]
+        },
+        {
+          "name": "Thēbai",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/786017/thebai-1"
+            }
+          ]
+        },
+        {
+          "name": "Waset",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "egy",
+              "source": "https://pleiades.stoa.org/places/786017/wa723st"
+            }
+          ]
+        },
+        {
+          "name": "West Thebes",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "de",
+              "source": "https://pleiades.stoa.org/places/786017/theben-west"
+            }
+          ]
+        },
+        {
+          "name": "al-Uqsur",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/786017/al-uqsur"
+            },
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/786017/al-uqsur-1"
+            }
+          ]
+        },
+        {
+          "name": "al-Uqṣur",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/786017/al-uqsur"
+            }
+          ]
+        },
+        {
+          "name": "el-Uqsur",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/786017/al-uqsur"
+            }
+          ]
+        },
+        {
+          "name": "w3st",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "egy",
+              "source": "https://pleiades.stoa.org/places/786017/wa723st"
+            }
+          ]
+        },
+        {
+          "name": "wꜣst",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "egy",
+              "source": "https://pleiades.stoa.org/places/786017/wa723st"
+            }
+          ]
+        },
+        {
+          "name": "أَلْأُقْصُر",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/786017/luxor"
+            }
+          ]
+        },
+        {
+          "name": "اقصر",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "ota",
+              "source": "https://pleiades.stoa.org/places/786017/aksar"
+            }
+          ]
+        }
       ],
       "source": "https://pleiades.stoa.org/places/786017"
     },
@@ -98,8 +737,46 @@
       "longitude": 32.658127567772674,
       "latitude": 25.71822004908206,
       "aliases": [
+        "Al-Karnak",
         "Karnak",
         "الكرنك"
+      ],
+      "nameVariants": [
+        {
+          "name": "Al-Karnak",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/786050/al-karnak"
+            }
+          ]
+        },
+        {
+          "name": "Karnak",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "en",
+              "source": "https://pleiades.stoa.org/places/786050/karnak"
+            },
+            {
+              "field": "romanized",
+              "language": "en",
+              "source": "https://pleiades.stoa.org/places/786050/karnak"
+            }
+          ]
+        },
+        {
+          "name": "الكرنك",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/786050/al-karnak"
+            }
+          ]
+        }
       ],
       "source": "https://pleiades.stoa.org/places/786050"
     },
@@ -110,7 +787,101 @@
       "longitude": 32.889,
       "latitude": 24.09,
       "aliases": [
-        "Elephantine"
+        "Aswan Island",
+        "Elephantine",
+        "Elephantinē",
+        "Gazirat Aswan",
+        "Gazirat Aswān",
+        "Jazirat Aswan",
+        "Jezirat Aswan",
+        "Ǧazīrat Aswān"
+      ],
+      "nameVariants": [
+        {
+          "name": "Aswan Island",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/786021/gazirat-aswan-1"
+            }
+          ]
+        },
+        {
+          "name": "Elephantine",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/786021/elephantine"
+            },
+            {
+              "field": "romanized",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/786021/elephantine-1"
+            }
+          ]
+        },
+        {
+          "name": "Elephantinē",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/786021/elephantine-1"
+            }
+          ]
+        },
+        {
+          "name": "Gazirat Aswan",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/786021/gazirat-aswan"
+            }
+          ]
+        },
+        {
+          "name": "Gazirat Aswān",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/786021/gazirat-aswan"
+            }
+          ]
+        },
+        {
+          "name": "Jazirat Aswan",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/786021/gazirat-aswan-1"
+            }
+          ]
+        },
+        {
+          "name": "Jezirat Aswan",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/786021/gazirat-aswan-1"
+            }
+          ]
+        },
+        {
+          "name": "Ǧazīrat Aswān",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/786021/gazirat-aswan-1"
+            }
+          ]
+        }
       ],
       "source": "https://pleiades.stoa.org/places/786021"
     },
@@ -123,6 +894,18 @@
       "aliases": [
         "Philae"
       ],
+      "nameVariants": [
+        {
+          "name": "Philae",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/786089/philae"
+            }
+          ]
+        }
+      ],
       "source": "https://pleiades.stoa.org/places/786089"
     },
     {
@@ -132,11 +915,122 @@
       "longitude": 32.872446,
       "latitude": 24.9778875,
       "aliases": [
+        "Apollonopolis Magna",
+        "Apollonos polis",
         "Behdet",
         "Edfou",
         "Edfu",
+        "Idfu",
+        "Idfū",
         "إدفو",
         "Ἀπόλλωνος πόλις"
+      ],
+      "nameVariants": [
+        {
+          "name": "Apollonopolis Magna",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/785974/apollonopolis-magna"
+            }
+          ]
+        },
+        {
+          "name": "Apollonos polis",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/785974/apollonos-polis"
+            }
+          ]
+        },
+        {
+          "name": "Behdet",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "en",
+              "source": "https://pleiades.stoa.org/places/785974/behdet"
+            },
+            {
+              "field": "romanized",
+              "language": "en",
+              "source": "https://pleiades.stoa.org/places/785974/behdet"
+            }
+          ]
+        },
+        {
+          "name": "Edfou",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "en",
+              "source": "https://pleiades.stoa.org/places/785974/edfou"
+            },
+            {
+              "field": "romanized",
+              "language": "en",
+              "source": "https://pleiades.stoa.org/places/785974/edfou"
+            }
+          ]
+        },
+        {
+          "name": "Edfu",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "en",
+              "source": "https://pleiades.stoa.org/places/785974/name.2011-05-27.9851418012"
+            },
+            {
+              "field": "romanized",
+              "language": "en",
+              "source": "https://pleiades.stoa.org/places/785974/name.2011-05-27.9851418012"
+            }
+          ]
+        },
+        {
+          "name": "Idfu",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arz",
+              "source": "https://pleiades.stoa.org/places/785974/idfui"
+            }
+          ]
+        },
+        {
+          "name": "Idfū",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arz",
+              "source": "https://pleiades.stoa.org/places/785974/idfui"
+            }
+          ]
+        },
+        {
+          "name": "إدفو",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "arz",
+              "source": "https://pleiades.stoa.org/places/785974/idfui"
+            }
+          ]
+        },
+        {
+          "name": "Ἀπόλλωνος πόλις",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/785974/apollonos-polis"
+            }
+          ]
+        }
       ],
       "source": "https://pleiades.stoa.org/places/785974"
     },
@@ -151,6 +1045,48 @@
         "Tentura",
         "Τέντυρα"
       ],
+      "nameVariants": [
+        {
+          "name": "Dendera",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/786127/dendera"
+            }
+          ]
+        },
+        {
+          "name": "Tentura",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/786127/tentyra"
+            },
+            {
+              "field": "attested",
+              "language": "la",
+              "source": "https://pleiades.stoa.org/places/786127/tentura"
+            },
+            {
+              "field": "romanized",
+              "language": "la",
+              "source": "https://pleiades.stoa.org/places/786127/tentura"
+            }
+          ]
+        },
+        {
+          "name": "Τέντυρα",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/786127/tentyra"
+            }
+          ]
+        }
+      ],
       "source": "https://pleiades.stoa.org/places/786127"
     },
     {
@@ -161,9 +1097,153 @@
       "latitude": 25.2936689,
       "aliases": [
         "Esna",
-        "Lato",
+        "Esne",
+        "Isna",
+        "Isnā",
+        "Laton Polis",
+        "Latopolis",
+        "Latōn Polis",
+        "Ta Senet",
+        "İsnā",
         "Λατόπολις",
         "اسنا"
+      ],
+      "nameVariants": [
+        {
+          "name": "Esna",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/786059/esna"
+            },
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/786059/isna-1"
+            }
+          ]
+        },
+        {
+          "name": "Esne",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/786059/isna-1"
+            }
+          ]
+        },
+        {
+          "name": "Isna",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/786059/isna"
+            },
+            {
+              "field": "romanized",
+              "language": "de",
+              "source": "https://pleiades.stoa.org/places/786059/isna-deu"
+            },
+            {
+              "field": "romanized",
+              "language": "en",
+              "source": "https://pleiades.stoa.org/places/786059/isna-eng"
+            },
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/786059/isna-1"
+            }
+          ]
+        },
+        {
+          "name": "Isnā",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/786059/isna-1"
+            }
+          ]
+        },
+        {
+          "name": "Laton Polis",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/786059/laton-polis"
+            }
+          ]
+        },
+        {
+          "name": "Latopolis",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/786059/latopolis"
+            },
+            {
+              "field": "romanized",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/786059/latopolis-1"
+            }
+          ]
+        },
+        {
+          "name": "Latōn Polis",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/786059/laton-polis"
+            }
+          ]
+        },
+        {
+          "name": "Ta Senet",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "egy",
+              "source": "https://pleiades.stoa.org/places/786059/ta723-snj-jwnyt"
+            }
+          ]
+        },
+        {
+          "name": "İsnā",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ota",
+              "source": "https://pleiades.stoa.org/places/786059/isna-2"
+            }
+          ]
+        },
+        {
+          "name": "Λατόπολις",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/786059/latopolis-1"
+            }
+          ]
+        },
+        {
+          "name": "اسنا",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "ota",
+              "source": "https://pleiades.stoa.org/places/786059/isna-2"
+            }
+          ]
+        }
       ],
       "source": "https://pleiades.stoa.org/places/786059"
     },
@@ -176,8 +1256,71 @@
       "aliases": [
         "Ambos",
         "Kom Ombo",
+        "Omboi",
         "Ombos",
         "Ὄμβοι"
+      ],
+      "nameVariants": [
+        {
+          "name": "Ambos",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "la",
+              "source": "https://pleiades.stoa.org/places/786079/ambos"
+            },
+            {
+              "field": "romanized",
+              "language": "la",
+              "source": "https://pleiades.stoa.org/places/786079/ambos"
+            }
+          ]
+        },
+        {
+          "name": "Kom Ombo",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "akk",
+              "source": "https://pleiades.stoa.org/places/786079/kom-ombo"
+            }
+          ]
+        },
+        {
+          "name": "Omboi",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/786079/omboi"
+            }
+          ]
+        },
+        {
+          "name": "Ombos",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "la",
+              "source": "https://pleiades.stoa.org/places/786079/ombos"
+            },
+            {
+              "field": "romanized",
+              "language": "la",
+              "source": "https://pleiades.stoa.org/places/786079/ombos"
+            }
+          ]
+        },
+        {
+          "name": "Ὄμβοι",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/786079/omboi"
+            }
+          ]
+        }
       ],
       "source": "https://pleiades.stoa.org/places/786079"
     },
@@ -188,9 +1331,177 @@
       "longitude": 29.909773,
       "latitude": 31.201435,
       "aliases": [
+        "Alexandrea ad Aegyptum",
+        "Alexandreia",
+        "Alexandreia ad Aegyptum",
         "Alexandria",
+        "Rakote",
+        "Rhakotis",
+        "Rhakōtis",
         "Scanderia",
+        "al-Iskandariya",
+        "al-Iskandariyya",
+        "al-Iskandarīya",
+        "el-Iskandariya",
+        "İskenderiyye",
         "ⲣⲁⲕⲟⲧⲉ"
+      ],
+      "nameVariants": [
+        {
+          "name": "Alexandrea ad Aegyptum",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ka",
+              "source": "https://pleiades.stoa.org/places/727070/alexandrea-ad-aegyptum"
+            }
+          ]
+        },
+        {
+          "name": "Alexandreia",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/727070/alexandreia"
+            }
+          ]
+        },
+        {
+          "name": "Alexandreia ad Aegyptum",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/727070/alexandreia-ad-aegyptum"
+            }
+          ]
+        },
+        {
+          "name": "Alexandria",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/727070/alexandria"
+            },
+            {
+              "field": "romanized",
+              "language": "de",
+              "source": "https://pleiades.stoa.org/places/727070/alexandria-1"
+            }
+          ]
+        },
+        {
+          "name": "Rakote",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "cop",
+              "source": "https://pleiades.stoa.org/places/727070/rakote"
+            }
+          ]
+        },
+        {
+          "name": "Rhakotis",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/727070/rhakotis"
+            }
+          ]
+        },
+        {
+          "name": "Rhakōtis",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/727070/rhakotis"
+            }
+          ]
+        },
+        {
+          "name": "Scanderia",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "en",
+              "source": "https://pleiades.stoa.org/places/727070/scanderia"
+            },
+            {
+              "field": "romanized",
+              "language": "en",
+              "source": "https://pleiades.stoa.org/places/727070/scanderia"
+            }
+          ]
+        },
+        {
+          "name": "al-Iskandariya",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/727070/al-iskandariya-1"
+            }
+          ]
+        },
+        {
+          "name": "al-Iskandariyya",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/727070/al-iskandariyya"
+            },
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/727070/al-iskandariya-1"
+            }
+          ]
+        },
+        {
+          "name": "al-Iskandarīya",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/727070/al-iskandariya-1"
+            }
+          ]
+        },
+        {
+          "name": "el-Iskandariya",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/727070/al-iskandariya-1"
+            }
+          ]
+        },
+        {
+          "name": "İskenderiyye",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ota",
+              "source": "https://pleiades.stoa.org/places/727070/iskenderiyye"
+            }
+          ]
+        },
+        {
+          "name": "ⲣⲁⲕⲟⲧⲉ",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "cop",
+              "source": "https://pleiades.stoa.org/places/727070/rakote"
+            }
+          ]
+        }
       ],
       "source": "https://pleiades.stoa.org/places/727070"
     },
@@ -201,9 +1512,63 @@
       "longitude": 31.883619562443883,
       "latitude": 30.975452837412377,
       "aliases": [
+        "San el-Hagar",
         "Tanis",
         "Τάνις",
-        "صان الحجر"
+        "صان الحجر",
+        "Ṣan al-Hagar"
+      ],
+      "nameVariants": [
+        {
+          "name": "San el-Hagar",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/727236/san-el-hagar"
+            }
+          ]
+        },
+        {
+          "name": "Tanis",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/727236/tanis"
+            }
+          ]
+        },
+        {
+          "name": "Τάνις",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/727236/tanis"
+            }
+          ]
+        },
+        {
+          "name": "صان الحجر",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/727236/san-al-hagar"
+            }
+          ]
+        },
+        {
+          "name": "Ṣan al-Hagar",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/727236/san-al-hagar"
+            }
+          ]
+        }
       ],
       "source": "https://pleiades.stoa.org/places/727236"
     },
@@ -214,7 +1579,24 @@
       "longitude": 31.511085335188596,
       "latitude": 30.57238231122388,
       "aliases": [
+        "Boubastis",
         "Bubastis"
+      ],
+      "nameVariants": [
+        {
+          "name": "Boubastis",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/727088/boubastis"
+            }
+          ]
+        },
+        {
+          "name": "Bubastis",
+          "attestations": []
+        }
       ],
       "source": "https://pleiades.stoa.org/places/727088"
     },
@@ -228,7 +1610,65 @@
         "Sais",
         "Saïs",
         "Σάι",
-        "صا الحجر"
+        "صا الحجر",
+        "Ṣa el-Ḥagar"
+      ],
+      "nameVariants": [
+        {
+          "name": "Sais",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/727217/sais"
+            }
+          ]
+        },
+        {
+          "name": "Saïs",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "fr",
+              "source": "https://pleiades.stoa.org/places/727217/sais-1"
+            },
+            {
+              "field": "romanized",
+              "language": "fr",
+              "source": "https://pleiades.stoa.org/places/727217/sais-1"
+            }
+          ]
+        },
+        {
+          "name": "Σάι",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/727217/sais"
+            }
+          ]
+        },
+        {
+          "name": "صا الحجر",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "arz",
+              "source": "https://pleiades.stoa.org/places/727217/sa-el-hagar"
+            }
+          ]
+        },
+        {
+          "name": "Ṣa el-Ḥagar",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arz",
+              "source": "https://pleiades.stoa.org/places/727217/sa-el-hagar"
+            }
+          ]
+        }
       ],
       "source": "https://pleiades.stoa.org/places/727217"
     },
@@ -239,7 +1679,199 @@
       "longitude": 31.3074812,
       "latitude": 30.1294036,
       "aliases": [
-        "Heliopolis"
+        "Ain Shams",
+        "Ayn Shams",
+        "Ein Shams",
+        "Eyn Shams",
+        "Heliopolis",
+        "Helioupolis",
+        "Hēlioupolis",
+        "Tall al-Hisn",
+        "Tall al-Ḥiṣn",
+        "Tell el-Hisn",
+        "al-Matariya",
+        "al-Matariyyah",
+        "al-Matarīya",
+        "al-Maṭarīya",
+        "jwnw",
+        "ʿAin Šams"
+      ],
+      "nameVariants": [
+        {
+          "name": "Ain Shams",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/727117/2bfain-sams"
+            }
+          ]
+        },
+        {
+          "name": "Ayn Shams",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/727117/2bfain-sams"
+            }
+          ]
+        },
+        {
+          "name": "Ein Shams",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/727117/2bfain-sams"
+            }
+          ]
+        },
+        {
+          "name": "Eyn Shams",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/727117/2bfain-sams"
+            }
+          ]
+        },
+        {
+          "name": "Heliopolis",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/727117/heliopolis"
+            },
+            {
+              "field": "romanized",
+              "language": "de",
+              "source": "https://pleiades.stoa.org/places/727117/heliopolis-deu"
+            },
+            {
+              "field": "romanized",
+              "language": "en",
+              "source": "https://pleiades.stoa.org/places/727117/heliopolis-eng"
+            }
+          ]
+        },
+        {
+          "name": "Helioupolis",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/727117/helioupolis"
+            },
+            {
+              "field": "romanized",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/727117/helioupolis-1"
+            }
+          ]
+        },
+        {
+          "name": "Hēlioupolis",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/727117/helioupolis-1"
+            }
+          ]
+        },
+        {
+          "name": "Tall al-Hisn",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/727117/tall-al-hisn"
+            }
+          ]
+        },
+        {
+          "name": "Tall al-Ḥiṣn",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/727117/tall-al-hisn"
+            }
+          ]
+        },
+        {
+          "name": "Tell el-Hisn",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/727117/tall-al-hisn"
+            }
+          ]
+        },
+        {
+          "name": "al-Matariya",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/727117/al-matariya-1"
+            }
+          ]
+        },
+        {
+          "name": "al-Matariyyah",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/727117/al-matariya-1"
+            }
+          ]
+        },
+        {
+          "name": "al-Matarīya",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/727117/al-matariya"
+            }
+          ]
+        },
+        {
+          "name": "al-Maṭarīya",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/727117/al-matariya-1"
+            }
+          ]
+        },
+        {
+          "name": "jwnw",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "egy",
+              "source": "https://pleiades.stoa.org/places/727117/jwnw"
+            }
+          ]
+        },
+        {
+          "name": "ʿAin Šams",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "arb",
+              "source": "https://pleiades.stoa.org/places/727117/2bfain-sams"
+            }
+          ]
+        }
       ],
       "source": "https://pleiades.stoa.org/places/727117"
     },
@@ -252,8 +1884,77 @@
       "aliases": [
         "Achmounein",
         "Hermopolis Magna",
-        "oppidum Mercuri",
+        "Hermou polis",
+        "Schmun",
+        "Uşmūneyn",
         "Ἑρμοῦ πόλις"
+      ],
+      "nameVariants": [
+        {
+          "name": "Achmounein",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "fr",
+              "source": "https://pleiades.stoa.org/places/756574/achmounein"
+            },
+            {
+              "field": "romanized",
+              "language": "fr",
+              "source": "https://pleiades.stoa.org/places/756574/achmounein"
+            }
+          ]
+        },
+        {
+          "name": "Hermopolis Magna",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/756574/hermopolis-magna"
+            }
+          ]
+        },
+        {
+          "name": "Hermou polis",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/756574/hermou-polis"
+            }
+          ]
+        },
+        {
+          "name": "Schmun",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/756574/schmun"
+            }
+          ]
+        },
+        {
+          "name": "Uşmūneyn",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ota",
+              "source": "https://pleiades.stoa.org/places/756574/usmuneyn"
+            }
+          ]
+        },
+        {
+          "name": "Ἑρμοῦ πόλις",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "grc",
+              "source": "https://pleiades.stoa.org/places/756574/hermou-polis"
+            }
+          ]
+        }
       ],
       "source": "https://pleiades.stoa.org/places/756574"
     },
@@ -264,8 +1965,63 @@
       "longitude": 30.8810025,
       "latitude": 27.8105625,
       "aliases": [
+        "Ansina",
+        "Antinoe",
         "Antinoopolis",
+        "Anṣınā",
         "انصنا"
+      ],
+      "nameVariants": [
+        {
+          "name": "Ansina",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/756518/ansina"
+            }
+          ]
+        },
+        {
+          "name": "Antinoe",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/756518/antinoe"
+            }
+          ]
+        },
+        {
+          "name": "Antinoopolis",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/756518/antinoopolis"
+            }
+          ]
+        },
+        {
+          "name": "Anṣınā",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ota",
+              "source": "https://pleiades.stoa.org/places/756518/ansina-1"
+            }
+          ]
+        },
+        {
+          "name": "انصنا",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "ota",
+              "source": "https://pleiades.stoa.org/places/756518/ansina-1"
+            }
+          ]
+        }
       ],
       "source": "https://pleiades.stoa.org/places/756518"
     },
@@ -276,8 +2032,79 @@
       "longitude": 30.65172,
       "latitude": 28.542574,
       "aliases": [
+        "Al Bahnasā",
+        "Behnesā",
         "Oxyrhynchus",
-        "Oxyrhynchus/Pemje"
+        "Oxyrhynchus/Pemje",
+        "Pemje",
+        "el-Bahnasa"
+      ],
+      "nameVariants": [
+        {
+          "name": "Al Bahnasā",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/736983/al-bahnasa"
+            }
+          ]
+        },
+        {
+          "name": "Behnesā",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ota",
+              "source": "https://pleiades.stoa.org/places/736983/behnesa"
+            }
+          ]
+        },
+        {
+          "name": "Oxyrhynchus",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/736983/oxyrhynchus"
+            }
+          ]
+        },
+        {
+          "name": "Oxyrhynchus/Pemje",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "en",
+              "source": "https://pleiades.stoa.org/places/736983/oxyrhynchus-pemje"
+            },
+            {
+              "field": "romanized",
+              "language": "en",
+              "source": "https://pleiades.stoa.org/places/736983/oxyrhynchus-pemje"
+            }
+          ]
+        },
+        {
+          "name": "Pemje",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/736983/pemje"
+            }
+          ]
+        },
+        {
+          "name": "el-Bahnasa",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/736983/al-bahnasa"
+            }
+          ]
+        }
       ],
       "source": "https://pleiades.stoa.org/places/736983"
     },
@@ -288,7 +2115,30 @@
       "longitude": 30.895832,
       "latitude": 29.253514,
       "aliases": [
+        "Haueris",
         "Hawara"
+      ],
+      "nameVariants": [
+        {
+          "name": "Haueris",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/736918/haueris"
+            }
+          ]
+        },
+        {
+          "name": "Hawara",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": null,
+              "source": "https://pleiades.stoa.org/places/736918/hawara"
+            }
+          ]
+        }
       ],
       "source": "https://pleiades.stoa.org/places/736918"
     },
@@ -299,9 +2149,95 @@
       "longitude": 30.983288561698398,
       "latitude": 29.236019508094262,
       "aliases": [
+        "El Lahun",
+        "El Lāhūn",
+        "Illahun",
         "Kahun",
         "Lahun",
+        "el-Lahun",
         "اللاهون"
+      ],
+      "nameVariants": [
+        {
+          "name": "El Lahun",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/736953/el-lahun"
+            }
+          ]
+        },
+        {
+          "name": "El Lāhūn",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/736953/el-lahun"
+            }
+          ]
+        },
+        {
+          "name": "Illahun",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/736953/illahun"
+            }
+          ]
+        },
+        {
+          "name": "Kahun",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "en",
+              "source": "https://pleiades.stoa.org/places/736953/kahun"
+            },
+            {
+              "field": "romanized",
+              "language": "en",
+              "source": "https://pleiades.stoa.org/places/736953/kahun"
+            }
+          ]
+        },
+        {
+          "name": "Lahun",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "en",
+              "source": "https://pleiades.stoa.org/places/736953/lahun"
+            },
+            {
+              "field": "romanized",
+              "language": "en",
+              "source": "https://pleiades.stoa.org/places/736953/lahun"
+            }
+          ]
+        },
+        {
+          "name": "el-Lahun",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/736953/el-lahun"
+            }
+          ]
+        },
+        {
+          "name": "اللاهون",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/736953/el-lahun"
+            }
+          ]
+        }
       ],
       "source": "https://pleiades.stoa.org/places/736953"
     },
@@ -312,8 +2248,63 @@
       "longitude": 32.60128640590839,
       "latitude": 25.72840127706976,
       "aliases": [
+        "Deir al-Medina",
+        "Deir el Medina",
         "Deir el-Medina",
+        "Deir el-Médina",
         "دير المدينة‎"
+      ],
+      "nameVariants": [
+        {
+          "name": "Deir al-Medina",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/864388873/deir-el-medina"
+            }
+          ]
+        },
+        {
+          "name": "Deir el Medina",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/864388873/deir-el-medina"
+            }
+          ]
+        },
+        {
+          "name": "Deir el-Medina",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/864388873/deir-el-medina"
+            }
+          ]
+        },
+        {
+          "name": "Deir el-Médina",
+          "attestations": [
+            {
+              "field": "romanized",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/864388873/deir-el-medina"
+            }
+          ]
+        },
+        {
+          "name": "دير المدينة‎",
+          "attestations": [
+            {
+              "field": "attested",
+              "language": "ar",
+              "source": "https://pleiades.stoa.org/places/864388873/deir-el-medina"
+            }
+          ]
+        }
       ],
       "source": "https://pleiades.stoa.org/places/864388873"
     }

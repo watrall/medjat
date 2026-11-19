@@ -16,3 +16,29 @@ test('place evidence respects word boundaries and does not mistake essais for Sa
   assert.equal(placeEvidence({ title: 'Essais sur la religion', abstract: '' }, site), null);
   assert.match(placeEvidence({ title: 'Excavations at Sais', abstract: '' }, site).text, /Sais/);
 });
+test('reviewed Pleiades variants match with provenance without conflating constituent places', () => {
+  const thebes = data.sites.find((s) => s.name === 'Thebes');
+  for (const name of ['Luxor', 'Waset', 'Thebai', 'Thēbai']) {
+    assert.ok(placeEvidence({ title: `Research at ${name.normalize('NFD')}` }, thebes));
+    assert.ok(
+      thebes.nameVariants
+        .find((n) => n.name === name)
+        .attestations.some((a) => a.source.startsWith(thebes.source)),
+    );
+  }
+  for (const title of [
+    'Karnak temple',
+    'Niwt and religion',
+    'Diospolis religion',
+    'Luxor2 catalogue',
+  ])
+    assert.equal(placeEvidence({ title }, thebes), null);
+  assert.equal(
+    placeEvidence(
+      { title: 'Abu Simbel' },
+      data.sites.find((s) => s.name === 'Elephantine'),
+    ),
+    null,
+  );
+  assert.equal(data.sites.filter((s) => s.nameVariants.length).length, 25);
+});

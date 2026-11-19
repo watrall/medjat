@@ -1,0 +1,227 @@
+{
+  "reviewedAt": "2026-11-19",
+  "policy": "Only listed variants are used for candidate matching. Primary labels remain available. Names are not proof of publication subject or equivalent site boundaries. Short ambiguous names, textual fragments, generic descriptions and constituent-location names are excluded.",
+  "exceptions": {
+    "Thebes": "Karnak and temple-specific names are not treated as aliases of Thebes. Diospolis without qualification is ambiguous.",
+    "Elephantine": "Abu, Ieb and transcription fragments are too short or ambiguous for automatic matching.",
+    "Heliopolis": "On, New Cairo and generic modern district names do not establish a subject association.",
+    "Sais": "Ṣân el-Ḥagar can be confused with Tanis; retain only the reviewed Sais variants."
+  },
+  "sites": {
+    "756512": [
+      "Abydos",
+      "Ebot",
+      "Abydos/Ebot"
+    ],
+    "149576487": [
+      "العمارنة",
+      "el-Amarna",
+      "Amarna",
+      "Tell el-Amarna",
+      "Al-‘Amārnah"
+    ],
+    "786037": [
+      "Ἱεράκων πόλις",
+      "Hierakonpolis",
+      "Kom el-Ahmar",
+      "Nekhen"
+    ],
+    "736963": [
+      "Memphis",
+      "Mempi",
+      "Hut-ka-Ptah",
+      "Hout-ka-Ptah",
+      "Ankh-Tawy",
+      "Ineb-hedj",
+      "Inebou-Hedjou",
+      "Men-nefer",
+      "Mit Rahina",
+      "Mit Rahinah",
+      "Mit Riheina",
+      "Mīt Ruhaina"
+    ],
+    "796289136": [
+      "سقارة",
+      "Saqqarah",
+      "Saqqara",
+      "Sakkara",
+      "Saqara"
+    ],
+    "442962448": [
+      "الجيزة‎",
+      "Giza",
+      "Gizah",
+      "Gizeh",
+      "Giseh"
+    ],
+    "786017": [
+      "Thebai",
+      "Thēbai",
+      "Luxor",
+      "Waset",
+      "wꜣst",
+      "w3st",
+      "Diospolis Magna",
+      "Diospolis Megalē",
+      "Diospolis Megale",
+      "Dios Polis Megale",
+      "Thebes east",
+      "West Thebes",
+      "Theben-West",
+      "Theben",
+      "al-Uqṣur",
+      "al-Uqsur",
+      "el-Uqsur",
+      "أَلْأُقْصُر",
+      "اقصر"
+    ],
+    "786050": [
+      "الكرنك",
+      "Al-Karnak",
+      "Karnak"
+    ],
+    "786021": [
+      "Elephantine",
+      "Elephantinē",
+      "Gazirat Aswān",
+      "Gazirat Aswan",
+      "Ǧazīrat Aswān",
+      "Jazirat Aswan",
+      "Jezirat Aswan",
+      "Aswan Island"
+    ],
+    "786089": [
+      "Philae"
+    ],
+    "785974": [
+      "Apollonopolis Magna",
+      "Edfu",
+      "Behdet",
+      "Edfou",
+      "إدفو",
+      "Idfu",
+      "Idfū",
+      "Ἀπόλλωνος πόλις",
+      "Apollonos polis"
+    ],
+    "786127": [
+      "Τέντυρα",
+      "Tentura",
+      "Dendera"
+    ],
+    "786059": [
+      "Latopolis",
+      "Esna",
+      "Λατόπολις",
+      "Latōn Polis",
+      "Laton Polis",
+      "Ta Senet",
+      "Isna",
+      "Isnā",
+      "Esne",
+      "اسنا",
+      "İsnā"
+    ],
+    "786079": [
+      "Ὄμβοι",
+      "Omboi",
+      "Ambos",
+      "Ombos",
+      "Kom Ombo"
+    ],
+    "727070": [
+      "Alexandria",
+      "ⲣⲁⲕⲟⲧⲉ",
+      "Rakote",
+      "Rhakōtis",
+      "Rhakotis",
+      "Alexandreia",
+      "Alexandrea ad Aegyptum",
+      "Alexandreia ad Aegyptum",
+      "al-Iskandariyya",
+      "al-Iskandarīya",
+      "al-Iskandariya",
+      "el-Iskandariya",
+      "İskenderiyye",
+      "Scanderia"
+    ],
+    "727236": [
+      "San el-Hagar",
+      "Τάνις",
+      "Tanis",
+      "صان الحجر",
+      "Ṣan al-Hagar"
+    ],
+    "727088": [
+      "Boubastis"
+    ],
+    "727217": [
+      "Σάι",
+      "Sais",
+      "صا الحجر",
+      "Ṣa el-Ḥagar",
+      "Saïs"
+    ],
+    "727117": [
+      "Heliopolis",
+      "al-Maṭarīya",
+      "al-Matarīya",
+      "al-Matariya",
+      "al-Matariyyah",
+      "ʿAin Šams",
+      "Ein Shams",
+      "Ain Shams",
+      "Ayn Shams",
+      "Eyn Shams",
+      "Hēlioupolis",
+      "Helioupolis",
+      "Tall al-Ḥiṣn",
+      "Tall al-Hisn",
+      "Tell el-Hisn",
+      "jwnw"
+    ],
+    "756574": [
+      "Hermopolis Magna",
+      "Schmun",
+      "Ἑρμοῦ πόλις",
+      "Hermou polis",
+      "Achmounein",
+      "Uşmūneyn"
+    ],
+    "756518": [
+      "Antinoopolis",
+      "Ansina",
+      "Antinoe",
+      "انصنا",
+      "Anṣınā"
+    ],
+    "736983": [
+      "Oxyrhynchus",
+      "Pemje",
+      "Oxyrhynchus/Pemje",
+      "Al Bahnasā",
+      "el-Bahnasa",
+      "Behnesā"
+    ],
+    "736918": [
+      "Haueris",
+      "Hawara"
+    ],
+    "736953": [
+      "Illahun",
+      "Kahun",
+      "اللاهون",
+      "el-Lahun",
+      "El Lahun",
+      "El Lāhūn",
+      "Lahun"
+    ],
+    "864388873": [
+      "دير المدينة‎",
+      "Deir el-Medina",
+      "Deir al-Medina",
+      "Deir el Medina",
+      "Deir el-Médina"
+    ]
+  }
+}

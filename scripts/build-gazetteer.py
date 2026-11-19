@@ -3,8 +3,8 @@
 Names were selected using the Pleiades name index. Coordinates are copied, never
 inferred. The Egypt extent is a validation guard, not a historical boundary.
 """
-import concurrent.futures
-import datetime
+import argparse
+import hashlib
 import json
 import pathlib
 import subprocess
@@ -20,19 +20,46 @@ SITES = {
     'Hawara': '736918', 'Lahun': '736953', 'Deir el-Medina': '864388873',
 }
 
-def fetch(item):
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+def build(item, snapshot, policy):
     label, identifier = item
     source = f'https://pleiades.stoa.org/places/{identifier}'
-    raw = json.loads(subprocess.check_output(['curl', '-f', '-sS', '-L', '--max-time', '30', source + '/json']))
+    raw = snapshot['sites'][identifier]
     lon, lat = raw['reprPoint']
     if not (23 <= lat <= 33 and 25 <= lon <= 36):
         raise ValueError(f'{label} coordinates outside expected Egypt extent: {lon}, {lat}')
-    aliases = sorted({label, *[(name.get('attested') or '') for name in raw.get('names', [])] } - {''})
-    return dict(id=identifier, name=label, sourceTitle=raw['title'], longitude=lon, latitude=lat, aliases=aliases, source=source)
+    candidates = {}
+    for name in raw.get('names', []):
+        for field in ('attested', 'romanized'):
+            for variant in (name.get(field) or '').split(','):
+                variant = variant.strip()
+                if variant:
+                    candidates.setdefault(variant, []).append(dict(field=field, language=name.get('language') or None, source=name.get('uri') or source))
+    chosen = policy['sites'][identifier]
+    for alias in chosen:
+        if alias not in candidates:
+            raise ValueError(f'{label}: reviewed alias absent from source: {alias}')
+    aliases = sorted({label, *chosen})
+    return dict(id=identifier, name=label, sourceTitle=raw['title'], longitude=lon, latitude=lat, aliases=aliases, nameVariants=[dict(name=alias, attestations=candidates.get(alias, [])) for alias in aliases], source=source)
 
 if __name__ == '__main__':
-    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
-        sites = list(pool.map(fetch, SITES.items()))
-    result = dict(source='Pleiades', attribution='Pleiades contributors; Ancient World Mapping Center and Institute for the Study of the Ancient World', license='CC BY 3.0', licenseURL='https://creativecommons.org/licenses/by/3.0/', retrievedAt=datetime.date.today().isoformat(), sites=sites)
-    pathlib.Path(__file__).resolve().parent.parent.joinpath('data/sites.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n')
+    parser = argparse.ArgumentParser(description='Build from the reviewed source snapshot; --refresh fetches canonical records first and requires name-policy review.')
+    parser.add_argument('--refresh', action='store_true')
+    args = parser.parse_args()
+    source_file = ROOT / 'data/pleiades-name-snapshot.json'
+    snapshot = json.loads(source_file.read_text())
+    if args.refresh:
+        import datetime
+        snapshot = dict(retrievedAt=datetime.date.today().isoformat(), source='Pleiades canonical JSON records', sites={})
+        for identifier in SITES.values():
+            raw = json.loads(subprocess.check_output(['curl', '-f', '-sS', '-L', '--max-time', '30', f'https://pleiades.stoa.org/places/{identifier}/json']))
+            snapshot['sites'][identifier] = dict(title=raw['title'], reprPoint=raw['reprPoint'], names=[{key: name.get(key) for key in ('attested', 'romanized', 'language', 'uri', 'associationCertainty', 'transcriptionCompleteness')} for name in raw.get('names', [])])
+    policy = json.loads((ROOT / 'data/place-name-policy.json').read_text())
+    sites = [build(item, snapshot, policy) for item in SITES.items()]
+    source_text = json.dumps(snapshot, ensure_ascii=False, indent=2) + '\n'
+    result = dict(source='Pleiades', attribution='Pleiades contributors; Ancient World Mapping Center and Institute for the Study of the Ancient World', license='CC BY 3.0', licenseURL='https://creativecommons.org/licenses/by/3.0/', retrievedAt=snapshot['retrievedAt'], namesReviewedAt=policy['reviewedAt'], sourceSHA256=hashlib.sha256(source_text.encode()).hexdigest(), namePolicy=policy['policy'], sites=sites)
+    if args.refresh:
+        source_file.write_text(source_text)
+    ROOT.joinpath('data/sites.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n')
     print(f'Validated and wrote {len(sites)} Pleiades places')

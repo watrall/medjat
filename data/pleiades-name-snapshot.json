@@ -1,0 +1,1703 @@
+{
+  "retrievedAt": "2026-11-19",
+  "source": "Pleiades canonical JSON records",
+  "sites": {
+    "756512": {
+      "title": "Abydos/Ebot",
+      "reprPoint": [
+        31.917622,
+        26.185099
+      ],
+      "names": [
+        {
+          "attested": "",
+          "romanized": "Abydos",
+          "language": "",
+          "uri": "https://pleiades.stoa.org/places/756512/abydos",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "Ebot",
+          "language": "",
+          "uri": "https://pleiades.stoa.org/places/756512/ebot",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "Abydos/Ebot",
+          "romanized": "Abydos/Ebot",
+          "language": "en",
+          "uri": "https://pleiades.stoa.org/places/756512/abydos-ebot",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        }
+      ]
+    },
+    "149576487": {
+      "title": "Amarna",
+      "reprPoint": [
+        30.89818203754354,
+        27.644099597341675
+      ],
+      "names": [
+        {
+          "attested": "العمارنة",
+          "romanized": "el-Amarna, Amarna, Tell el-Amarna",
+          "language": "ar",
+          "uri": "https://pleiades.stoa.org/places/149576487/el-amarna",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "العمارنة",
+          "romanized": "Al-‘Amārnah",
+          "language": "ar",
+          "uri": "https://pleiades.stoa.org/places/149576487/al-2018amarnah",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        }
+      ]
+    },
+    "786037": {
+      "title": "Nekhen/Hierakonpolis",
+      "reprPoint": [
+        32.779728,
+        25.097743
+      ],
+      "names": [
+        {
+          "attested": "Ἱεράκων πόλις",
+          "romanized": "Hierakonpolis",
+          "language": "grc",
+          "uri": "https://pleiades.stoa.org/places/786037/hierakonpolis",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "Kom el-Ahmar",
+          "language": "",
+          "uri": "https://pleiades.stoa.org/places/786037/kom-el-ahmar",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "Nekhen",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/786037/nekhen",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        }
+      ]
+    },
+    "736963": {
+      "title": "Memphis",
+      "reprPoint": [
+        31.255061,
+        29.849491
+      ],
+      "names": [
+        {
+          "attested": "Memphis",
+          "romanized": "Memphis",
+          "language": "la",
+          "uri": "https://pleiades.stoa.org/places/736963/memphis",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Nof, Noph",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/736963/nof",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Mempi",
+          "language": "akk",
+          "uri": "https://pleiades.stoa.org/places/736963/mempi",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "ḥwt-kꜣ-Ptḥ, Hut-ka-Ptah, Hout-ka-Ptah, ḥwt-k3-Ptḥ",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/736963/hwt-ka723-pth",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Mefi",
+          "language": "cop",
+          "uri": "https://pleiades.stoa.org/places/736963/mefi",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "ʿnḫ-tꜣwj, ʿnḫ-t3wj, Ankh-Tawy",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/736963/2bfnh-ta723wj",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "ínbw hd",
+          "language": null,
+          "uri": "https://pleiades.stoa.org/places/736963/inbw-hd",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "jnb(w) ḥḏ, jnbw ḥḏ, jnb ḥḏ, Ineb-hedj, Inebou-Hedjou",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/736963/jnb-w-hd",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "jnbw-ḥḏ, ínbw hd, Ineb-hedj, Inebou-Hedjou",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/736963/jnbw-hd",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "jnb, Ineb",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/736963/jnb",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "mnp",
+          "language": "arc",
+          "uri": "https://pleiades.stoa.org/places/736963/mnp",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "mn-nfr, Men-nefer",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/736963/mn-nfr",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "V Macedonica garrison",
+          "language": "en",
+          "uri": "https://pleiades.stoa.org/places/736963/v-macedonica-garrison",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Memphis",
+          "language": "grc",
+          "uri": "https://pleiades.stoa.org/places/736963/memphis-1",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "V Macedonia garrison",
+          "language": null,
+          "uri": "https://pleiades.stoa.org/places/736963/v-macedonia-garrison",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "Mīt Ruhaina, Mit Rahina, Mit Rahinah, Mit Ruhainah, Mit Riheina, Mitrahineh, Mit Ruhaynah, Mit Ruhayna, Mit Ruhaina",
+          "language": "arb",
+          "uri": "https://pleiades.stoa.org/places/736963/mit-ruhaina",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Mīt Rahīna",
+          "language": null,
+          "uri": "https://pleiades.stoa.org/places/736963/mit-rahina",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "λευκὸν τεῖχος",
+          "romanized": "leúkon teíchos",
+          "language": "grc",
+          "uri": "https://pleiades.stoa.org/places/736963/leaokon-teachos",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "Menf",
+          "language": "ota",
+          "uri": "https://pleiades.stoa.org/places/736963/menf",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        }
+      ]
+    },
+    "796289136": {
+      "title": "Saqqarah",
+      "reprPoint": [
+        31.219354151151553,
+        29.862380874013706
+      ],
+      "names": [
+        {
+          "attested": "سقارة",
+          "romanized": "Saqqarah, Saqqara, Sakkara, Saqara, sqArp, SbGQI, sqʾrẗ",
+          "language": "ar",
+          "uri": "https://pleiades.stoa.org/places/796289136/saqqarah",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        }
+      ]
+    },
+    "442962448": {
+      "title": "Giza",
+      "reprPoint": [
+        31.12668227565419,
+        29.970055997040458
+      ],
+      "names": [
+        {
+          "attested": "الجيزة‎",
+          "romanized": "Giza, Gizah, Gizeh, Giseh",
+          "language": "ar",
+          "uri": "https://pleiades.stoa.org/places/442962448/giza",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        }
+      ]
+    },
+    "786017": {
+      "title": "Diospolis Magna/Thebai",
+      "reprPoint": [
+        32.631884,
+        25.664780999999998
+      ],
+      "names": [
+        {
+          "attested": "",
+          "romanized": "Diospolis Magna",
+          "language": "",
+          "uri": "https://pleiades.stoa.org/places/786017/diospolis-magna",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "Thebai",
+          "language": "",
+          "uri": "https://pleiades.stoa.org/places/786017/thebai",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "Thebes east",
+          "language": "",
+          "uri": "https://pleiades.stoa.org/places/786017/thebes-east",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "أَلْأُقْصُر",
+          "romanized": "Luxor",
+          "language": "ar",
+          "uri": "https://pleiades.stoa.org/places/786017/luxor",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "ḥwt-nṯr n Ḫnsw (m Wꜣst), ḥwt-nṯr n Ḫnsw, ḥwt-nṯr n Ḫnsw m Wꜣst",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/786017/hwt-ntrn-hnsw-mwa723st",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "ḥwt-nṯr nt Jmn-(Rʿ), ḥwt-nṯr nt Jmn, ḥwt-nṯr nt Jmn-Rʿ",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/786017/hwt-ntr-nt-jmn-r2bf",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "al-Karnak",
+          "language": "arb",
+          "uri": "https://pleiades.stoa.org/places/786017/al-karnak",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "pr-Jmn",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/786017/pr-jmn",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "jpt rst, Ipet-Resit",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/786017/jpt-rst",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "jpt-swt (m Wꜣst), jpt-swt m Wꜣst, jpt-swt m Wꜣst, jpt-swt m W3st",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/786017/jpt-swt-mwa723st",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Nēʾ, Ne', Ne",
+          "language": "akk",
+          "uri": "https://pleiades.stoa.org/places/786017/ne2be",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "njwt-rsjt, Niwt-Resit",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/786017/njwt-rsjt",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "wꜣst, w3st, Waset",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/786017/wa723st",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "al-Uqṣurēn, al-Uqsuren, el-Uqsuren",
+          "language": "ar",
+          "uri": "https://pleiades.stoa.org/places/786017/al-uqsuren",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "al-Uqṣurain, al-Uqsurain, el-Uqsurein, al-Uqsurayn, el-Uqsureyn",
+          "language": "arb",
+          "uri": "https://pleiades.stoa.org/places/786017/al-uqsurain",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "al-Uqṣur, al-Uqsur, el-Uqsur",
+          "language": "arb",
+          "uri": "https://pleiades.stoa.org/places/786017/al-uqsur",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "jpt swt, jpt-swt, Ipet-Sut",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/786017/jpt-swt",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "jpt-swt",
+          "language": null,
+          "uri": "https://pleiades.stoa.org/places/786017/jpt-swt-1",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Papē, Pape",
+          "language": "cop",
+          "uri": "https://pleiades.stoa.org/places/786017/pape",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Thēbai, Thebai",
+          "language": "grc",
+          "uri": "https://pleiades.stoa.org/places/786017/thebai-1",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Dios polis megalē",
+          "language": null,
+          "uri": "https://pleiades.stoa.org/places/786017/dios-polis-megale",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Diospolis Megalē, Diospolis Megale, Dios Polis Megale",
+          "language": "grc",
+          "uri": "https://pleiades.stoa.org/places/786017/diospolis-megale",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Diospolis megalē",
+          "language": null,
+          "uri": "https://pleiades.stoa.org/places/786017/diospolis-megale-1",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Diospolis Magna",
+          "language": "ka",
+          "uri": "https://pleiades.stoa.org/places/786017/diospolis-magna-1",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Diospolis magna",
+          "language": null,
+          "uri": "https://pleiades.stoa.org/places/786017/diospolis-magna-2",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Theben-West, West Thebes",
+          "language": "de",
+          "uri": "https://pleiades.stoa.org/places/786017/theben-west",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Theben",
+          "language": "de",
+          "uri": "https://pleiades.stoa.org/places/786017/theben",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Diospolis, Dios Polis",
+          "language": "grc",
+          "uri": "https://pleiades.stoa.org/places/786017/diospolis",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "njwt, Niwt",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/786017/njwt",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "[pr]-Sḫm-Rʿḫwj‑[tꜣwj], Sḫm-Rʿḫwj‑tꜣwj, pr-Sḫm-Rʿḫwj‑tꜣwj, pr-Sḫm-Rʿḫwj, Sḫm-Rʿḫwj, Sḫm-Rʿḫwj‑t3wj, pr-Sḫm-Rʿḫwj‑t3wj",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/786017/pr-shm-r2bfhwj-ta723wj",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "[pr]-Sbk-ḥtpmpr-Jmn, pr-Sbk-ḥtpmpr-Jmn, Sbk-ḥtpmpr-Jmn",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/786017/pr-sbk-htpmpr-jmn",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "pr-Mnṯw, Per-Menthu",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/786017/pr-mntw",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Luxor",
+          "language": "de",
+          "uri": "https://pleiades.stoa.org/places/786017/luxor-1",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Ḫpr-kꜣ-Rʿswt-ḏfꜣw, Ḫpr-k3-Rʿswt-ḏf3w",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/786017/hpr-ka723-r2bfswt-dfa723w",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Ḫpr-kꜣ-Rʿḫnttjpt-swt, Ḫpr-k3-Rʿḫnttjpt-swt",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/786017/hpr-ka723-r2bfhnttjpt-swt",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Karnak",
+          "language": "de",
+          "uri": "https://pleiades.stoa.org/places/786017/karnak-deu",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Karnak",
+          "language": "en",
+          "uri": "https://pleiades.stoa.org/places/786017/karnak-eng",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "al-Uqsur",
+          "language": null,
+          "uri": "https://pleiades.stoa.org/places/786017/al-uqsur-1",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "ḥwt Ptḥ wꜣst(j), ḥwt Ptḥ wꜣst, ḥwt Ptḥ wꜣstj, ḥwt Ptḥ w3stj, ḥwt Ptḥ w3st",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/786017/hwt-pthwa723st-j",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "اقصر",
+          "romanized": "Aḳṣar",
+          "language": "ota",
+          "uri": "https://pleiades.stoa.org/places/786017/aksar",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "Diospoli Q[ - ? - ]tibe",
+          "romanized": "Diospoli quae Tibe",
+          "language": "la",
+          "uri": "https://pleiades.stoa.org/places/786017/diospoli-quae-tibe",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        }
+      ]
+    },
+    "786050": {
+      "title": "Karnak",
+      "reprPoint": [
+        32.658127567772674,
+        25.71822004908206
+      ],
+      "names": [
+        {
+          "attested": "الكرنك",
+          "romanized": "Al-Karnak",
+          "language": "ar",
+          "uri": "https://pleiades.stoa.org/places/786050/al-karnak",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "Karnak",
+          "romanized": "Karnak",
+          "language": "en",
+          "uri": "https://pleiades.stoa.org/places/786050/karnak",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        }
+      ]
+    },
+    "786021": {
+      "title": "Elephantine",
+      "reprPoint": [
+        32.889,
+        24.09
+      ],
+      "names": [
+        {
+          "attested": "",
+          "romanized": "Elephantine",
+          "language": "",
+          "uri": "https://pleiades.stoa.org/places/786021/elephantine",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "Abu",
+          "language": "",
+          "uri": "https://pleiades.stoa.org/places/786021/abu",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "(jw)ꜣbw, (jw)3bw, jw3bw, jw 3bw",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/786021/jw-a723bw",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "(jw) 3bw",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/786021/jw-3bw",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "ꜣbw, 3bw, Abu",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/786021/a723bw",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "3bw",
+          "language": null,
+          "uri": "https://pleiades.stoa.org/places/786021/3bw",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Iēb, Ieb, Yabu",
+          "language": "grc",
+          "uri": "https://pleiades.stoa.org/places/786021/ieb-grc",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Iēb, Ieb, Yabu",
+          "language": "cop",
+          "uri": "https://pleiades.stoa.org/places/786021/ieb-cop",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Elephantinē, Elephantine",
+          "language": "grc",
+          "uri": "https://pleiades.stoa.org/places/786021/elephantine-1",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "Gazirat Aswān, Gazirat Aswan",
+          "language": "ar",
+          "uri": "https://pleiades.stoa.org/places/786021/gazirat-aswan",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "Ǧazīrat Aswān, Jazirat Aswan, Jezirat Aswan, Aswan Island",
+          "language": "arb",
+          "uri": "https://pleiades.stoa.org/places/786021/gazirat-aswan-1",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        }
+      ]
+    },
+    "786089": {
+      "title": "Philae",
+      "reprPoint": [
+        32.88414092882277,
+        24.0252586030107
+      ],
+      "names": [
+        {
+          "attested": "",
+          "romanized": "Philae",
+          "language": "",
+          "uri": "https://pleiades.stoa.org/places/786089/philae",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        }
+      ]
+    },
+    "785974": {
+      "title": "Apollonopolis Magna",
+      "reprPoint": [
+        32.872446,
+        24.9778875
+      ],
+      "names": [
+        {
+          "attested": "",
+          "romanized": "Apollonopolis Magna",
+          "language": "",
+          "uri": "https://pleiades.stoa.org/places/785974/apollonopolis-magna",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "Edfu",
+          "romanized": "Edfu",
+          "language": "en",
+          "uri": "https://pleiades.stoa.org/places/785974/name.2011-05-27.9851418012",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "Behdet",
+          "romanized": "Behdet",
+          "language": "en",
+          "uri": "https://pleiades.stoa.org/places/785974/behdet",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "Edfou",
+          "romanized": "Edfou",
+          "language": "en",
+          "uri": "https://pleiades.stoa.org/places/785974/edfou",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "إدفو",
+          "romanized": "Idfu, Idfū, EOah, إdfw, <dfw",
+          "language": "arz",
+          "uri": "https://pleiades.stoa.org/places/785974/idfui",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "Ἀπόλλωνος πόλις",
+          "romanized": "Apollonos polis",
+          "language": "grc",
+          "uri": "https://pleiades.stoa.org/places/785974/apollonos-polis",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        }
+      ]
+    },
+    "786127": {
+      "title": "Tentyra",
+      "reprPoint": [
+        32.67041622105285,
+        26.142546215868396
+      ],
+      "names": [
+        {
+          "attested": "Τέντυρα",
+          "romanized": "Tentura",
+          "language": "grc",
+          "uri": "https://pleiades.stoa.org/places/786127/tentyra",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "Tentura",
+          "romanized": "Tentura",
+          "language": "la",
+          "uri": "https://pleiades.stoa.org/places/786127/tentura",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "Dendera",
+          "language": "",
+          "uri": "https://pleiades.stoa.org/places/786127/dendera",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        }
+      ]
+    },
+    "786059": {
+      "title": "Latopolis",
+      "reprPoint": [
+        32.5531993,
+        25.2936689
+      ],
+      "names": [
+        {
+          "attested": "",
+          "romanized": "Latopolis",
+          "language": "",
+          "uri": "https://pleiades.stoa.org/places/786059/latopolis",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "Esna",
+          "language": "",
+          "uri": "https://pleiades.stoa.org/places/786059/esna",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Tempel des Chnum und Nebut, Temple of Khnum and Nebut",
+          "language": "de",
+          "uri": "https://pleiades.stoa.org/places/786059/tempel-des-chnum-und-nebut",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "[tꜣ]-snj jwnyt, tꜣ-snj jwnyt, snj jwnyt, Ta Senet",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/786059/ta723-snj-jwnyt",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "Λατόπολις",
+          "romanized": "Latopolis",
+          "language": "grc",
+          "uri": "https://pleiades.stoa.org/places/786059/latopolis-1",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Latōn Polis, Laton Polis",
+          "language": "grc",
+          "uri": "https://pleiades.stoa.org/places/786059/laton-polis",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Latōn polis",
+          "language": null,
+          "uri": "https://pleiades.stoa.org/places/786059/laton-polis-1",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "snꜣt",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/786059/sna723t",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "snt, Senet",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/786059/snt",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Snē, Sne",
+          "language": "cop",
+          "uri": "https://pleiades.stoa.org/places/786059/sne",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "jwnjjt",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/786059/jwnjjt",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "jwnjt-rsjt",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/786059/jwnjt-rsjt",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Isna",
+          "language": null,
+          "uri": "https://pleiades.stoa.org/places/786059/isna",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Isna",
+          "language": "de",
+          "uri": "https://pleiades.stoa.org/places/786059/isna-deu",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "Isna",
+          "language": "en",
+          "uri": "https://pleiades.stoa.org/places/786059/isna-eng",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Isnā, Isna, Esna, Esne",
+          "language": "arb",
+          "uri": "https://pleiades.stoa.org/places/786059/isna-1",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Isnā Site 2, Isna Site 2",
+          "language": "arb",
+          "uri": "https://pleiades.stoa.org/places/786059/isna-site-2",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Isnā Site 13, Isna Site 13",
+          "language": "arb",
+          "uri": "https://pleiades.stoa.org/places/786059/isna-site-13",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Isnā sites, Isna Sites",
+          "language": "arb",
+          "uri": "https://pleiades.stoa.org/places/786059/isna-sites",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "jwnjt",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/786059/jwnjt",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "اسنا",
+          "romanized": "İsnā",
+          "language": "ota",
+          "uri": "https://pleiades.stoa.org/places/786059/isna-2",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "Lato",
+          "romanized": "Lato",
+          "language": "la",
+          "uri": "https://pleiades.stoa.org/places/786059/lato",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        }
+      ]
+    },
+    "786079": {
+      "title": "Omboi",
+      "reprPoint": [
+        32.928412989627994,
+        24.452146834041102
+      ],
+      "names": [
+        {
+          "attested": "Ὄμβοι",
+          "romanized": "Omboi",
+          "language": "grc",
+          "uri": "https://pleiades.stoa.org/places/786079/omboi",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "Ambos",
+          "romanized": "Ambos",
+          "language": "la",
+          "uri": "https://pleiades.stoa.org/places/786079/ambos",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "Ombos",
+          "romanized": "Ombos",
+          "language": "la",
+          "uri": "https://pleiades.stoa.org/places/786079/ombos",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "Kom Ombo",
+          "language": "akk",
+          "uri": "https://pleiades.stoa.org/places/786079/kom-ombo",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        }
+      ]
+    },
+    "727070": {
+      "title": "Alexandria",
+      "reprPoint": [
+        29.909773,
+        31.201435
+      ],
+      "names": [
+        {
+          "attested": "",
+          "romanized": "Alexandria",
+          "language": "",
+          "uri": "https://pleiades.stoa.org/places/727070/alexandria",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Alexandria",
+          "language": "de",
+          "uri": "https://pleiades.stoa.org/places/727070/alexandria-1",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "ⲣⲁⲕⲟⲧⲉ",
+          "romanized": "Rakote",
+          "language": "cop",
+          "uri": "https://pleiades.stoa.org/places/727070/rakote",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "al-İskandarīya",
+          "language": null,
+          "uri": "https://pleiades.stoa.org/places/727070/al-iskandariya",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "al-Iskandariyya",
+          "language": null,
+          "uri": "https://pleiades.stoa.org/places/727070/al-iskandariyya",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "al-Iskandarīya, al-Iskandariya, al-Iskandariyah, el-Iskandariya, el-Iskandariyah, al-Iskandariyya, al-Iskandariyyah, el-Iskandariyya, el-Iskandariyyah",
+          "language": "arb",
+          "uri": "https://pleiades.stoa.org/places/727070/al-iskandariya-1",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "Rhakōtis, Rhakotis",
+          "language": "grc",
+          "uri": "https://pleiades.stoa.org/places/727070/rhakotis",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Alexandreia",
+          "language": "grc",
+          "uri": "https://pleiades.stoa.org/places/727070/alexandreia",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Alexandrea ad Aegyptum",
+          "language": "ka",
+          "uri": "https://pleiades.stoa.org/places/727070/alexandrea-ad-aegyptum",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Alexandreia ad Aegyptum",
+          "language": null,
+          "uri": "https://pleiades.stoa.org/places/727070/alexandreia-ad-aegyptum",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "İskenderiyye",
+          "language": "ota",
+          "uri": "https://pleiades.stoa.org/places/727070/iskenderiyye",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "Scanderia",
+          "romanized": "Scanderia",
+          "language": "en",
+          "uri": "https://pleiades.stoa.org/places/727070/scanderia",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        }
+      ]
+    },
+    "727236": {
+      "title": "Tanis",
+      "reprPoint": [
+        31.883619562443883,
+        30.975452837412377
+      ],
+      "names": [
+        {
+          "attested": "",
+          "romanized": "San el-Hagar",
+          "language": "ar",
+          "uri": "https://pleiades.stoa.org/places/727236/san-el-hagar",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "Τάνις",
+          "romanized": "Tanis",
+          "language": "grc",
+          "uri": "https://pleiades.stoa.org/places/727236/tanis",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "صان الحجر",
+          "romanized": "Ṣan al-Hagar",
+          "language": "ar",
+          "uri": "https://pleiades.stoa.org/places/727236/san-al-hagar",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        }
+      ]
+    },
+    "727088": {
+      "title": "Boubastis",
+      "reprPoint": [
+        31.511085335188596,
+        30.57238231122388
+      ],
+      "names": [
+        {
+          "attested": "",
+          "romanized": "Boubastis",
+          "language": "",
+          "uri": "https://pleiades.stoa.org/places/727088/boubastis",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        }
+      ]
+    },
+    "727217": {
+      "title": "Sais",
+      "reprPoint": [
+        30.774366999999998,
+        30.967149999999997
+      ],
+      "names": [
+        {
+          "attested": "Σάι",
+          "romanized": "Sais",
+          "language": "grc",
+          "uri": "https://pleiades.stoa.org/places/727217/sais",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "صا الحجر",
+          "romanized": "Ṣa el-Ḥagar, Şā al Ḩajar, Ṣân el-Ḥagar",
+          "language": "arz",
+          "uri": "https://pleiades.stoa.org/places/727217/sa-el-hagar",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "Saïs",
+          "romanized": "Saïs",
+          "language": "fr",
+          "uri": "https://pleiades.stoa.org/places/727217/sais-1",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        }
+      ]
+    },
+    "727117": {
+      "title": "Heliopolis",
+      "reprPoint": [
+        31.3074812,
+        30.1294036
+      ],
+      "names": [
+        {
+          "attested": "",
+          "romanized": "Heliopolis",
+          "language": "",
+          "uri": "https://pleiades.stoa.org/places/727117/heliopolis",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "al-Matarīya",
+          "language": null,
+          "uri": "https://pleiades.stoa.org/places/727117/al-matariya",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "al-Maṭarīya, al-Matariya, al-Matariyah, al-Matariyya, al-Matariyyah, el-Matariye, el-Matariyeh, el-Matariyye, el-Matariyyeh",
+          "language": "arb",
+          "uri": "https://pleiades.stoa.org/places/727117/al-matariya-1",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Ōn, On",
+          "language": "cop",
+          "uri": "https://pleiades.stoa.org/places/727117/on",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Miṣr al-Ǧadīda, Masr el-Jedide, Masr al-Jadida, Misr al-Jadida, Misr el-Jedide, Misr al-Jadidah, Misr el-Jedideh, Masr al-Jadidah, Masr el-Jedideh",
+          "language": "arb",
+          "uri": "https://pleiades.stoa.org/places/727117/misr-al-gadida",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "jwśʿꜣś, jwśʿ3ś, jw.s ʿꜣ.s",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/727117/jws2bfa723s",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "ḏdjt",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/727117/ddjt",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "ʿAin Šams, Ein Shams, Ain Shams, Ayn Shams, Eyn Shams",
+          "language": "arb",
+          "uri": "https://pleiades.stoa.org/places/727117/2bfain-sams",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "Miṣr al-Gadīda, Misr al-Gadida, Misr el-Gedide, Masr al-Gadida, Masr el-Gedide, Misr al-Gadidah, Misr el-Gedideh, Masr al-Gadidah, Masr el-Gedideh",
+          "language": "ar",
+          "uri": "https://pleiades.stoa.org/places/727117/misr-al-gadida-1",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "ʿĒn Šams, En Shams",
+          "language": "ar",
+          "uri": "https://pleiades.stoa.org/places/727117/2bfen-sams",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "mnśt",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/727117/mnst",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Neu-Kairo, New Cairo",
+          "language": "de",
+          "uri": "https://pleiades.stoa.org/places/727117/neu-kairo",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "šnḏt",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/727117/sndt",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "ʾn",
+          "language": "arc",
+          "uri": "https://pleiades.stoa.org/places/727117/2ben",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Hēliou polis",
+          "language": null,
+          "uri": "https://pleiades.stoa.org/places/727117/heliou-polis",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Unu",
+          "language": "akk",
+          "uri": "https://pleiades.stoa.org/places/727117/unu",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "jwnw",
+          "language": "egy",
+          "uri": "https://pleiades.stoa.org/places/727117/jwnw",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "jwśʿ3ś",
+          "language": null,
+          "uri": "https://pleiades.stoa.org/places/727117/jws2bf3s",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "jw.s ʿꜣ.s",
+          "language": null,
+          "uri": "https://pleiades.stoa.org/places/727117/jw-s-2bfa723.s",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Helioupolis",
+          "language": null,
+          "uri": "https://pleiades.stoa.org/places/727117/helioupolis",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "Heliopolis",
+          "language": "de",
+          "uri": "https://pleiades.stoa.org/places/727117/heliopolis-deu",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "Heliopolis",
+          "language": "en",
+          "uri": "https://pleiades.stoa.org/places/727117/heliopolis-eng",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": null,
+          "romanized": "Hēlioupolis, Helioupolis",
+          "language": "grc",
+          "uri": "https://pleiades.stoa.org/places/727117/helioupolis-1",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "Tall al-Ḥiṣn, Tall al-Hisn, Tell el-Hisn",
+          "language": "arb",
+          "uri": "https://pleiades.stoa.org/places/727117/tall-al-hisn",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        }
+      ]
+    },
+    "756574": {
+      "title": "Hermopolis Magna/Schmun",
+      "reprPoint": [
+        30.803758051080735,
+        27.781357334509522
+      ],
+      "names": [
+        {
+          "attested": "",
+          "romanized": "Hermopolis Magna",
+          "language": "",
+          "uri": "https://pleiades.stoa.org/places/756574/hermopolis-magna",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "Schmun",
+          "language": "",
+          "uri": "https://pleiades.stoa.org/places/756574/schmun",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "Ἑρμοῦ πόλις",
+          "romanized": "Hermou polis",
+          "language": "grc",
+          "uri": "https://pleiades.stoa.org/places/756574/hermou-polis",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "Achmounein",
+          "romanized": "Achmounein",
+          "language": "fr",
+          "uri": "https://pleiades.stoa.org/places/756574/achmounein",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "Uşmūneyn",
+          "language": "ota",
+          "uri": "https://pleiades.stoa.org/places/756574/usmuneyn",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "oppidum Mercuri",
+          "romanized": "oppidum Mercuri",
+          "language": "la",
+          "uri": "https://pleiades.stoa.org/places/756574/oppidum-mercuri",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        }
+      ]
+    },
+    "756518": {
+      "title": "Antinoopolis",
+      "reprPoint": [
+        30.8810025,
+        27.8105625
+      ],
+      "names": [
+        {
+          "attested": "",
+          "romanized": "Antinoopolis",
+          "language": "",
+          "uri": "https://pleiades.stoa.org/places/756518/antinoopolis",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "Ansina",
+          "language": "",
+          "uri": "https://pleiades.stoa.org/places/756518/ansina",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "Antinoe",
+          "language": "",
+          "uri": "https://pleiades.stoa.org/places/756518/antinoe",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "انصنا",
+          "romanized": "Anṣınā",
+          "language": "ota",
+          "uri": "https://pleiades.stoa.org/places/756518/ansina-1",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        }
+      ]
+    },
+    "736983": {
+      "title": "Oxyrhynchus/Pemje",
+      "reprPoint": [
+        30.65172,
+        28.542574
+      ],
+      "names": [
+        {
+          "attested": "",
+          "romanized": "Oxyrhynchus",
+          "language": "",
+          "uri": "https://pleiades.stoa.org/places/736983/oxyrhynchus",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "Pemje",
+          "language": "",
+          "uri": "https://pleiades.stoa.org/places/736983/pemje",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "Oxyrhynchus/Pemje",
+          "romanized": "Oxyrhynchus/Pemje",
+          "language": "en",
+          "uri": "https://pleiades.stoa.org/places/736983/oxyrhynchus-pemje",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "Al Bahnasā, el-Bahnasa",
+          "language": "ar",
+          "uri": "https://pleiades.stoa.org/places/736983/al-bahnasa",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "Behnesā",
+          "language": "ota",
+          "uri": "https://pleiades.stoa.org/places/736983/behnesa",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        }
+      ]
+    },
+    "736918": {
+      "title": "Haueris",
+      "reprPoint": [
+        30.895832,
+        29.253514
+      ],
+      "names": [
+        {
+          "attested": "",
+          "romanized": "Haueris",
+          "language": "",
+          "uri": "https://pleiades.stoa.org/places/736918/haueris",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "",
+          "romanized": "Hawara",
+          "language": "",
+          "uri": "https://pleiades.stoa.org/places/736918/hawara",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        }
+      ]
+    },
+    "736953": {
+      "title": "el-Lahun",
+      "reprPoint": [
+        30.983288561698398,
+        29.236019508094262
+      ],
+      "names": [
+        {
+          "attested": "",
+          "romanized": "Illahun",
+          "language": "ar",
+          "uri": "https://pleiades.stoa.org/places/736953/illahun",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "Kahun",
+          "romanized": "Kahun",
+          "language": "en",
+          "uri": "https://pleiades.stoa.org/places/736953/kahun",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "اللاهون",
+          "romanized": "el-Lahun, El Lahun, El Lāhūn",
+          "language": "ar",
+          "uri": "https://pleiades.stoa.org/places/736953/el-lahun",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        },
+        {
+          "attested": "Lahun",
+          "romanized": "Lahun",
+          "language": "en",
+          "uri": "https://pleiades.stoa.org/places/736953/lahun",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        }
+      ]
+    },
+    "864388873": {
+      "title": "Deir el-Medina",
+      "reprPoint": [
+        32.60128640590839,
+        25.72840127706976
+      ],
+      "names": [
+        {
+          "attested": "دير المدينة‎",
+          "romanized": "Deir el-Medina, Deir al-Medina, Deir el Medina, Deir el-Médina",
+          "language": "ar",
+          "uri": "https://pleiades.stoa.org/places/864388873/deir-el-medina",
+          "associationCertainty": "certain",
+          "transcriptionCompleteness": "complete"
+        }
+      ]
+    }
+  }
+}

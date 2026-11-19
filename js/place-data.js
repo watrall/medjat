@@ -22,16 +22,18 @@ export function placeEvidence(work, place) {
       .filter((name) => name.length >= 4)
       .map((alias) => {
         const escaped = alias
+          .normalize('NFC')
           .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
           .replace(/[\s\u2010-\u2015-]+/g, '[\\s\\u2010-\\u2015-]+');
-        return new RegExp(`(?<![\\p{L}])${escaped}(?![\\p{L}])`, 'iu');
+        return new RegExp(`(?<![\\p{L}\\p{N}\\p{M}])${escaped}(?![\\p{L}\\p{N}\\p{M}])`, 'iu');
       });
     matchers.set(place, expressions);
   }
-  for (const [field, text] of [
+  for (const [field, sourceText] of [
     ['title', work.title || ''],
     ['abstract', work.abstract || ''],
   ]) {
+    const text = sourceText.normalize('NFC');
     for (const expression of expressions) {
       const match = expression.exec(text);
       if (match)
