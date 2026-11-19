@@ -1901,3 +1901,21 @@ p {
     grid-row: 1;
   }
 }
+
+.place-search-form :is(select, input),
+.places-map-tools select,
+.place-status-control :is(select, input) {
+  min-inline-size: 0;
+  inline-size: 100%;
+  max-inline-size: 100%;
+}
+.publication-identity,
+.place-assignment-preview {
+  overflow-wrap: anywhere;
+}
+.place-assignment-preview {
+  padding-block: var(--space-sm);
+}
+.place-assignment-preview > p:first-child {
+  font-weight: 650;
+}

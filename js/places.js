@@ -1,8 +1,9 @@
+import { publicationMetadata } from './place-publication.js';
 import { loadGazetteer, placeEvidence, placesForWork, searchPlaceWorks } from './place-data.js';
 import { createPlaceMap } from './place-map.js';
 import { createInspector } from './inspector.js';
 import { createPlaceCollection } from './place-collection.js';
-import { authorLine, doiURL } from './data.js';
+import { doiURL } from './data.js';
 import { el, icon, externalLink, skeletons } from './dom.js';
 
 export function createPlaces(
@@ -46,6 +47,7 @@ export function createPlaces(
   }
   function capture() {
     return {
+      collection: panels?.collection.capture(),
       ...location(),
       searchDraft,
       inspector: panels?.detail.hidden === false ? panels.inspector.capture() : null,
@@ -197,6 +199,8 @@ export function createPlaces(
       onInspect: inspect,
       onChoose: choose,
       onRefresh: () => map?.refresh(),
+      initialDraft: reading?.collection,
+      onDraft: onSession,
       getStatus: () => evidenceStatus,
       onStatus: (value) => {
         evidenceStatus = value;
@@ -415,11 +419,7 @@ export function createPlaces(
       'li',
       { class: 'place-publication' },
       el('button', { class: 'place-publication-title', onclick: () => inspect(work) }, work.title),
-      el(
-        'p',
-        { class: 'scope-note' },
-        [authorLine(work), work.year, work.typeLabel].filter(Boolean).join(' · '),
-      ),
+      publicationMetadata(work),
       evidence &&
         el(
           'p',

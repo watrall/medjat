@@ -1,3 +1,4 @@
+import { publicationMetadata, assignmentLabel } from './place-publication.js';
 import { placeEvidence } from './place-data.js';
 import { researchData, reviewDecision } from './research-store.js';
 import { exportCollection, downloadFile } from './export.js';
@@ -51,7 +52,17 @@ export function collectionPlaces(records, sites, decisions = {}) {
 
 export function createPlaceCollection(
   root,
-  { sites, getSaved, onInspect, onChoose, onRefresh, getStatus = () => 'all', onStatus = () => {} },
+  {
+    sites,
+    getSaved,
+    onInspect,
+    onChoose,
+    onRefresh,
+    getStatus = () => 'all',
+    onStatus = () => {},
+    initialDraft = {},
+    onDraft = () => {},
+  },
 ) {
   let selected = '',
     status = getStatus(),
@@ -59,6 +70,17 @@ export function createPlaceCollection(
     exportJob = null,
     exporting = false,
     exportMessage = '';
+  let draft = initialDraft || {};
+  function capture() {
+    draft = {
+      query: root.querySelector('#assignPlaceSearch')?.value ?? draft.query ?? '',
+      work: root.querySelector('#assignPlaceWork')?.value ?? draft.work,
+      target: root.querySelector('#assignPlaceTarget')?.value ?? draft.target,
+      format: root.querySelector('#placeExportFormat')?.value ?? draft.format,
+      open: root.querySelector('.place-assignment')?.open ?? draft.open,
+    };
+    return draft;
+  }
   const decide = (key, value) => {
     if (!reviewDecision(key, value))
       notify('Place review is kept for this visit only. Export a JSON backup to retain it.');
@@ -146,10 +168,11 @@ export function createPlaceCollection(
   }
   function render(placeID) {
     const samePlace = selected === placeID;
-    const draftWork = root.querySelector('#assignPlaceWork')?.value;
-    const draftTarget = samePlace ? root.querySelector('#assignPlaceTarget')?.value : placeID;
-    const draftFormat = root.querySelector('#placeExportFormat')?.value;
-    const assignmentOpen = root.querySelector('.place-assignment')?.open;
+    capture();
+    const draftWork = draft.work;
+    const draftTarget = samePlace ? draft.target : placeID;
+    const draftFormat = draft.format;
+    const assignmentOpen = draft.open;
     selected = placeID;
     snapshot = collectionPlaces(getSaved(), sites, researchData());
     const current = sites.find((site) => site.id === selected),
@@ -256,6 +279,7 @@ export function createPlaceCollection(
           { class: 'place-publication-title', onclick: () => onInspect(work) },
           work.title,
         ),
+        publicationMetadata(work),
       );
       for (const link of associations)
         row.append(
@@ -306,13 +330,58 @@ export function createPlaceCollection(
             : 'Save publications from Explore or Discover in Crossref to build a place-based bibliography.',
         ),
       );
-    const publication = el(
-      'select',
-      { id: 'assignPlaceWork' },
-      [...getSaved().values()].map(({ work }) =>
-        el('option', { value: work.id }, work.title.slice(0, 160)),
-      ),
-    );
+    const savedWorks = [...getSaved().values()].map(({ work }) => work);
+    const publication = el('select', { id: 'assignPlaceWork' });
+    let chosen = getSaved().has(draftWork) ? draftWork : savedWorks[0]?.id || '';
+    const preview = el('div', {
+      class: 'place-assignment-preview',
+      'aria-label': 'Selected publication',
+    });
+    const matchCount = el('p', { class: 'scope-note', role: 'status' });
+    function showPreview() {
+      const work = getSaved().get(chosen)?.work;
+      preview.replaceChildren(
+        ...(work
+          ? [el('p', {}, work.title), publicationMetadata(work)]
+          : [el('p', {}, 'Choose a saved publication.')]),
+      );
+    }
+    function filterAssignments() {
+      const query = assignmentSearch.value.trim().toLocaleLowerCase();
+      const matches = savedWorks.filter((work) =>
+        assignmentLabel(work).toLocaleLowerCase().includes(query),
+      );
+      publication.replaceChildren(
+        el('option', { value: '' }, 'Choose a publication'),
+        ...matches.map((work) => el('option', { value: work.id }, assignmentLabel(work))),
+      );
+      if (chosen && !matches.some((work) => work.id === chosen)) {
+        const work = getSaved().get(chosen)?.work;
+        if (work)
+          publication.append(
+            el('option', { value: chosen }, `Selected outside search: ${assignmentLabel(work)}`),
+          );
+      }
+      publication.value = chosen;
+      matchCount.textContent = `${matches.length} matching ${noun(matches.length)}${chosen && !matches.some((work) => work.id === chosen) ? ' · selected publication retained outside search' : ''}.`;
+      showPreview();
+    }
+    const assignmentSearch = el('input', {
+      id: 'assignPlaceSearch',
+      type: 'search',
+      value: draft.query || '',
+      placeholder: 'Title, author, year or DOI',
+      oninput: () => {
+        filterAssignments();
+        onDraft();
+      },
+    });
+    publication.addEventListener('change', () => {
+      chosen = publication.value;
+      showPreview();
+      onDraft();
+    });
+    filterAssignments();
     const target = el(
       'select',
       { id: 'assignPlaceTarget' },
@@ -329,6 +398,28 @@ export function createPlaceCollection(
         { class: 'scope-note' },
         'Use your reading of the publication when its title or abstract does not provide enough evidence. Your assignment is recorded as researcher-supplied.',
       ),
+      el(
+        'label',
+        { class: 'place-status-control', for: 'assignPlaceSearch' },
+        'Find a saved publication',
+        assignmentSearch,
+      ),
+      matchCount,
+      el(
+        'button',
+        {
+          class: 'text-button',
+          type: 'button',
+          onclick: () => {
+            assignmentSearch.value = '';
+            filterAssignments();
+            assignmentSearch.focus();
+            onDraft();
+          },
+        },
+        'Clear publication search',
+      ),
+      preview,
       el(
         'form',
         {
@@ -361,7 +452,10 @@ export function createPlaceCollection(
     );
     root.append(assignment);
     assignment.open = assignmentOpen || false;
-    if (draftWork && getSaved().has(draftWork)) publication.value = draftWork;
+    assignment.addEventListener('toggle', onDraft);
+    target.addEventListener('change', onDraft);
+    format.addEventListener('change', onDraft);
+
     if (draftTarget && sites.some((site) => site.id === draftTarget)) target.value = draftTarget;
     if (draftFormat) format.value = draftFormat;
     function workList(title, rows, decision) {
@@ -372,6 +466,7 @@ export function createPlaceCollection(
             'li',
             {},
             el('button', { class: 'text-button', onclick: () => onInspect(work) }, work.title),
+            publicationMetadata(work),
             el(
               'button',
               {
@@ -379,7 +474,8 @@ export function createPlaceCollection(
                 onclick: () => {
                   if (decision === 'assign') {
                     assignment.open = true;
-                    publication.value = work.id;
+                    chosen = work.id;
+                    filterAssignments();
                     target.focus();
                   } else {
                     decide(`place-scope:${work.id}`, { decision: 'unassigned' });
@@ -444,6 +540,7 @@ export function createPlaceCollection(
   }
   return {
     render,
+    capture,
     stats,
     cancel() {
       exportJob?.abort();

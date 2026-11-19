@@ -227,3 +227,51 @@ test('an export keeps its original place identity while another place is selecte
   expect(await readFile(await file.path(), 'utf8')).toContain('10.1234/abydos');
   await expect(page.locator('[data-export-status]')).toContainText('for Abydos');
 });
+test('assignment identifies duplicate titles, searches without changing selection and fits its column', async ({
+  page,
+}) => {
+  const records = [
+    {
+      DOI: '10.1234/intro-a',
+      title: ['Introduction'],
+      author: [{ family: 'Ahmed' }],
+      published: { 'date-parts': [[2001]] },
+      'container-title': ['Abydos studies'],
+    },
+    {
+      DOI: '10.1234/intro-b',
+      title: ['Introduction'],
+      author: [{ family: 'Brown' }],
+      published: { 'date-parts': [[2020]] },
+      'container-title': ['Thebes studies'],
+    },
+  ];
+  await page.route('https://tile.openstreetmap.org/**', (r) => r.abort());
+  await page.route('https://api.crossref.org/**', (r) =>
+    r.fulfill({ json: { message: { items: records, 'total-results': 2 } } }),
+  );
+  await page.goto('/');
+  for (const button of await page.locator('.save-button').all()) await button.click();
+  await page.locator('#placesNav').click();
+  await page.getByRole('button', { name: 'Your collection', exact: true }).click();
+  await page.locator('.place-assignment > summary').click();
+  await expect(page.locator('#assignPlaceWork option[value="10.1234/intro-a"]')).toContainText(
+    'Ahmed',
+  );
+  await expect(page.locator('#assignPlaceWork option[value="10.1234/intro-b"]')).toContainText(
+    '2020',
+  );
+  await page.locator('#assignPlaceWork').selectOption('10.1234/intro-b');
+  await page.locator('#assignPlaceSearch').fill('Ahmed');
+  await expect(page.locator('#assignPlaceWork')).toHaveValue('10.1234/intro-b');
+  await expect(page.locator('.place-assignment-preview')).toContainText('Brown');
+  const fits = await page
+    .locator('#assignPlaceWork')
+    .evaluate(
+      (el) => el.getBoundingClientRect().width <= el.parentElement.getBoundingClientRect().width,
+    );
+  expect(fits).toBe(true);
+  await page.reload();
+  await expect(page.locator('#assignPlaceSearch')).toHaveValue('Ahmed');
+  await expect(page.locator('#assignPlaceWork')).toHaveValue('10.1234/intro-b');
+});
