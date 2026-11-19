@@ -4,6 +4,7 @@ import { el, notify } from './dom.js';
 import { researchData, reviewDecision } from './research-store.js';
 import { serializeCollection } from './collection.js';
 import { downloadText } from './download.js';
+import { citationKey, doiKey } from './decision-keys.js';
 import { RESEARCH_LIMITS } from './references.js';
 function network(data) {
   const refs = data.references.slice(0, RESEARCH_LIMITS.referencedNodes),
@@ -61,7 +62,7 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
       notify('Review decision kept for this visit only. Download a research backup to retain it.');
   };
   function referenceRow(ref) {
-    const key = `doi:${ref.doi}`,
+    const key = doiKey(ref.doi),
       state = researchData()[key];
     const row = el(
       'li',
@@ -137,7 +138,7 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
           {
             class: 'text-button',
             onclick: () => {
-              decide(`citation:${source.id}:${source.label}`, {
+              decide(citationKey(source.id, source.label), {
                 decision: 'unmatched',
                 source: source.id,
                 label: source.label,
@@ -151,7 +152,7 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
     return row;
   }
   function unresolvedRow(ref) {
-    const key = `citation:${ref.source}:${ref.label}`;
+    const key = citationKey(ref.source, ref.label);
     const status = el(
       'p',
       { role: 'status' },

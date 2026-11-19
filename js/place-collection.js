@@ -2,6 +2,7 @@ import { preservePlaceFocus } from './place-focus.js';
 import { publicationMetadata, assignmentLabel } from './place-publication.js';
 import { placeEvidence } from './place-data.js';
 import { researchData, reviewDecision } from './research-store.js';
+import { placeKey, placeScopeKey } from './decision-keys.js';
 import { EXPORT_FORMATS, exportCollection, downloadFile } from './export.js';
 import { el, icon, notify } from './dom.js';
 const noun = (count) => (count === 1 ? 'publication' : 'publications');
@@ -13,13 +14,13 @@ export function collectionPlaces(records, sites, decisions = {}) {
     notSpecific = [];
   const counts = new Map();
   for (const { work } of records.values()) {
-    if (decisions[`place-scope:${work.id}`]?.decision === 'not-place-specific') {
+    if (decisions[placeScopeKey(work.id)]?.decision === 'not-place-specific') {
       notSpecific.push(work);
       continue;
     }
     let found = false;
     for (const place of sites) {
-      const key = `place:${work.id}:${place.id}`,
+      const key = placeKey(work.id, place.id),
         review = decisions[key],
         evidence = placeEvidence(work, place);
       if (!evidence && !['confirmed', 'rejected'].includes(review?.decision)) continue;
@@ -74,7 +75,7 @@ export function createPlaceCollection(
     exportMessage = '';
   let scopeUndo = null;
   function classify(work) {
-    const key = `place-scope:${work.id}`;
+    const key = placeScopeKey(work.id);
     const previous = researchData()[key];
     scopeUndo = { key, previous: previous || { decision: 'place-specific' }, work };
     decide(key, {
@@ -518,8 +519,8 @@ export function createPlaceCollection(
             const work = getSaved().get(publication.value)?.work,
               place = sites.find((site) => site.id === target.value);
             if (!work || !place) return;
-            decide(`place-scope:${work.id}`, { decision: 'place-specific' });
-            decide(`place:${work.id}:${place.id}`, {
+            decide(placeScopeKey(work.id), { decision: 'place-specific' });
+            decide(placeKey(work.id, place.id), {
               decision: 'confirmed',
               method: 'researcher',
               doi: work.id,
@@ -569,8 +570,8 @@ export function createPlaceCollection(
                     filterAssignments();
                     target.focus();
                   } else {
-                    const prior = researchData()[`place-scope:${work.id}`];
-                    decide(`place-scope:${work.id}`, {
+                    const prior = researchData()[placeScopeKey(work.id)];
+                    decide(placeScopeKey(work.id), {
                       decision: prior?.previousDecision || 'place-specific',
                     });
                     refresh();

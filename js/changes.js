@@ -1,6 +1,7 @@
 import { getWork } from './crossref.js';
 import { el, notify, externalLink } from './dom.js';
 import { researchData, reviewDecision } from './research-store.js';
+import { changesKey } from './decision-keys.js';
 const fields = [
   'title',
   'abstract',
@@ -58,7 +59,7 @@ export function createChangeReview(root, { getRecords, onAccept, onInspect }) {
           const next = await getWork(entry.work.id, { signal: active.signal, fresh: true });
           if (active.signal.aborted) return;
           const changes = metadataChanges(entry.work.raw, next.raw),
-            history = researchData()[`changes:${next.id}`];
+            history = researchData()[changesKey(next.id)];
           if (changes.length) {
             const details = el(
               'details',
@@ -98,7 +99,7 @@ export function createChangeReview(root, { getRecords, onAccept, onInspect }) {
                     try {
                       await onAccept(next, entry.savedAt, entry.work.raw);
                       if (
-                        !reviewDecision(`changes:${next.id}`, {
+                        !reviewDecision(changesKey(next.id), {
                           decision: 'accepted',
                           fields: changes.map((change) => change.field),
                           previousRaw: entry.work.raw,
@@ -119,7 +120,7 @@ export function createChangeReview(root, { getRecords, onAccept, onInspect }) {
                 {
                   class: 'text-button',
                   onclick: () => {
-                    reviewDecision(`changes:${next.id}`, {
+                    reviewDecision(changesKey(next.id), {
                       decision: 'deferred',
                       fields: changes.map((change) => change.field),
                     });

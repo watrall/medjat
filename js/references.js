@@ -1,4 +1,5 @@
 import { normalizeDOI, plainText } from './data.js';
+import { citationKey } from './decision-keys.js';
 
 export const RESEARCH_LIMITS = Object.freeze({
   seeds: 50,
@@ -24,7 +25,7 @@ export function analyzeReferences(seeds, savedIDs = [], decisions = {}) {
           .map((value) => plainText(String(value || '')))
           .filter(Boolean)
           .join('. ');
-      const decision = decisions[`citation:${work.id}:${label}`];
+      const decision = decisions[citationKey(work.id, label)];
       if (!doi && decision?.decision === 'confirmed') doi = normalizeDOI(decision.doi);
       if (!doi) {
         if (label && !seen.has(label)) {
