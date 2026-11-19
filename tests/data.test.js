@@ -117,3 +117,25 @@ test('invalid requests are distinguished from retryable service failures', async
     (error) => error.retryable === false && /Change your search/.test(error.message),
   );
 });
+test('transient network failures are retried and aborted requests never fetch', async () => {
+  let attempts = 0;
+  const result = await request('https://api.crossref.org/works?network-recovery-contract', {
+    fetcher: async () => {
+      if (++attempts === 1) throw new TypeError('Failed to fetch');
+      return new Response('{"message":{"recovered":true}}');
+    },
+  });
+  assert.equal(attempts, 2);
+  assert.equal(result.body.message.recovered, true);
+  const controller = new AbortController();
+  controller.abort();
+  await assert.rejects(
+    request('https://api.crossref.org/works?aborted-contract', {
+      signal: controller.signal,
+      fetcher: async () => {
+        throw new Error('An aborted request must never fetch');
+      },
+    }),
+    (error) => error.name === 'AbortError',
+  );
+});

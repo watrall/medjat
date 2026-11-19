@@ -6,6 +6,54 @@ export const PAGE_SIZE = 25;
 export const DATE_BROWSE_LIMIT = 10000;
 const cache = new Map();
 const TTL = 5 * 60 * 1000;
+const pending = [];
+let activeRequests = 0,
+  lastStarted = 0,
+  dispatchTimer;
+// Stay below the polite pool's reported 3 requests/second, including retries.
+// All features share this queue so a background check cannot crowd out search.
+function reserveRequest(signal) {
+  return new Promise((resolve, reject) => {
+    signal.throwIfAborted();
+    const entry = { resolve, reject, signal };
+    entry.abort = () => {
+      const index = pending.indexOf(entry);
+      if (index >= 0) pending.splice(index, 1);
+      reject(signal.reason);
+    };
+    signal.addEventListener('abort', entry.abort, { once: true });
+    pending.push(entry);
+    dispatch();
+  });
+}
+function dispatch() {
+  if (dispatchTimer || activeRequests >= 2 || !pending.length) return;
+  const delay = Math.max(0, lastStarted + 400 - Date.now());
+  if (delay) {
+    dispatchTimer = setTimeout(() => {
+      dispatchTimer = null;
+      dispatch();
+    }, delay);
+    return;
+  }
+  const entry = pending.shift();
+  entry.signal.removeEventListener('abort', entry.abort);
+  if (entry.signal.aborted) {
+    entry.reject(entry.signal.reason);
+    dispatch();
+    return;
+  }
+  activeRequests++;
+  lastStarted = Date.now();
+  let released = false;
+  entry.resolve(() => {
+    if (released) return;
+    released = true;
+    activeRequests--;
+    dispatch();
+  });
+  dispatch();
+}
 
 export function bibliographicTerms(query) {
   const period = PERIODS.find((p) => p.id === query.period);
@@ -67,10 +115,24 @@ export async function request(
   const timeout = AbortSignal.timeout(25000);
   const combined = signal ? AbortSignal.any([signal, timeout]) : timeout;
   for (let attempt = 0; attempt < 3; attempt++) {
-    const response = await fetcher(url, {
-      signal: combined,
-      headers: { Accept: format === 'json' ? 'application/json' : 'text/plain', ...headers },
-    });
+    let response, body;
+    const release = await reserveRequest(combined);
+    try {
+      response = await fetcher(url, {
+        signal: combined,
+        headers: { Accept: format === 'json' ? 'application/json' : 'text/plain', ...headers },
+      });
+      if (response.ok) body = format === 'json' ? await response.json() : await response.text();
+    } catch (error) {
+      release();
+      if (error instanceof TypeError && !combined.aborted && attempt < 2) {
+        await wait(700 * 2 ** attempt, combined);
+        continue;
+      }
+      throw error;
+    } finally {
+      release();
+    }
     if (!response.ok) {
       const retryAfter = Number(response.headers.get('retry-after')) || 0;
       if ([429, 502, 503, 504].includes(response.status) && attempt < 2 && retryAfter <= 8) {
@@ -90,7 +152,6 @@ export async function request(
         retryable: response.status === 429 || response.status >= 500,
       });
     }
-    const body = format === 'json' ? await response.json() : await response.text();
     const result = { body, retrievedAt: new Date().toISOString(), cached: false };
     cache.set(key, { time: Date.now(), result });
     if (cache.size > 40) cache.delete(cache.keys().next().value);

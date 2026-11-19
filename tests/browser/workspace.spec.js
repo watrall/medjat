@@ -94,7 +94,9 @@ test('sorting and navigation preserve unapplied search choices', async ({ page }
   await expect(page.locator('#pendingQuery')).toBeVisible();
   await page.locator('#sortSelect').selectOption('newest');
   await expect(page.locator('#scopeNote')).toContainText('newest first');
-  expect(requests.at(-1).searchParams.get('query.bibliographic')).toBe('ancient egypt');
+  await expect
+    .poll(() => requests.at(-1).searchParams.get('query.bibliographic'))
+    .toBe('ancient egypt');
   await expect(page.locator('#searchInput')).toHaveValue('Abydos');
   await expect(page.locator('#periodSelect')).toHaveValue('new-kingdom');
   await expect(page.locator('#typeFilter')).toHaveValue('book');
@@ -106,8 +108,10 @@ test('sorting and navigation preserve unapplied search choices', async ({ page }
   await expect(page.locator('#searchInput')).toHaveValue('Abydos');
   await page.locator('#filterForm').getByRole('button', { name: 'Update search' }).click();
   await expect(page.locator('#pendingQuery')).toBeHidden();
-  expect(requests.at(-1).searchParams.get('query.bibliographic')).toContain('Abydos');
-  expect(requests.at(-1).searchParams.get('filter')).toContain('type:book');
+  await expect
+    .poll(() => requests.at(-1).searchParams.get('query.bibliographic'))
+    .toContain('Abydos');
+  await expect.poll(() => requests.at(-1).searchParams.get('filter')).toContain('type:book');
 });
 
 test('refresh restores collection scope, selected record, and an unfinished search', async ({
@@ -368,15 +372,19 @@ test('period queries, filters, pagination, and browser back preserve research co
   await page.getByRole('button', { name: 'Update search', exact: true }).click();
   await expect(page).toHaveURL(/period=new-kingdom/);
   await expect(page.locator('.result-row')).toHaveCount(25);
-  expect(requests.at(-1).searchParams.get('query.bibliographic')).toContain('New Kingdom Egypt');
-  expect(requests.at(-1).searchParams.has('filter')).toBe(false);
+  await expect
+    .poll(() => requests.at(-1).searchParams.get('query.bibliographic'))
+    .toContain('New Kingdom Egypt');
+  await expect.poll(() => requests.at(-1).searchParams.has('filter')).toBe(false);
   await page.getByLabel('From', { exact: true }).fill('2000');
   await page.getByLabel('To', { exact: true }).fill('2025');
   await page.getByRole('checkbox', { name: 'Abstract', exact: true }).check();
   await page.getByRole('button', { name: 'Update search', exact: true }).click();
   await expect(page).toHaveURL(/from=2000/);
   await expect(page.locator('.result-row')).toHaveCount(25);
-  expect(requests.at(-1).searchParams.get('filter')).toContain('has-abstract:true');
+  await expect
+    .poll(() => requests.at(-1).searchParams.get('filter'))
+    .toContain('has-abstract:true');
   await page.getByRole('button', { name: 'Load 25 more publications' }).click();
   await expect(page.locator('.result-row')).toHaveCount(28);
   await page.goBack();
@@ -404,7 +412,9 @@ test('period refinements apply with either search action and reset with the othe
   await page.getByRole('button', { name: 'Search', exact: true }).click();
   await expect(page).toHaveURL(/period=new-kingdom/);
   await expect(page.locator('.result-row')).toHaveCount(25);
-  expect(requests.at(-1).searchParams.get('query.bibliographic')).toContain('Hierakonpolis');
+  await expect
+    .poll(() => requests.at(-1).searchParams.get('query.bibliographic'))
+    .toContain('Hierakonpolis');
   await expect(page.locator('#activeQuery')).toContainText('Period keywords: New Kingdom');
 
   await period.selectOption('old-kingdom');
@@ -412,7 +422,7 @@ test('period refinements apply with either search action and reset with the othe
   await page.getByRole('button', { name: 'Update search', exact: true }).click();
   await expect(page).toHaveURL(/period=old-kingdom/);
   await expect(page.locator('.result-row')).toHaveCount(25);
-  expect(requests.at(-1).searchParams.get('filter')).toContain('type:book');
+  await expect.poll(() => requests.at(-1).searchParams.get('filter')).toContain('type:book');
 
   await page.getByRole('button', { name: 'Reset refinements', exact: true }).click();
   await expect(page).not.toHaveURL(/period=|type=/);
@@ -643,11 +653,11 @@ test('date sorts browse subsequent pages with supported pagination', async ({ pa
     await page.locator('#sortSelect').selectOption(sort);
     await expect(page.locator('#scopeNote')).toContainText('Sorted by publication date');
     await expect(page.locator('#resultCount')).toContainText('25 loaded');
-    expect(requests.at(-1).searchParams.get('offset')).toBe('0');
-    expect(requests.at(-1).searchParams.has('cursor')).toBe(false);
+    await expect.poll(() => requests.at(-1).searchParams.get('offset')).toBe('0');
+    await expect.poll(() => requests.at(-1).searchParams.has('cursor')).toBe(false);
     await page.getByRole('button', { name: 'Load 25 more publications' }).click();
     await expect(page.locator('.result-row')).toHaveCount(28);
-    expect(requests.at(-1).searchParams.get('offset')).toBe('25');
+    await expect.poll(() => requests.at(-1).searchParams.get('offset')).toBe('25');
   }
 });
 test('a rejected changed search preserves clearly identified previous results', async ({
