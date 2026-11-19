@@ -87,12 +87,16 @@ export async function exportCollection(
   }
   return parts.join('\n\n') + '\n';
 }
-export function downloadFile(text, format, { scope = 'all', count } = {}) {
+export function downloadFile(
+  text,
+  format,
+  { scope = 'all', count, date = new Date().toISOString().slice(0, 10) } = {},
+) {
   const { mime, extension } = EXPORT_FORMATS[format];
   const url = URL.createObjectURL(new Blob([text], { type: mime }));
   const link = document.createElement('a');
   link.href = url;
-  link.download = `ancient-egypt-${scope}${count ? `-${count}` : ''}-${new Date().toISOString().slice(0, 10)}.${extension}`;
+  link.download = `ancient-egypt-${scope}${count ? `-${count}` : ''}-${date}.${extension}`;
   document.body.append(link);
   link.click();
   link.remove();

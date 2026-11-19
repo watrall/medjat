@@ -198,3 +198,32 @@ test('Places restores applied query, drafts, evidence scope and direct-entry col
     page.getByRole('button', { name: 'Export 1 publication', exact: true }),
   ).toBeVisible();
 });
+test('an export keeps its original place identity while another place is selected', async ({
+  page,
+}) => {
+  let release;
+  const gate = new Promise((resolve) => {
+    release = resolve;
+  });
+  await page.route('https://tile.openstreetmap.org/**', (r) => r.abort());
+  await page.route('https://api.crossref.org/**', async (r) => {
+    if (r.request().url().includes('/transform')) {
+      await gate;
+      return r.fulfill({ body: 'TY  - JOUR\nDO  - 10.1234/abydos\nER  -' });
+    }
+    return r.fulfill({ json: { message: { items: [source], 'total-results': 1 } } });
+  });
+  await page.goto('/');
+  await page.locator('.save-button').click();
+  await page.locator('#placesNav').click();
+  await page.getByRole('button', { name: 'Your collection', exact: true }).click();
+  await page.locator('#placeSelect').selectOption('756512');
+  await page.getByRole('button', { name: 'Export 1 publication', exact: true }).click();
+  await page.locator('#placeSelect').selectOption('786017');
+  const pending = page.waitForEvent('download');
+  release();
+  const file = await pending;
+  expect(file.suggestedFilename()).toContain('place-756512-all-1-');
+  expect(await readFile(await file.path(), 'utf8')).toContain('10.1234/abydos');
+  await expect(page.locator('[data-export-status]')).toContainText('for Abydos');
+});

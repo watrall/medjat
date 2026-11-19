@@ -110,14 +110,22 @@ export function createPlaceCollection(
     const ids = new Set(filtered().map((link) => link.work.id)),
       records = new Map([...getSaved()].filter(([id]) => ids.has(id)));
     if (!records.size) return;
-    const label = sites.find((site) => site.id === selected)?.name || 'all associated places';
+    const job = Object.freeze({
+      label: sites.find((site) => site.id === selected)?.name || 'all associated places',
+      scope: `place-${selected || 'associated'}-${status}`,
+      count: records.size,
+      format,
+      date: new Date().toISOString().slice(0, 10),
+      records: structuredClone(records),
+    });
+    const { label } = job;
     const controller = new AbortController();
     exportJob = controller;
     exporting = true;
     exportMessage = `Preparing ${records.size} saved ${noun(records.size)} for ${label}…`;
     syncExport();
     try {
-      const text = await exportCollection(records, format, {
+      const text = await exportCollection(job.records, job.format, {
         signal: controller.signal,
         onProgress: (done, total) => {
           exportMessage = `Preparing ${done} of ${total} publications for ${label}…`;
@@ -125,15 +133,12 @@ export function createPlaceCollection(
         },
       });
       controller.signal.throwIfAborted();
-      downloadFile(text, format, {
-        scope: `place-${selected || 'associated'}`,
-        count: records.size,
-      });
+      downloadFile(text, job.format, job);
       exportMessage = `Exported ${records.size} ${noun(records.size)} for ${label}.`;
     } catch (error) {
       exportMessage = controller.signal.aborted
         ? 'Place bibliography export cancelled.'
-        : error.message;
+        : `Export for ${label} failed: ${error.message} No bibliography was downloaded. Retry this scope or use CSV.`;
     } finally {
       exporting = false;
       syncExport();
