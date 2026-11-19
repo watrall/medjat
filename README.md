@@ -65,18 +65,21 @@ Open Library cover requests contain the deposited ISBN of the inspected book. Co
 
 Quicksand typography, Lucide icons, and the supplied papyrus mark define the interface. The layout moves from a refinement/list/inspector workspace on desktop to linked list and detail views on mobile.
 
-| Module              | Responsibility                                                                     |
-| ------------------- | ---------------------------------------------------------------------------------- |
-| `js/main.js`        | Query state, view transitions, result rendering, and collection actions            |
-| `js/data.js`        | Scholarly period presets, normalization, identifiers, and shareable query state    |
-| `js/crossref.js`    | API requests, cancellation, caching, retries, pagination, and citation negotiation |
-| `js/inspector.js`   | Publication metadata, references, relationships, and citation views                |
-| `js/collection.js`  | Collection validation, persistence, and import/backup format                       |
-| `js/export.js`      | Bibliography conversion, CSV, JSON, and downloads                                  |
-| `js/covers.js`      | ISBN validation and attributed Open Library covers                                 |
-| `js/dom.js`         | Text-safe DOM construction and shared interface helpers                            |
-| `css/tokens.css`    | Primitive and semantic design tokens                                               |
-| `css/workspace.css` | Components, layout, responsive behavior, and interaction states                    |
+| Module                   | Responsibility                                                                     |
+| ------------------------ | ---------------------------------------------------------------------------------- |
+| `js/main.js`             | Query state, view transitions, result rendering, and collection actions            |
+| `js/data.js`             | Scholarly period presets, normalization, identifiers, and shareable query state    |
+| `js/crossref.js`         | API requests, cancellation, caching, retries, pagination, and citation negotiation |
+| `js/inspector.js`        | Publication metadata, references, relationships, and citation views                |
+| `js/collection.js`       | Collection validation, legacy storage input, and import/backup format              |
+| `js/collection-store.js` | Transactional browser persistence and cross-tab change notifications               |
+| `js/collection-tools.js` | Collection search, scoped export, selection feedback, and import                   |
+| `js/session.js`          | Per-tab reading-position persistence                                               |
+| `js/export.js`           | Bibliography conversion, CSV, JSON, and downloads                                  |
+| `js/covers.js`           | ISBN validation and attributed Open Library covers                                 |
+| `js/dom.js`              | Text-safe DOM construction and shared interface helpers                            |
+| `css/tokens.css`         | Primitive and semantic design tokens                                               |
+| `css/workspace.css`      | Components, layout, responsive behavior, and interaction states                    |
 
 API-supplied text is rendered through DOM text nodes. Data is not embedded in inline event handlers. DOI, ORCID, ISBN, and external URL handling have explicit validation. Raw deposited records remain available for download.
 
