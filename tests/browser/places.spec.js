@@ -51,3 +51,34 @@ test('Places discovers Crossref works from a Pleiades place without a saved coll
   await expect(page.locator('#places')).toContainText('Map tiles could not be fully loaded');
   expect(errors).toEqual([]);
 });
+test('publication place links retain evidence and return to the search draft after refresh', async ({
+  page,
+}) => {
+  await page.route('https://tile.openstreetmap.org/**', (route) => route.abort());
+  await page.route('https://api.crossref.org/**', (route) =>
+    route.fulfill({
+      json: {
+        message: { items: [{ ...source, abstract: 'A study of Thebes.' }], 'total-results': 1 },
+      },
+    }),
+  );
+  await page.goto('/?q=burial');
+  await expect(page.locator('.result-row')).toHaveCount(1);
+  await page.locator('#searchInput').fill('An unfinished research topic');
+  const abydos = page.getByRole('button', { name: 'Explore Abydos in Places', exact: true });
+  await expect(abydos).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Explore Thebes in Places', exact: true }),
+  ).toBeVisible();
+  await abydos.click();
+  await expect(page.locator('#placeSelect')).toHaveValue('756512');
+  await expect(page.locator('.place-origin')).toContainText('“Abydos” appears in the title');
+  await page.reload();
+  await expect(page.locator('.place-origin')).toContainText(source.title[0]);
+  await page.getByRole('button', { name: 'Back to publication', exact: true }).click();
+  await expect(page.locator('#exploreNav')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#searchInput')).toHaveValue('An unfinished research topic');
+  await expect(page.locator('#inspector .detail-title')).toHaveText(source.title[0]);
+  await expect(page.locator('.result-row')).toHaveCount(1);
+  await expect(abydos).toBeFocused();
+});

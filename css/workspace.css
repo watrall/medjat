@@ -1770,6 +1770,52 @@ p {
   min-width: 0;
   overflow-wrap: anywhere;
 }
+.place-mention-links {
+  display: flex;
+  flex-wrap: wrap;
+  list-style: none;
+  padding: 0;
+  gap: var(--space-sm);
+  margin-block: var(--space-sm);
+}
+.place-link {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  min-height: 44px;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  color: var(--color-accent);
+  background: var(--color-subtle);
+  font-size: var(--text-label);
+  font-weight: 600;
+}
+.place-link:hover {
+  border-color: var(--color-accent);
+}
+.place-mention-field {
+  color: var(--color-secondary);
+  font-size: var(--text-caption);
+  font-weight: 400;
+}
+.place-return {
+  margin-block-end: var(--space-base);
+}
+.place-origin {
+  margin-block: var(--space-base);
+  padding-block: var(--space-base);
+  border-block: 1px solid var(--color-line);
+}
+.place-origin .place-publication-title {
+  font-size: 1rem;
+}
+.place-origin blockquote {
+  margin: var(--space-sm) 0;
+  font-size: var(--text-label);
+  color: var(--color-secondary);
+}
 @media (max-width: 899px) {
   .places-layout {
     grid-template-columns: minmax(0, 1fr);

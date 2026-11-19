@@ -2,10 +2,18 @@ import { authorLine, doiURL, normalizeDOI, normalizeWork, plainText, safeURL } f
 import { getWork, getCitation } from './crossref.js';
 import { el, icon, externalLink, emptyState, notify } from './dom.js';
 import { createCover } from './covers.js';
+import { loadGazetteer, placesForWork } from './place-data.js';
 
 export function createInspector(
   root,
-  { onClose, onSave, onChange = () => {}, onNavigate = () => {}, isSaved = () => false } = {},
+  {
+    onClose,
+    onSave,
+    onPlace,
+    onChange = () => {},
+    onNavigate = () => {},
+    isSaved = () => false,
+  } = {},
 ) {
   let work = null,
     tab = 'overview',
@@ -18,6 +26,14 @@ export function createInspector(
     referenceLimit = 20,
     followError = '',
     following = false;
+  let sites = [];
+  if (onPlace)
+    loadGazetteer()
+      .then((data) => {
+        sites = data.sites;
+        if (work) render();
+      })
+      .catch(() => {});
 
   function readingPosition() {
     return {
@@ -198,6 +214,51 @@ export function createInspector(
     return el('section', { class: 'detail-section' }, el('h3', {}, title), ...children);
   }
   function overview(container) {
+    const mentions = onPlace ? placesForWork(work, sites) : [];
+    if (mentions.length) {
+      const links = (matches) =>
+        el(
+          'ul',
+          { class: 'place-mention-links' },
+          matches.map(({ place, evidence }) =>
+            el(
+              'li',
+              {},
+              el(
+                'button',
+                {
+                  class: 'place-link',
+                  'data-focus-key': `place-${place.id}`,
+                  'aria-label': `Explore ${place.name} in Places`,
+                  onclick: () => onPlace(place, work),
+                },
+                icon('map-pin'),
+                place.name,
+                el('span', { class: 'place-mention-field' }, evidence.field),
+              ),
+            ),
+          ),
+        );
+      const block = section(
+        'Places mentioned',
+        links(mentions.slice(0, 5)),
+        el(
+          'p',
+          { class: 'scope-note' },
+          'Name matches in the title or abstract. Open a place to inspect the context and explore related Crossref publications.',
+        ),
+      );
+      if (mentions.length > 5)
+        block.append(
+          el(
+            'details',
+            {},
+            el('summary', {}, `More places (${mentions.length - 5})`),
+            links(mentions.slice(5)),
+          ),
+        );
+      container.append(block);
+    }
     const cover = createCover(work);
     if (cover) container.append(cover);
     container.append(

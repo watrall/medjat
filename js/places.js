@@ -35,6 +35,9 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
     return { place: selected };
   }
   async function show(options = {}) {
+    controller?.abort();
+    generation++;
+    loading = false;
     active = true;
     if ('place' in options && selected !== options.place) {
       selected = options.place;
@@ -113,6 +116,8 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
     });
     const resultPane = el('div', { class: 'places-results' }, publications, detail);
     const inspector = createInspector(detail, {
+      onPlace: (site, work) =>
+        show({ place: site.id, origin: { work, return: () => inspect(work) } }),
       onClose: () => {
         detail.hidden = true;
         publications.hidden = false;
@@ -190,6 +195,15 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
         resultPane,
       ),
     );
+    if (origin)
+      root.prepend(
+        el(
+          'button',
+          { class: 'text-button place-return', onclick: () => origin.return() },
+          icon('arrow-left'),
+          'Back to publication',
+        ),
+      );
     renderPublications();
   }
   function choose(id) {
@@ -385,6 +399,30 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
         'Searches are ranked candidates, not an exhaustive bibliography of this place. A place name in metadata is evidence to inspect, not a verified subject classification.',
       ),
     );
+    if (origin) {
+      const evidence = placeEvidence(origin.work, current);
+      root.insertBefore(
+        el(
+          'section',
+          { class: 'place-origin' },
+          el('p', { class: 'eyebrow' }, 'FROM YOUR PUBLICATION'),
+          el(
+            'button',
+            { class: 'place-publication-title', onclick: () => inspect(origin.work) },
+            origin.work.title,
+          ),
+          el(
+            'p',
+            { class: 'scope-note' },
+            evidence
+              ? `“${evidence.alias}” appears in the ${evidence.field}.`
+              : 'This publication has no recognized mention of the selected place.',
+          ),
+          evidence && el('blockquote', {}, evidence.text),
+        ),
+        root.querySelector('form'),
+      );
+    }
     if (loading)
       root.append(
         el('p', { role: 'status' }, 'Searching Crossref…'),

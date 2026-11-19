@@ -3,7 +3,15 @@ import { createPlaces } from './places.js';
 import { createResearch } from './research.js';
 import { importResearch } from './research-store.js';
 import { createVisualize } from './visualize.js';
-import { PERIODS, TYPES, readQuery, queryString, authorLine, doiURL } from './data.js';
+import {
+  PERIODS,
+  TYPES,
+  readQuery,
+  queryString,
+  authorLine,
+  doiURL,
+  normalizeWork,
+} from './data.js';
 import { searchWorks, getWork, bibliographicTerms, DATE_BROWSE_LIMIT } from './crossref.js';
 import { readSession, writeSession } from './session.js';
 import { createInspector } from './inspector.js';
@@ -50,6 +58,7 @@ const state = {
 
 let initialized = false,
   restoringLocation = false;
+let placeReturnContext = null;
 let navigationGeneration = 0,
   locationController;
 function cancelRestoration() {
@@ -67,6 +76,7 @@ function saveSession() {
     exportScope: state.exportScope,
     exportFormat: state.exportFormat,
     inspector: inspector.capture(),
+    placesOrigin: state.view === 'places' ? placeReturnContext : null,
   });
 }
 function updateURL({ push = false } = {}) {
@@ -148,6 +158,17 @@ function renderAppliedQuery() {
 const inspector = createInspector($('inspector'), {
   onClose: closeInspector,
   onSave: toggleSave,
+  onPlace: (place, work) => {
+    placeReturnContext = {
+      view: state.view === 'collection' ? 'collection' : 'explore',
+      inspector: inspector.capture(),
+      selected: state.selected,
+      mobileDetail: $('research').classList.contains('mobile-detail-open'),
+    };
+    setView('places', {
+      placeOptions: { place: place.id, origin: placeOrigin(placeReturnContext) },
+    });
+  },
   isSaved: (id) => state.collection.has(id),
   onChange: saveSession,
   onNavigate: () => {
@@ -290,6 +311,27 @@ const places = createPlaces($('places'), {
   onSave: toggleSave,
   onLocation: () => updateURL({ push: true }),
 });
+function placeOrigin(context) {
+  if (!context?.inspector?.current?.raw) return null;
+  return {
+    work: normalizeWork(context.inspector.current.raw),
+    async return() {
+      setView(context.view === 'collection' ? 'collection' : 'explore', {
+        load: false,
+        syncURL: false,
+      });
+      const navigation = navigationGeneration;
+      const needsSearch = state.view === 'explore' && !state.resultQuery;
+      if (needsSearch) await runSearch();
+      if (navigation !== navigationGeneration || state.view === 'places') return;
+      state.selected = context.selected;
+      inspector.restore(context.inspector);
+      renderList();
+      if (context.mobileDetail) $('research').classList.add('mobile-detail-open');
+      updateURL({ push: !needsSearch });
+    },
+  };
+}
 const visualizer = createVisualize($('visualize'), {
   onRefine(filter) {
     Object.assign(state.query, filter);
@@ -834,11 +876,12 @@ async function restoreLocation(resume = null) {
     const view = ['collection', 'visualize', 'places'].includes(params.get('view'))
       ? params.get('view')
       : 'explore';
+    placeReturnContext = resume?.placesOrigin || (view === 'places' ? placeReturnContext : null);
     setView(view, {
       navigate: false,
       syncURL: false,
       load: false,
-      placeOptions: { place: params.get('place') || '' },
+      placeOptions: { place: params.get('place') || '', origin: placeOrigin(placeReturnContext) },
     });
     if (
       view === 'explore' &&
