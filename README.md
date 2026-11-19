@@ -138,12 +138,18 @@ An optional live integration check makes a small number of real Crossref request
 npm run test:live
 ```
 
-The live check is deliberately separate from CI because service availability and deposited records can change. 
+The live check is deliberately separate from CI because service availability and deposited records can change.
 The checked-in Lucide sprite contains only the icons used by the interface. Regenerate it after changing the icon list:
 
 ```sh
 npm run build:icons
 ```
+
+## Publishing
+
+`npm run build` creates `dist/` from an explicit runtime file list. GitHub Pages publishes only that directory. Tests, development scripts, source data snapshots, package metadata, and repository documentation are excluded from the website. Tests and CI remain in the source repository.
+
+`npm run check:repository` checks tracked paths throughout the reachable commit history against the repository file list. The publishing workflow runs this check, syntax checks, unit tests, browser tests, and the runtime build before deployment from `main`.
 
 ## Maintaining place names
 

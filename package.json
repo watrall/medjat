@@ -10,7 +10,9 @@
     "check": "node scripts/check-syntax.mjs",
     "test:e2e": "playwright test",
     "test:live": "node scripts/smoke-crossref.mjs",
-    "build:icons": "node scripts/build-icons.mjs"
+    "build:icons": "node scripts/build-icons.mjs",
+    "build": "node scripts/build-site.mjs",
+    "check:repository": "node scripts/check-repository.mjs --history"
   },
   "engines": {
     "node": ">=20"
