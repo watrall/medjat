@@ -1551,3 +1551,12 @@ p {
   display: grid;
   gap: 4px;
 }
+.research-tools pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: var(--text-caption);
+  max-height: 20rem;
+  overflow: auto;
+  background: var(--color-subtle);
+  padding: var(--space-base);
+}

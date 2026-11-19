@@ -1,3 +1,4 @@
+import { createChangeReview } from './changes.js';
 import { createAtlas } from './atlas.js';
 import { createResearch } from './research.js';
 import { importResearch } from './research-store.js';
@@ -194,6 +195,18 @@ const collectionTools = createCollectionTools($('collectionTools'), {
     return `Imported collection. ${state.collection.size} publications saved. Records are matched by DOI.${result.warning ? ' Changes are kept for this visit only.' : ''}`;
   },
 });
+const changeReview = createChangeReview($('changeReview'), {
+  getRecords: () => state.collection,
+  onInspect: selectWork,
+  onAccept: async (work, savedAt, expectedRaw) => {
+    const result = await collectionStore.change({ update: { work, savedAt }, expectedRaw });
+    state.collection = result.records;
+    state.storageWarning = result.warning;
+    renderList();
+    renderStatus();
+    if (inspector.getCurrentWork()?.id === work.id) renderInspector(work);
+  },
+});
 const researcher = createResearch($('researchTools'), {
   getSeeds: () =>
     [...state.collection.values()]
@@ -202,6 +215,10 @@ const researcher = createResearch($('researchTools'), {
   getSaved: () => state.collection,
   onSave: async (work) => {
     if (!state.collection.has(work.id)) await toggleSave(work);
+    if (!state.collection.has(work.id))
+      throw new Error(
+        'This reference could not be saved. Try again or export your collection to free space.',
+      );
   },
   onInspect: selectWork,
 });
@@ -284,6 +301,10 @@ const visualizer = createVisualize($('visualize'), {
 });
 function setView(view, { navigate = true, syncURL = true, load = true } = {}) {
   if (navigate) cancelRestoration();
+  if (view !== 'collection') {
+    changeReview.cancel();
+    researcher.cancel();
+  }
   $('atlas').hidden = view !== 'atlas';
   $('atlasNav').setAttribute('aria-pressed', String(view === 'atlas'));
   if (view === 'atlas') {
@@ -333,6 +354,8 @@ function setView(view, { navigate = true, syncURL = true, load = true } = {}) {
   else $('resultsTitle').textContent = title;
   $('collectionTools').hidden = view !== 'collection';
   $('researchTools').hidden = view !== 'collection';
+  $('changeReview').hidden = view !== 'collection';
+  if (view !== 'collection') changeReview.cancel();
   $('searchExplanation').hidden = view === 'collection';
   if (view === 'collection') renderCollectionTools();
   const work = visibleWorks().find((w) => w.id === state.selected) || visibleWorks()[0];
@@ -344,6 +367,15 @@ function setView(view, { navigate = true, syncURL = true, load = true } = {}) {
   if (view === 'explore' && !state.resultQuery && !state.loading && load) runSearch();
 }
 function renderCollectionTools() {
+  changeReview.cancel();
+  researcher.cancel();
+  $('changeReview').replaceChildren(
+    el(
+      'button',
+      { class: 'button', onclick: () => changeReview.run() },
+      'Check saved publications for metadata changes',
+    ),
+  );
   $('researchTools').hidden = false;
   $('researchTools').replaceChildren(
     el(

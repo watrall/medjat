@@ -86,6 +86,21 @@ export function createCollectionStore({ storage, database = globalThis.indexedDB
     const apply = (current) => {
       const next = new Map(current);
       if (operation.remove) next.delete(operation.remove);
+      if (operation.update) {
+        if (!next.has(operation.update.work.id))
+          throw new Error(
+            'This publication was removed from the collection. Save it again before updating.',
+          );
+        if (
+          operation.expectedRaw &&
+          JSON.stringify(next.get(operation.update.work.id).work.raw) !==
+            JSON.stringify(operation.expectedRaw)
+        )
+          throw new Error(
+            'This saved record changed in another tab. Run the check again before accepting.',
+          );
+        next.set(operation.update.work.id, operation.update);
+      }
       if (operation.add) next.set(operation.add.work.id, operation.add);
       const merged = operation.import ? mergeCollections(next, operation.import) : next;
       if (merged.size > MAX_SAVED)
@@ -109,6 +124,7 @@ export function createCollectionStore({ storage, database = globalThis.indexedDB
               latest = new Map(request.result.map((entry) => [entry.work.id, entry]));
               next = apply(latest);
               if (operation.remove) store.delete(operation.remove);
+              if (operation.update) store.put(operation.update);
               if (operation.add) store.put(operation.add);
               if (operation.import) for (const entry of operation.import.values()) store.put(entry);
             } catch (error) {
