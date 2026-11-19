@@ -1,21 +1,101 @@
+// @ts-check
 import { buildSearchURL, getWork, request } from './crossref.js';
-import { normalizeDOI, TYPES } from './data.js';
+import { normalizeDOI, normalizeWork, TYPES } from './data.js';
+
+export const WINDOW_SIZE = 250;
+const TTL = 15 * 60 * 1000;
 const cache = new Map();
-export function aggregateURL(query, extraFilter = '', facet = '') {
+
+/**
+ * One request reads the first page of the relevance ranking. Crossref keyword
+ * totals count every record matching any word, so they cannot describe a
+ * discipline; the ranked window is the population the charts report.
+ * @param {import('./types.js').Query} query
+ */
+export function windowURL(query) {
   const url = new URL(buildSearchURL({ ...query, sort: 'relevance' }));
-  for (const key of ['cursor', 'offset', 'sort', 'order']) url.searchParams.delete(key);
-  url.searchParams.set('rows', '0');
-  if (facet) url.searchParams.set('facet', facet);
-  if (extraFilter)
-    url.searchParams.set(
-      'filter',
-      [url.searchParams.get('filter'), extraFilter].filter(Boolean).join(','),
-    );
+  for (const key of ['cursor', 'offset']) url.searchParams.delete(key);
+  url.searchParams.set('rows', String(WINDOW_SIZE));
   return url.toString();
 }
+
+/** @param {import('./types.js').Query} query */
 export function aggregateKey(query) {
-  return aggregateURL(query);
+  return windowURL(query);
 }
+
+/**
+ * @param {Map<string, number>} counts
+ * @param {number} [limit]
+ * @returns {[string, number][]}
+ */
+function ranked(counts, limit = Infinity) {
+  return [...counts].sort(([a, x], [b, y]) => y - x || a.localeCompare(b)).slice(0, limit);
+}
+
+/**
+ * @param {unknown[]} items
+ */
+export function summarizeItems(items) {
+  const seen = new Set();
+  const works = [];
+  for (const raw of items) {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
+    const record = /** @type {{ DOI?: unknown }} */ (raw);
+    const doi = typeof record.DOI === 'string' ? record.DOI : '';
+    if (!doi || seen.has(doi)) continue;
+    seen.add(doi);
+    try {
+      works.push(normalizeWork(record));
+    } catch {
+      // A malformed record is not a reason to lose the rest of the window.
+    }
+  }
+  const types = new Map(),
+    venues = new Map(),
+    years = new Map();
+  const availability = { abstract: 0, references: 0, orcid: 0, license: 0 };
+  for (const work of works) {
+    types.set(work.typeLabel, (types.get(work.typeLabel) || 0) + 1);
+    if (work.container) venues.set(work.container, (venues.get(work.container) || 0) + 1);
+    if (Number.isInteger(work.year) && work.year >= 1000 && work.year <= 2100) {
+      const year = String(work.year);
+      years.set(year, (years.get(year) || 0) + 1);
+    }
+    if (work.abstract) availability.abstract++;
+    if (work.references.length) availability.references++;
+    if (work.authors.some((author) => author.orcid)) availability.orcid++;
+    if (work.licenses.length) availability.license++;
+  }
+  const yearRows = [...years].sort(([a], [b]) => Number(a) - Number(b));
+  return {
+    window: works.length,
+    types: ranked(types),
+    venues: ranked(venues, 10),
+    years: yearRows,
+    decades: decadeRows(yearRows),
+    availability,
+  };
+}
+
+/**
+ * @param {[string, number][]} rows
+ * @returns {[string, number][]}
+ */
+export function decadeRows(rows) {
+  const bins = new Map();
+  for (const [year, count] of rows) {
+    if (!/^\d{4}$/.test(year)) continue;
+    const decade = String(Math.floor(Number(year) / 10) * 10);
+    bins.set(decade, (bins.get(decade) || 0) + count);
+  }
+  return [...bins].sort(([a], [b]) => Number(a) - Number(b));
+}
+
+/**
+ * @param {import('./types.js').Query} query
+ * @param {{signal?: AbortSignal, fresh?: boolean, fetcher?: typeof fetch, onPart?: (result: any) => void}} [options]
+ */
 export async function aggregateSearch(
   query,
   { signal, fresh = false, fetcher, onPart = () => {} } = {},
@@ -24,63 +104,26 @@ export async function aggregateSearch(
     return { doi: await getWork(query.q, { signal, fresh, fetcher }), query: { ...query } };
   const key = aggregateKey(query),
     previous = cache.get(key);
-  if (!fresh && previous && Date.now() - previous.time < 900000) return previous.result;
+  if (!fresh && previous && Date.now() - previous.time < TTL) return previous.result;
+  const startedAt = new Date().toISOString();
+  const response = await request(windowURL(query), { signal, fetcher, fresh });
+  const message = response.body?.message;
+  if (!Array.isArray(message?.items) || !Number.isFinite(message['total-results']))
+    throw new Error('Crossref returned an unexpected response. Please retry.');
   const result = {
     query: { ...query },
-    total: null,
-    facets: {},
-    availability: {},
-    errors: {},
-    startedAt: new Date().toISOString(),
+    total: message['total-results'],
+    ...summarizeItems(message.items),
+    startedAt,
+    finishedAt: new Date().toISOString(),
   };
-  const tasks = [
-    ['facets', 'type-name:1000,published:1000,container-title:10', ''],
-    ...[
-      ['abstract', 'has-abstract:true'],
-      ['references', 'has-references:true'],
-      ['orcid', 'has-orcid:true'],
-      ['license', 'has-license:true'],
-    ].map(([name, filter]) => [name, '', filter]),
-  ];
-  async function worker() {
-    while (tasks.length) {
-      signal?.throwIfAborted();
-      const [name, facet, filter] = tasks.shift();
-      try {
-        const response = await request(aggregateURL(query, filter, facet), {
-          signal,
-          fetcher,
-          fresh,
-        });
-        const message = response.body?.message;
-        if (!Number.isFinite(message?.['total-results']))
-          throw new Error('Crossref returned an invalid count.');
-        if (name === 'facets') {
-          result.total = message['total-results'];
-          result.facets = message.facets || {};
-        } else result.availability[name] = message['total-results'];
-      } catch (error) {
-        if (signal?.aborted) throw error;
-        result.errors[name] = error.message;
-      }
-      onPart(result);
-    }
-  }
-  await Promise.all([worker(), worker()]);
-  result.finishedAt = new Date().toISOString();
-  if (!Object.keys(result.errors).length) cache.set(key, { time: Date.now(), result });
+  onPart(result);
+  cache.set(key, { time: Date.now(), result });
   if (cache.size > 12) cache.delete(cache.keys().next().value);
   return result;
 }
-export function facetRows(facet, chronological = false) {
-  return Object.entries(facet?.values || {})
-    .filter(([, count]) => Number.isFinite(count) && count >= 0)
-    .sort(
-      chronological
-        ? ([a], [b]) => Number(a) - Number(b)
-        : ([a, x], [b, y]) => y - x || a.localeCompare(b),
-    );
-}
+
+/** @param {string} label */
 export function typeID(label) {
   return (
     [...TYPES].find(([, value]) => value.toLowerCase() === label.toLowerCase())?.[0] ||
@@ -93,13 +136,4 @@ export function typeID(label) {
     }[label] ||
     null
   );
-}
-export function decadeRows(rows) {
-  const bins = new Map();
-  for (const [year, count] of rows) {
-    if (!/^\d{4}$/.test(year)) continue;
-    const decade = String(Math.floor(Number(year) / 10) * 10);
-    bins.set(decade, (bins.get(decade) || 0) + count);
-  }
-  return [...bins].sort(([a], [b]) => Number(a) - Number(b));
 }

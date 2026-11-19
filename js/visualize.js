@@ -1,4 +1,4 @@
-import { aggregateSearch, facetRows, typeID, decadeRows } from './aggregates.js';
+import { aggregateSearch, typeID } from './aggregates.js';
 import { bibliographicTerms } from './crossref.js';
 import { el, icon } from './dom.js';
 import { downloadText } from './download.js';
@@ -19,7 +19,7 @@ export function createVisualize(root, { onRefine }) {
         'Retrieved',
         'Chart',
         'Category',
-        'Approximate count',
+        'Count',
       ],
     ];
     const add = (chart, label, value) =>
@@ -33,17 +33,20 @@ export function createVisualize(root, { onRefine }) {
         label,
         value,
       ]);
-    add('query total', 'Crossref candidates', result.total ?? 'Unavailable');
-    for (const [key, facet] of Object.entries(result.facets))
-      for (const [label, count] of facetRows(facet)) add(key, label, count);
+    add('query total', 'Ranked matches', result.total ?? 'Unavailable');
+    add('sample', 'Ranked window size', result.window);
+    for (const [chart, rows] of [
+      ['type', result.types],
+      ['container-title', result.venues],
+      ['published', result.years],
+    ])
+      for (const [label, count] of rows) add(chart, label, count);
     for (const [label, count] of Object.entries(result.availability))
       add('metadata availability', label, count);
-    for (const [name, error] of Object.entries(result.errors))
-      add('unavailable summary', name, error);
     add(
       'interpretation',
       'Scope',
-      'Whole applied Crossref query; approximate facets; missing buckets are not zero; keyword candidates are not a verified subject corpus.',
+      'Charts describe the retrieved ranked window, not a corpus census. Crossref keyword totals count records matching any word; they are not a subject bibliography.',
     );
     downloadText(rows.map((row) => row.map(csvCell).join(',')).join('\r\n'), {
       type: 'text/csv;charset=utf-8',
@@ -149,10 +152,10 @@ export function createVisualize(root, { onRefine }) {
       el(
         'p',
         { class: 'analysis-intro' },
-        'Whole-search summaries from Crossref. These charts do not use the first page of publications.',
+        'Ranked summaries from Crossref. These charts describe the first matches by relevance, not a corpus census.',
       ),
-      el('p', {}, `Applied keywords: ${bibliographicTerms(query)}`),
-      el('p', { role: 'status' }, 'Retrieving whole-search aggregates…'),
+      el('p', {}, `Ranking context: ${bibliographicTerms(query)}`),
+      el('p', { role: 'status' }, 'Retrieving ranked summaries…'),
     );
     try {
       const result = await aggregateSearch(query, { signal: controller.signal, fresh });
@@ -175,14 +178,14 @@ export function createVisualize(root, { onRefine }) {
         el(
           'p',
           { class: 'analysis-intro' },
-          `${result.total === null ? 'Candidate total unavailable' : `${number(result.total)} Crossref candidates`}. Whole applied search, not loaded records.`,
+          `${result.total === null ? 'Match total unavailable' : result.total > result.window ? `Charts describe the first ${number(result.window)} relevance-ranked matches. Crossref lists ${number(result.total)} keyword matches, a count that includes any matching word.` : `${number(result.total)} ranked matches. All are included in the charts.`}`,
         ),
-        el('p', {}, `Keywords: ${bibliographicTerms(query)}`),
+        el('p', {}, `Ranking context: ${bibliographicTerms(query)}`),
         el('p', { class: 'scope-note' }, filterDescription(query)),
         el(
           'p',
           { class: 'scope-note' },
-          `Approximate API aggregates, retrieved ${new Date(result.finishedAt).toLocaleString()}. Counts may differ across requests. Keyword candidates are not a verified Egyptology corpus.`,
+          `Ranked matches retrieved ${new Date(result.finishedAt).toLocaleString()}. Crossref totals count records matching any keyword, so they are not a disciplinary census; the sample can differ between requests.`,
         ),
         el(
           'div',
@@ -201,16 +204,8 @@ export function createVisualize(root, { onRefine }) {
           ),
         ),
       );
-      for (const [key, message] of Object.entries(result.errors))
-        root.append(
-          el(
-            'p',
-            { class: 'notice notice-error', role: 'status' },
-            `${{ facets: 'Search charts', abstract: 'Abstract count', references: 'Reference count', orcid: 'ORCID count', license: 'License count' }[key] || key} unavailable. ${message === 'Failed to fetch' ? 'Crossref could not be reached. Use Refresh summaries to retry.' : message}`,
-          ),
-        );
       const grid = el('div', { class: 'chart-grid' });
-      const years = facetRows(result.facets.published, true),
+      const years = result.years,
         yearView = el('div');
       let annual = years.length <= 40;
       function renderYears() {
@@ -218,11 +213,9 @@ export function createVisualize(root, { onRefine }) {
           annual ? 'Publication years' : 'Publication decades',
           annual
             ? [...years].reverse()
-            : decadeRows(years)
-                .map(([year, count]) => [`${year}s`, count])
-                .reverse(),
+            : result.decades.map(([year, count]) => [`${year}s`, count]).reverse(),
           {
-            note: 'Modern publication dates, newest first. Up to 1,000 returned year buckets; missing buckets are not asserted to be zero. Decades sum the returned approximate year counts. CSV retains individual years.',
+            note: 'Modern publication dates in the ranked sample, newest first. Years absent from the sample are not asserted to be zero. CSV retains individual years.',
             refine: (label) => {
               const year = label.replace(/s$/, '');
               return /^\d{4}$/.test(year)
@@ -252,14 +245,14 @@ export function createVisualize(root, { onRefine }) {
       renderYears();
       grid.append(yearView);
       grid.append(
-        panel('Publication types', facetRows(result.facets['type-name']), {
-          note: 'Types reported for the complete query. Select a supported category to refine Explore.',
+        panel('Publication types', result.types, {
+          note: 'Types in the ranked sample. Select a supported category to refine Explore.',
           refine: (label) => (typeID(label) ? { type: typeID(label) } : null),
         }),
       );
       grid.append(
-        panel('Leading publication venues', facetRows(result.facets['container-title']), {
-          note: 'Top ten returned venues. This is not an exhaustive distribution; records may have multiple container titles. Venues containing commas cannot be refined through the API filter.',
+        panel('Leading publication venues', result.venues, {
+          note: 'Top ten venues in the ranked sample; records without a supplied container title are not counted. Venues containing commas cannot be refined through the API filter.',
           refine: (container) => (container.includes(',') ? null : { container }),
         }),
       );
@@ -276,8 +269,8 @@ export function createVisualize(root, { onRefine }) {
             .filter((name) => name in result.availability)
             .map((name) => [names[name], result.availability[name]]),
           {
-            note: 'Counts and percentages of the whole query. Categories overlap and do not sum to the total. Missing metadata does not indicate poor research quality.',
-            denominator: result.total,
+            note: 'Share of the ranked sample. Categories overlap and do not sum to the total. Missing metadata does not indicate poor research quality.',
+            denominator: result.window,
           },
         ),
       );

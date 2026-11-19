@@ -49,7 +49,7 @@ test('research views retain accessible controls and reflow across desktop and mo
       await page.locator('.place-assignment > summary').click();
     }
     if (view === 'visualize')
-      await expect(page.locator('#visualize')).toContainText('9,000,000 Crossref candidates');
+      await expect(page.locator('#visualize')).toContainText('9,000,000 keyword matches');
     if (view === 'places') {
       await expect(page.locator('#placeMap .leaflet-marker-icon').first()).toBeVisible();
       await page.locator('#placeSelect').selectOption('756512');

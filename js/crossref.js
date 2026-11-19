@@ -99,6 +99,10 @@ function wait(ms, signal) {
   });
 }
 
+/**
+ * @param {string} url
+ * @param {{signal?: AbortSignal, format?: 'json' | 'text', headers?: Record<string, string>, fetcher?: typeof fetch, fresh?: boolean}} [options]
+ */
 export async function request(
   url,
   { signal, format = 'json', headers = {}, fetcher = fetch, fresh = false } = {},
