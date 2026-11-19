@@ -1306,9 +1306,6 @@ p {
   }
 }
 @media (max-width: 639px) {
-  .masthead-inner {
-    flex-wrap: wrap;
-  }
   .intro-top,
   .search-field,
   .results-toolbar,
