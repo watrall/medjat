@@ -36,11 +36,12 @@ async function fixtures(
     if (fail) return route.abort();
     if (url.pathname.endsWith('/transform')) {
       const accept = route.request().headers().accept;
+      const doi = decodeURIComponent(url.pathname.slice('/works/'.length, -'/transform'.length));
       const body = accept.includes('x-bibliography')
         ? 'Researcher, A. (2020). A "quoted" publication.'
         : accept.includes('bibtex')
-          ? '@inbook{duplicate, title={A publication}}'
-          : 'TY  - GENERIC\nTI  - A publication\nER  -';
+          ? `@inbook{duplicate, title={A publication}, doi={${doi}}}`
+          : `TY  - GENERIC\nTI  - A publication\nDO  - ${doi}\nER  -`;
       return route.fulfill({ status: 200, body, contentType: 'text/plain' });
     }
     if (url.pathname !== '/works')
@@ -162,6 +163,108 @@ test('browser back returns from mobile publication detail to its results', async
   await expect(page.locator('.results-column')).toBeVisible();
 });
 
+for (const [scope, included] of Object.entries({ all: [0, 1, 2], matching: [0], selected: [1] })) {
+  test(`export exact membership in every format: ${scope}`, async ({ page }) => {
+    await fixtures(page);
+    await page.goto('/');
+    await expect(page.locator('.result-row')).toHaveCount(25);
+    for (const index of [0, 1, 2]) await page.locator('.save-button').nth(index).click();
+    await page.locator('#collectionNav').click();
+    await page
+      .getByRole('checkbox', {
+        name: 'Select publication: Ancient Egyptian research 1',
+        exact: true,
+      })
+      .check();
+    await page.locator('#collectionSearch').fill('Settlement');
+    await expect(page.locator('#selectionSummary')).toHaveText(
+      '1 selected (1 outside this search)',
+    );
+    await page.locator('#exportScope').selectOption(scope);
+    for (const format of ['json', 'csv', 'ris', 'bibtex']) {
+      await page.locator('#exportFormat').selectOption(format);
+      const downloaded = page.waitForEvent('download');
+      await page.getByRole('button', { name: /^Export \d+ publications?$/ }).click();
+      await expect(page.locator('#exportStatus'), `${scope}/${format}`).toContainText(
+        `Exported ${included.length}`,
+      );
+      const download = await downloaded;
+      const text = await readFile(await download.path(), 'utf8');
+      for (const index of [0, 1, 2])
+        expect(text.includes(`10.1234/test-record-${index}`)).toBe(included.includes(index));
+      await expect(page.locator('#exportStatus')).toContainText(`Exported ${included.length}`);
+      await expect(page.locator('#exportScope')).toHaveValue(scope);
+    }
+    await page.locator('#collectionSearch').fill('no matching publication');
+    await expect(page.locator('.detail-title')).toHaveCount(0);
+    await page.locator('#exportScope').selectOption('matching');
+    await expect(
+      page.getByRole('button', { name: 'Export 0 publications', exact: true }),
+    ).toBeDisabled();
+    await page.locator('#exportScope').selectOption('selected');
+    await page.getByRole('button', { name: 'Clear selection', exact: true }).click();
+    await expect(
+      page.getByRole('button', { name: 'Export 0 publications', exact: true }),
+    ).toBeDisabled();
+  });
+}
+
+test('failed and cancelled exports leave the saved list and selection intact', async ({ page }) => {
+  await fixtures(page);
+  await page.goto('/');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await page.locator('.save-button').first().click();
+  await page.locator('#collectionNav').click();
+  await page.getByRole('checkbox', { name: /^Select publication:/ }).check();
+  await page.route('https://api.crossref.org/works/**/transform?**', (route) =>
+    route.fulfill({ status: 400, body: '{}' }),
+  );
+  await page.getByRole('button', { name: 'Export 1 publication', exact: true }).click();
+  await expect(page.locator('#exportStatus')).toContainText('Export failed.');
+  let release;
+  const gate = new Promise((resolve) => {
+    release = resolve;
+  });
+  await page.route('https://api.crossref.org/works/**/transform?**', async (route) => {
+    await gate;
+    await route.fulfill({ body: 'TY  - CHAP\nER  -' }).catch(() => {});
+  });
+  await page.getByRole('button', { name: 'Export 1 publication', exact: true }).click();
+  await page.getByRole('button', { name: 'Cancel export', exact: true }).click();
+  release();
+  await expect(page.locator('#exportStatus')).toContainText('Export cancelled.');
+  await expect(page.locator('#collectionCount')).toHaveText('1');
+  await expect(page.getByRole('checkbox', { name: /^Select publication:/ })).toBeChecked();
+});
+
+test('an export keeps its initial membership while the collection changes', async ({ page }) => {
+  await fixtures(page);
+  await page.goto('/');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  for (const index of [0, 1]) await page.locator('.save-button').nth(index).click();
+  await page.locator('#collectionNav').click();
+  let release;
+  const gate = new Promise((resolve) => {
+    release = resolve;
+  });
+  await page.route('https://api.crossref.org/works/**/transform?**', async (route) => {
+    await gate;
+    const url = new URL(route.request().url());
+    const doi = decodeURIComponent(url.pathname.slice('/works/'.length, -'/transform'.length));
+    await route.fulfill({ body: `TY  - CHAP\nDO  - ${doi}\nER  -` });
+  });
+  const downloaded = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export 2 publications', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Cancel export', exact: true })).toBeVisible();
+  await page.locator('.save-button').nth(1).click();
+  await expect(page.locator('#collectionCount')).toHaveText('1');
+  release();
+  const output = await readFile(await (await downloaded).path(), 'utf8');
+  expect(output).toContain('10.1234/test-record-0');
+  expect(output).toContain('10.1234/test-record-1');
+  await expect(page.locator('#exportStatus')).toContainText('Exported 2 saved publications');
+});
+
 test('search, inspect, save, reload, cite, and export a collection', async ({ page }) => {
   const requests = await fixtures(page);
   await page.goto('/');
@@ -188,13 +291,13 @@ test('search, inspect, save, reload, cite, and export a collection', async ({ pa
     .evaluate((el) => el.getBoundingClientRect().width);
   expect(rowWidth).toBeGreaterThan(450);
   const downloaded = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Export collection', exact: true }).click();
+  await page.getByRole('button', { name: /^Export \d+ publications?$/ }).click();
   const download = await downloaded;
   expect(download.suggestedFilename()).toMatch(/\.ris$/);
   expect(await readFile(await download.path(), 'utf8')).toMatch(/^TY  - CHAP/m);
   await page.getByRole('combobox', { name: 'Export format', exact: true }).selectOption('json');
   const backupDownload = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Export collection', exact: true }).click();
+  await page.getByRole('button', { name: /^Export \d+ publications?$/ }).click();
   const backup = await readFile(await (await backupDownload).path());
   await page.getByRole('button', { name: /^Remove from collection: Settlement/ }).click();
   await expect(

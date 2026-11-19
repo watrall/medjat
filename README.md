@@ -10,13 +10,13 @@ The explorer covers ancient Egypt from the Predynastic to Roman Egypt. It is bui
 2. **Evaluate.** Open a publication beside the results. Read its deposited abstract, authors, identifiers, affiliations, funding, licenses, and source metadata where available.
 3. **Follow connections.** Inspect references and deposited relations without losing the original results. Return to the preceding publication in the inspector.
 4. **Collect.** Save publications from either the results or the inspector. The collection is matched by DOI and retained in the current browser.
-5. **Reuse.** Copy APA, MLA, or Chicago author-date citations. Export the collection as RIS, BibTeX, CSV, or a JSON backup. JSON backups can be imported and merged without duplicating DOIs.
+5. **Reuse.** Copy APA, MLA, or Chicago author-date citations. In Collection, choose all saved, matching, or selected records and export RIS, BibTeX, CSV, or JSON. The controls show the exact scope and count; selection can include records outside the current search. Export takes a snapshot and leaves the list and selection intact. JSON backups can be imported and merged without duplicating DOIs.
 
 Books and chapters can display an ISBN-matched cover from Open Library. A chapter's cover represents the containing book. Missing covers leave a text-only record.
 
 ## Run locally
 
-The application is static HTML, CSS, and ES modules. There is no runtime framework, database, API key, or required account.
+The application is static HTML, CSS, and ES modules. There is no runtime framework, backend service, API key, or required account.
 
 With Python 3 installed:
 

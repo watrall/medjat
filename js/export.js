@@ -16,6 +16,11 @@ export function csvCell(value) {
   if (/^\s*[=+@-]/.test(text) || /^[\t\r]/.test(text)) text = "'" + text;
   return `"${text.replaceAll('"', '""')}"`;
 }
+export function scopedRecords(records, scope, matching = [], selected = new Set()) {
+  if (!['all', 'matching', 'selected'].includes(scope)) throw new Error('Choose an export scope.');
+  const included = scope === 'matching' ? new Set(matching) : selected;
+  return new Map([...records].filter(([id]) => scope === 'all' || included.has(id)));
+}
 export function metadataCSV(records) {
   const rows = [['Title', 'Authors', 'Publication year', 'Type', 'Container', 'DOI', 'DOI URL']];
   for (const { work } of records.values())
@@ -37,6 +42,7 @@ export async function exportCollection(
 ) {
   if (!EXPORT_FORMATS[format]) throw new Error('Choose an export format.');
   if (!records.size) throw new Error('Save some publications before exporting.');
+  signal?.throwIfAborted();
   if (format === 'json') return serializeCollection(records);
   if (format === 'csv') return metadataCSV(records);
   const parts = [];
@@ -81,12 +87,12 @@ export async function exportCollection(
   }
   return parts.join('\n\n') + '\n';
 }
-export function downloadFile(text, format) {
+export function downloadFile(text, format, { scope = 'all', count } = {}) {
   const { mime, extension } = EXPORT_FORMATS[format];
   const url = URL.createObjectURL(new Blob([text], { type: mime }));
   const link = document.createElement('a');
   link.href = url;
-  link.download = `ancient-egypt-collection-${new Date().toISOString().slice(0, 10)}.${extension}`;
+  link.download = `ancient-egypt-${scope}${count ? `-${count}` : ''}-${new Date().toISOString().slice(0, 10)}.${extension}`;
   document.body.append(link);
   link.click();
   link.remove();

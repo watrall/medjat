@@ -2,9 +2,8 @@ import { PERIODS, TYPES, readQuery, queryString, authorLine, doiURL } from './da
 import { searchWorks, getWork, DATE_BROWSE_LIMIT } from './crossref.js';
 import { readSession, writeSession } from './session.js';
 import { createInspector } from './inspector.js';
-import { parseCollection } from './collection.js';
 import { createCollectionStore } from './collection-store.js';
-import { EXPORT_FORMATS, exportCollection, downloadFile } from './export.js';
+import { createCollectionTools } from './collection-tools.js';
 import { el, icon, externalLink, emptyState, notify, skeletons } from './dom.js';
 
 const $ = (id) => document.getElementById(id);
@@ -20,6 +19,9 @@ const state = {
   collection: saved.records,
   storageWarning: saved.warning,
   collectionQuery: '',
+  exportSelection: new Set(),
+  exportScope: 'all',
+  exportFormat: 'ris',
   lastRemoved: null,
   query: readQuery(location.search),
   draft: readQuery(location.search),
@@ -49,6 +51,9 @@ function saveSession() {
     draft: state.draft,
     selected: state.selected,
     collectionQuery: state.collectionQuery,
+    selection: [...state.exportSelection],
+    exportScope: state.exportScope,
+    exportFormat: state.exportFormat,
     inspector: inspector.capture(),
   });
 }
@@ -128,6 +133,57 @@ const inspector = createInspector($('inspector'), {
   onChange: saveSession,
   onNavigate: () => updateURL({ push: true }),
 });
+const collectionTools = createCollectionTools($('collectionTools'), {
+  getState: () => ({
+    records: state.collection,
+    visible: state.view === 'collection' ? visibleWorks() : [],
+    selection: state.exportSelection,
+    query: state.collectionQuery,
+    scope: state.exportScope,
+    format: state.exportFormat,
+  }),
+  onQuery(query) {
+    state.collectionQuery = query;
+    reconcileCollection();
+    renderList();
+    renderStatus();
+    updateURL();
+  },
+  onSelect(ids) {
+    if (!ids.length) state.exportSelection.clear();
+    else {
+      for (const id of ids) state.exportSelection.add(id);
+      state.exportScope = 'selected';
+    }
+    renderList();
+    collectionTools.sync();
+    saveSession();
+  },
+  onPreferences({ scope, format }) {
+    if (scope) state.exportScope = scope;
+    if (format) state.exportFormat = format;
+    saveSession();
+  },
+  async onImport(imported) {
+    const result = await collectionStore.change({ import: imported });
+    state.collection = result.records;
+    state.storageWarning = result.warning;
+    reconcileCollection();
+    renderList();
+    renderStatus();
+    return `Imported collection. ${state.collection.size} publications saved. Records are matched by DOI.${result.warning ? ' Changes are kept for this visit only.' : ''}`;
+  },
+});
+function reconcileCollection() {
+  for (const id of state.exportSelection)
+    if (!state.collection.has(id)) state.exportSelection.delete(id);
+  if (state.view !== 'collection') return;
+  const works = visibleWorks();
+  if (!works.some((work) => work.id === state.selected)) {
+    state.selected = works[0]?.id || null;
+    renderInspector(works[0]);
+  }
+}
 function visibleWorks() {
   if (state.view === 'explore') return state.items;
   const query = state.collectionQuery.toLowerCase();
@@ -156,6 +212,7 @@ async function toggleSave(work) {
     state.collection = result.records;
     state.storageWarning = result.warning;
     if (removing) state.lastRemoved = removedEntry;
+    reconcileCollection();
   } catch (error) {
     notify(error.message);
     return;
@@ -179,7 +236,7 @@ async function toggleSave(work) {
     )?.focus({ preventScroll: true });
 }
 function setView(view, { navigate = true, syncURL = true, load = true } = {}) {
-  if (view !== 'collection') exportController?.abort();
+  if (view !== 'collection') collectionTools.cancel();
   $('research').classList.toggle('collection-view', view === 'collection');
   state.view = view;
   renderDraftStatus();
@@ -200,119 +257,8 @@ function setView(view, { navigate = true, syncURL = true, load = true } = {}) {
   if (syncURL) updateURL({ push: navigate });
   if (view === 'explore' && !state.resultQuery && !state.loading && load) runSearch();
 }
-let exportController = null;
 function renderCollectionTools() {
-  const input = el('input', {
-    type: 'search',
-    id: 'collectionSearch',
-    placeholder: 'Title, author, or keyword',
-    value: state.collectionQuery,
-    oninput: (e) => {
-      state.collectionQuery = e.target.value;
-      renderList();
-      renderStatus();
-      saveSession();
-    },
-  });
-  const formats = el('select', { id: 'exportFormat' });
-  for (const [value, format] of Object.entries(EXPORT_FORMATS))
-    formats.append(el('option', { value }, format.label));
-  const status = el(
-    'p',
-    { id: 'exportStatus', role: 'status' },
-    'Export includes every saved publication, including those outside the current collection search.',
-  );
-  const cancel = el(
-    'button',
-    { class: 'text-button', hidden: true, onclick: () => exportController?.abort() },
-    'Cancel export',
-  );
-  const button = el(
-    'button',
-    {
-      class: 'button button-primary',
-      onclick: async () => {
-        if (exportController) return;
-        const snapshot = new Map(state.collection);
-        const format = formats.value;
-        exportController = new AbortController();
-        button.disabled = true;
-        formats.disabled = true;
-        cancel.hidden = false;
-        status.textContent = 'Preparing your collection…';
-        try {
-          const text = await exportCollection(snapshot, format, {
-            signal: exportController.signal,
-            onProgress: (done, total) => {
-              status.textContent = `Formatted ${done} of ${total} publications…`;
-            },
-          });
-          downloadFile(text, format);
-          status.textContent = `Exported ${snapshot.size} publications. Your saved collection is unchanged.`;
-          notify('Collection exported.');
-        } catch (error) {
-          status.textContent = exportController.signal.aborted
-            ? 'Export cancelled. Your collection is unchanged.'
-            : error.message;
-        } finally {
-          exportController = null;
-          button.disabled = false;
-          formats.disabled = false;
-          cancel.hidden = true;
-        }
-      },
-    },
-    icon('download'),
-    'Export collection',
-  );
-  const file = el('input', {
-    type: 'file',
-    accept: '.json,application/json',
-    hidden: true,
-    id: 'importCollection',
-    onchange: async (e) => {
-      const selected = e.target.files?.[0];
-      if (!selected) return;
-      try {
-        if (selected.size > 10 * 1024 * 1024)
-          throw new Error('Choose a collection file smaller than 10 MB.');
-        const imported = parseCollection(await selected.text());
-        const result = await collectionStore.change({ import: imported });
-        state.collection = result.records;
-        state.storageWarning = result.warning;
-        status.textContent = `Imported collection. ${state.collection.size} publications saved. Existing records are matched by DOI.${result.warning ? ' Changes are kept for this visit only.' : ''}`;
-        renderList();
-        renderStatus();
-      } catch (error) {
-        status.textContent = error.message;
-      } finally {
-        file.value = '';
-      }
-    },
-  });
-  $('collectionTools').replaceChildren(
-    el(
-      'div',
-      { class: 'collection-toolbar' },
-      el('label', { for: 'collectionSearch' }, 'Search saved publications', input),
-      el('label', { for: 'exportFormat' }, 'Export format', formats),
-      button,
-      cancel,
-      el(
-        'button',
-        { class: 'text-button', onclick: () => file.click() },
-        icon('library-big'),
-        'Import collection',
-      ),
-      file,
-      status,
-      el(
-        'p',
-        {},
-        'Saved in this browser. RIS and BibTeX use Crossref’s format conversion; JSON keeps the deposited metadata and can be imported here.',
-      ),
-    ),
-  );
+  collectionTools.sync();
 }
 function renderInspector(work) {
   inspector.show(work);
@@ -404,6 +350,24 @@ function renderList() {
         el(
           'div',
           { class: 'result-top' },
+          state.view === 'collection' &&
+            el(
+              'label',
+              { class: 'select-publication' },
+              el('input', {
+                type: 'checkbox',
+                checked: state.exportSelection.has(work.id),
+                'aria-label': `Select publication: ${work.title}`,
+                onchange: (event) => {
+                  if (event.target.checked) {
+                    state.exportSelection.add(work.id);
+                    state.exportScope = 'selected';
+                  } else state.exportSelection.delete(work.id);
+                  collectionTools.sync();
+                  saveSession();
+                },
+              }),
+            ),
           el('h3', {}, title),
           el(
             'button',
@@ -441,6 +405,7 @@ function renderStatus() {
     $('removedTitle').textContent = `Removed “${state.lastRemoved.work.title}”.`;
   $('collectionCount').textContent = state.collection.size;
   if (state.view === 'collection') {
+    collectionTools.sync();
     $('resultCount').textContent =
       `${visibleWorks().length} of ${state.collection.size} saved publications`;
     $('scopeNote').textContent =
@@ -652,6 +617,7 @@ $('undoRemoval').addEventListener('click', async () => {
     state.collection = result.records;
     state.storageWarning = result.warning;
     state.lastRemoved = null;
+    reconcileCollection();
     renderList();
     renderStatus();
     inspector.refresh();
@@ -672,6 +638,7 @@ $('undoRemoval').addEventListener('click', async () => {
 collectionStore.subscribe(({ records, warning }) => {
   state.collection = records;
   state.storageWarning = warning;
+  reconcileCollection();
   renderList();
   renderStatus();
   inspector.refresh();
@@ -686,6 +653,17 @@ async function restoreLocation(resume = null) {
     state.draft = resume?.draft ? readQuery(queryString(resume.draft)) : { ...state.query };
     state.collectionQuery =
       typeof resume?.collectionQuery === 'string' ? resume.collectionQuery : '';
+    state.exportSelection = new Set(
+      Array.isArray(resume?.selection)
+        ? resume.selection.filter((id) => state.collection.has(id))
+        : [],
+    );
+    state.exportScope = ['all', 'matching', 'selected'].includes(resume?.exportScope)
+      ? resume.exportScope
+      : 'all';
+    state.exportFormat = ['ris', 'bibtex', 'csv', 'json'].includes(resume?.exportFormat)
+      ? resume.exportFormat
+      : 'ris';
     state.selected = resume?.selected || record;
     syncControls();
     const view = params.get('view') === 'collection' ? 'collection' : 'explore';
