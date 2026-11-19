@@ -4,7 +4,6 @@ import {
   parseCollection,
   serializeCollection,
   readCollection,
-  writeCollection,
   mergeCollections,
 } from '../js/collection.js';
 import { normalizeWork } from '../js/data.js';
@@ -19,7 +18,7 @@ test('collection export round-trips source metadata and save time', () => {
   assert.deepEqual(restored.get(work.id), records.get(work.id));
   assert.equal(mergeCollections(records, restored).size, 1);
 });
-test('storage errors are explicit rather than false save success', () => {
+test('storage errors are explicit', () => {
   const storage = {
     getItem() {
       throw new Error('blocked');
@@ -29,7 +28,6 @@ test('storage errors are explicit rather than false save success', () => {
     },
   };
   assert.ok(readCollection(storage).warning);
-  assert.equal(writeCollection(records, storage), false);
 });
 test('invalid imports are rejected before replacing the collection', () => {
   assert.throws(() => parseCollection('not json'), /valid JSON/);

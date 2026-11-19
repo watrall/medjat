@@ -1,4 +1,4 @@
-import { authorLine, doiURL, normalizeDOI, normalizeWork, plainText, safeURL } from './data.js';
+import { doiURL, normalizeDOI, normalizeWork, plainText, safeURL } from './data.js';
 import { getWork, getCitation } from './crossref.js';
 import { el, icon, externalLink, emptyState, notify } from './dom.js';
 import { createCover } from './covers.js';

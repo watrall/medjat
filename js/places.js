@@ -1,6 +1,6 @@
 import { preservePlaceFocus } from './place-focus.js';
 import { publicationMetadata } from './place-publication.js';
-import { loadGazetteer, placeEvidence, placesForWork, searchPlaceWorks } from './place-data.js';
+import { loadGazetteer, placeEvidence, searchPlaceWorks } from './place-data.js';
 import { createPlaceMap } from './place-map.js';
 import { createInspector } from './inspector.js';
 import { createPlaceCollection } from './place-collection.js';

@@ -18,7 +18,7 @@ import { readSession, writeSession } from './session.js';
 import { createInspector } from './inspector.js';
 import { createCollectionStore } from './collection-store.js';
 import { createCollectionTools } from './collection-tools.js';
-import { el, icon, externalLink, emptyState, notify, skeletons } from './dom.js';
+import { el, icon, emptyState, notify, skeletons } from './dom.js';
 
 const $ = (id) => document.getElementById(id);
 let storage;

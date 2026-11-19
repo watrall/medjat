@@ -1,6 +1,6 @@
 import { normalizeWork } from './data.js';
 import { researchData } from './research-store.js';
-export const COLLECTION_KEY = 'ancient-egypt-research-collection-v1';
+const COLLECTION_KEY = 'ancient-egypt-research-collection-v1';
 export const MAX_SAVED = 500;
 export function parseCollection(text) {
   if (typeof text !== 'string' || text.length > 10 * 1024 * 1024)
@@ -58,14 +58,6 @@ export function readCollection(storage) {
       warning:
         'Your saved collection could not be read. Storage may be unavailable or the stored file may be damaged. New saves will be kept for this visit; export to keep a copy.',
     };
-  }
-}
-export function writeCollection(records, storage) {
-  try {
-    storage.setItem(COLLECTION_KEY, serializeCollection(records));
-    return true;
-  } catch {
-    return false;
   }
 }
 export function mergeCollections(current, incoming) {

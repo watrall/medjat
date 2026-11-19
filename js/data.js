@@ -1,6 +1,4 @@
 // Approximate ranges follow the Egypt Exploration Society's Chronology of Egypt.
-export const CHRONOLOGY_SOURCE =
-  'https://www.ees.ac.uk/static/102ae8e9-31ea-432d-a8d7434e3c65917d/EES-Chronology-of-Egypt.pdf';
 export const PERIODS = [
   { id: 'predynastic', name: 'Predynastic', dates: 'c. 4400–3000 BCE', query: 'Predynastic Egypt' },
   {
