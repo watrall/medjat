@@ -1,3 +1,4 @@
+import { createAtlas } from './atlas.js';
 import { createResearch } from './research.js';
 import { importResearch } from './research-store.js';
 import { createVisualize } from './visualize.js';
@@ -265,6 +266,13 @@ async function toggleSave(work) {
       $('undoRemoval')
     )?.focus({ preventScroll: true });
 }
+const atlas = createAtlas($('atlas'), {
+  getWorks: () => [...state.collection.values()].map((entry) => entry.work),
+  onInspect: (work) => {
+    setView('collection');
+    selectWork(work);
+  },
+});
 const visualizer = createVisualize($('visualize'), {
   onRefine(filter) {
     Object.assign(state.query, filter);
@@ -276,6 +284,21 @@ const visualizer = createVisualize($('visualize'), {
 });
 function setView(view, { navigate = true, syncURL = true, load = true } = {}) {
   if (navigate) cancelRestoration();
+  $('atlas').hidden = view !== 'atlas';
+  $('atlasNav').setAttribute('aria-pressed', String(view === 'atlas'));
+  if (view === 'atlas') {
+    state.view = view;
+    $('research').hidden = true;
+    $('visualize').hidden = true;
+    for (const id of ['exploreNav', 'collectionNav', 'visualizeNav'])
+      $(id).setAttribute('aria-pressed', 'false');
+    document.body.classList.add('is-collection');
+    collectionTools.cancel();
+    visualizer.cancel();
+    atlas.show();
+    if (syncURL) updateURL({ push: navigate });
+    return;
+  }
   $('visualize').hidden = view !== 'visualize';
   $('research').hidden = view === 'visualize';
   $('visualizeNav').setAttribute('aria-pressed', String(view === 'visualize'));
@@ -694,6 +717,7 @@ $('aboutToggle').addEventListener('click', () => {
   $('aboutToggle').setAttribute('aria-expanded', String(open));
 });
 $('exploreNav').addEventListener('click', () => setView('explore'));
+$('atlasNav').addEventListener('click', () => setView('atlas'));
 $('visualizeNav').addEventListener('click', () => setView('visualize'));
 $('collectionNav').disabled = false;
 $('collectionNav').addEventListener('click', () => setView('collection'));
@@ -765,7 +789,7 @@ async function restoreLocation(resume = null) {
       : 'ris';
     state.selected = resume?.selected || record;
     syncControls();
-    const view = ['collection', 'visualize'].includes(params.get('view'))
+    const view = ['collection', 'visualize', 'atlas'].includes(params.get('view'))
       ? params.get('view')
       : 'explore';
     setView(view, { navigate: false, syncURL: false, load: false });
@@ -775,7 +799,7 @@ async function restoreLocation(resume = null) {
     )
       await runSearch();
     if (navigation !== navigationGeneration) return;
-    if (view === 'visualize') return;
+    if (view === 'visualize' || view === 'atlas') return;
     if (resume?.inspector) inspector.restore(resume.inspector);
     else if (record) {
       const work =

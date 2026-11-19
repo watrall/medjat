@@ -1,0 +1,321 @@
+{
+  "source": "Pleiades",
+  "attribution": "Pleiades contributors; Ancient World Mapping Center and Institute for the Study of the Ancient World",
+  "license": "CC BY 3.0",
+  "licenseURL": "https://creativecommons.org/licenses/by/3.0/",
+  "retrievedAt": "2026-11-19",
+  "sites": [
+    {
+      "id": "756512",
+      "name": "Abydos",
+      "sourceTitle": "Abydos/Ebot",
+      "longitude": 31.917622,
+      "latitude": 26.185099,
+      "aliases": [
+        "Abydos",
+        "Abydos/Ebot"
+      ],
+      "source": "https://pleiades.stoa.org/places/756512"
+    },
+    {
+      "id": "149576487",
+      "name": "Amarna",
+      "sourceTitle": "Amarna",
+      "longitude": 30.89818203754354,
+      "latitude": 27.644099597341675,
+      "aliases": [
+        "Amarna",
+        "العمارنة"
+      ],
+      "source": "https://pleiades.stoa.org/places/149576487"
+    },
+    {
+      "id": "786037",
+      "name": "Hierakonpolis",
+      "sourceTitle": "Nekhen/Hierakonpolis",
+      "longitude": 32.779728,
+      "latitude": 25.097743,
+      "aliases": [
+        "Hierakonpolis",
+        "Ἱεράκων πόλις"
+      ],
+      "source": "https://pleiades.stoa.org/places/786037"
+    },
+    {
+      "id": "736963",
+      "name": "Memphis",
+      "sourceTitle": "Memphis",
+      "longitude": 31.255061,
+      "latitude": 29.849491,
+      "aliases": [
+        "Memphis",
+        "λευκὸν τεῖχος"
+      ],
+      "source": "https://pleiades.stoa.org/places/736963"
+    },
+    {
+      "id": "796289136",
+      "name": "Saqqara",
+      "sourceTitle": "Saqqarah",
+      "longitude": 31.219354151151553,
+      "latitude": 29.862380874013706,
+      "aliases": [
+        "Saqqara",
+        "سقارة"
+      ],
+      "source": "https://pleiades.stoa.org/places/796289136"
+    },
+    {
+      "id": "442962448",
+      "name": "Giza",
+      "sourceTitle": "Giza",
+      "longitude": 31.12668227565419,
+      "latitude": 29.970055997040458,
+      "aliases": [
+        "Giza",
+        "الجيزة‎"
+      ],
+      "source": "https://pleiades.stoa.org/places/442962448"
+    },
+    {
+      "id": "786017",
+      "name": "Thebes",
+      "sourceTitle": "Diospolis Magna/Thebai",
+      "longitude": 32.631884,
+      "latitude": 25.664780999999998,
+      "aliases": [
+        "Diospoli Q[ - ? - ]tibe",
+        "Thebes",
+        "أَلْأُقْصُر",
+        "اقصر"
+      ],
+      "source": "https://pleiades.stoa.org/places/786017"
+    },
+    {
+      "id": "786050",
+      "name": "Karnak",
+      "sourceTitle": "Karnak",
+      "longitude": 32.658127567772674,
+      "latitude": 25.71822004908206,
+      "aliases": [
+        "Karnak",
+        "الكرنك"
+      ],
+      "source": "https://pleiades.stoa.org/places/786050"
+    },
+    {
+      "id": "786021",
+      "name": "Elephantine",
+      "sourceTitle": "Elephantine",
+      "longitude": 32.889,
+      "latitude": 24.09,
+      "aliases": [
+        "Elephantine"
+      ],
+      "source": "https://pleiades.stoa.org/places/786021"
+    },
+    {
+      "id": "786089",
+      "name": "Philae",
+      "sourceTitle": "Philae",
+      "longitude": 32.88414092882277,
+      "latitude": 24.0252586030107,
+      "aliases": [
+        "Philae"
+      ],
+      "source": "https://pleiades.stoa.org/places/786089"
+    },
+    {
+      "id": "785974",
+      "name": "Edfu",
+      "sourceTitle": "Apollonopolis Magna",
+      "longitude": 32.872446,
+      "latitude": 24.9778875,
+      "aliases": [
+        "Behdet",
+        "Edfou",
+        "Edfu",
+        "إدفو",
+        "Ἀπόλλωνος πόλις"
+      ],
+      "source": "https://pleiades.stoa.org/places/785974"
+    },
+    {
+      "id": "786127",
+      "name": "Dendera",
+      "sourceTitle": "Tentyra",
+      "longitude": 32.67041622105285,
+      "latitude": 26.142546215868396,
+      "aliases": [
+        "Dendera",
+        "Tentura",
+        "Τέντυρα"
+      ],
+      "source": "https://pleiades.stoa.org/places/786127"
+    },
+    {
+      "id": "786059",
+      "name": "Esna",
+      "sourceTitle": "Latopolis",
+      "longitude": 32.5531993,
+      "latitude": 25.2936689,
+      "aliases": [
+        "Esna",
+        "Lato",
+        "Λατόπολις",
+        "اسنا"
+      ],
+      "source": "https://pleiades.stoa.org/places/786059"
+    },
+    {
+      "id": "786079",
+      "name": "Kom Ombo",
+      "sourceTitle": "Omboi",
+      "longitude": 32.928412989627994,
+      "latitude": 24.452146834041102,
+      "aliases": [
+        "Ambos",
+        "Kom Ombo",
+        "Ombos",
+        "Ὄμβοι"
+      ],
+      "source": "https://pleiades.stoa.org/places/786079"
+    },
+    {
+      "id": "727070",
+      "name": "Alexandria",
+      "sourceTitle": "Alexandria",
+      "longitude": 29.909773,
+      "latitude": 31.201435,
+      "aliases": [
+        "Alexandria",
+        "Scanderia",
+        "ⲣⲁⲕⲟⲧⲉ"
+      ],
+      "source": "https://pleiades.stoa.org/places/727070"
+    },
+    {
+      "id": "727236",
+      "name": "Tanis",
+      "sourceTitle": "Tanis",
+      "longitude": 31.883619562443883,
+      "latitude": 30.975452837412377,
+      "aliases": [
+        "Tanis",
+        "Τάνις",
+        "صان الحجر"
+      ],
+      "source": "https://pleiades.stoa.org/places/727236"
+    },
+    {
+      "id": "727088",
+      "name": "Bubastis",
+      "sourceTitle": "Boubastis",
+      "longitude": 31.511085335188596,
+      "latitude": 30.57238231122388,
+      "aliases": [
+        "Bubastis"
+      ],
+      "source": "https://pleiades.stoa.org/places/727088"
+    },
+    {
+      "id": "727217",
+      "name": "Sais",
+      "sourceTitle": "Sais",
+      "longitude": 30.774366999999998,
+      "latitude": 30.967149999999997,
+      "aliases": [
+        "Sais",
+        "Saïs",
+        "Σάι",
+        "صا الحجر"
+      ],
+      "source": "https://pleiades.stoa.org/places/727217"
+    },
+    {
+      "id": "727117",
+      "name": "Heliopolis",
+      "sourceTitle": "Heliopolis",
+      "longitude": 31.3074812,
+      "latitude": 30.1294036,
+      "aliases": [
+        "Heliopolis"
+      ],
+      "source": "https://pleiades.stoa.org/places/727117"
+    },
+    {
+      "id": "756574",
+      "name": "Hermopolis Magna",
+      "sourceTitle": "Hermopolis Magna/Schmun",
+      "longitude": 30.803758051080735,
+      "latitude": 27.781357334509522,
+      "aliases": [
+        "Achmounein",
+        "Hermopolis Magna",
+        "oppidum Mercuri",
+        "Ἑρμοῦ πόλις"
+      ],
+      "source": "https://pleiades.stoa.org/places/756574"
+    },
+    {
+      "id": "756518",
+      "name": "Antinoopolis",
+      "sourceTitle": "Antinoopolis",
+      "longitude": 30.8810025,
+      "latitude": 27.8105625,
+      "aliases": [
+        "Antinoopolis",
+        "انصنا"
+      ],
+      "source": "https://pleiades.stoa.org/places/756518"
+    },
+    {
+      "id": "736983",
+      "name": "Oxyrhynchus",
+      "sourceTitle": "Oxyrhynchus/Pemje",
+      "longitude": 30.65172,
+      "latitude": 28.542574,
+      "aliases": [
+        "Oxyrhynchus",
+        "Oxyrhynchus/Pemje"
+      ],
+      "source": "https://pleiades.stoa.org/places/736983"
+    },
+    {
+      "id": "736918",
+      "name": "Hawara",
+      "sourceTitle": "Haueris",
+      "longitude": 30.895832,
+      "latitude": 29.253514,
+      "aliases": [
+        "Hawara"
+      ],
+      "source": "https://pleiades.stoa.org/places/736918"
+    },
+    {
+      "id": "736953",
+      "name": "Lahun",
+      "sourceTitle": "el-Lahun",
+      "longitude": 30.983288561698398,
+      "latitude": 29.236019508094262,
+      "aliases": [
+        "Kahun",
+        "Lahun",
+        "اللاهون"
+      ],
+      "source": "https://pleiades.stoa.org/places/736953"
+    },
+    {
+      "id": "864388873",
+      "name": "Deir el-Medina",
+      "sourceTitle": "Deir el-Medina",
+      "longitude": 32.60128640590839,
+      "latitude": 25.72840127706976,
+      "aliases": [
+        "Deir el-Medina",
+        "دير المدينة‎"
+      ],
+      "source": "https://pleiades.stoa.org/places/864388873"
+    }
+  ]
+}
