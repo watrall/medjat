@@ -109,6 +109,7 @@ export const repositoryFiles = [
   'js/result-row.js',
   'js/search-status.js',
   'js/session.js',
+  'js/types.d.ts',
   'js/view-config.js',
   'js/visualize.js',
   'package-lock.json',

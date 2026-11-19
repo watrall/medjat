@@ -1,4 +1,7 @@
+// @ts-check
 import { PERIODS, TYPES } from './data.js';
+
+/** @typedef {import('./types.js').Query} Query */
 
 export const FILTER_CONTROLS = Object.freeze([
   { key: 'period', id: 'periodSelect' },
@@ -10,23 +13,41 @@ export const FILTER_CONTROLS = Object.freeze([
   { key: 'references', id: 'hasReferences', checked: true },
 ]);
 
+/**
+ * @param {Document} document
+ * @param {string} id
+ * @returns {HTMLInputElement | HTMLSelectElement}
+ */
+function control(document, id) {
+  const element = document.getElementById(id);
+  if (!element) throw new Error(`Missing filter control: ${id}`);
+  return /** @type {HTMLInputElement | HTMLSelectElement} */ (element);
+}
+
+/** @param {Document} document @returns {Record<string, string | boolean>} */
 export function readFilterControls(document) {
+  /** @type {Record<string, string | boolean>} */
   const values = {};
   for (const filter of FILTER_CONTROLS) {
-    const control = document.getElementById(filter.id);
-    values[filter.key] = filter.checked ? control.checked : control.value;
+    const element = control(document, filter.id);
+    values[filter.key] = filter.checked
+      ? /** @type {HTMLInputElement} */ (element).checked
+      : element.value;
   }
   return values;
 }
 
+/** @param {Document} document @param {Query} query */
 export function writeFilterControls(document, query) {
   for (const filter of FILTER_CONTROLS) {
-    const control = document.getElementById(filter.id);
-    if (filter.checked) control.checked = Boolean(query[filter.key]);
-    else control.value = query[filter.key];
+    const element = control(document, filter.id);
+    const value = query[filter.key];
+    if (filter.checked) /** @type {HTMLInputElement} */ (element).checked = Boolean(value);
+    else element.value = String(value ?? '');
   }
 }
 
+/** @param {Query} query @returns {string[]} */
 export function queryFilters(query) {
   const filters = [];
   if (query.container) filters.push(`container-title:${query.container}`);
@@ -39,6 +60,7 @@ export function queryFilters(query) {
   return filters;
 }
 
+/** @param {Query} query @returns {string[]} */
 export function filterChips(query) {
   const period = PERIODS.find((entry) => entry.id === query.period);
   return [
@@ -50,9 +72,10 @@ export function filterChips(query) {
     query.abstract && 'Has abstract',
     query.orcid && 'Has ORCID',
     query.references && 'Has references',
-  ].filter(Boolean);
+  ].filter((label) => typeof label === 'string');
 }
 
+/** @param {Query} query @returns {string} */
 export function filterDescription(query) {
   return (
     [
