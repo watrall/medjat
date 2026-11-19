@@ -64,7 +64,7 @@ export function createVisualize(root, { onRefine }) {
         type: 'text/csv;charset=utf-8',
       }),
     );
-    const link = el('a', { href: url, download: 'crossref-whole-search-summary.csv' });
+    const link = el('a', { href: url, download: 'medjat-whole-search-summary.csv' });
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }

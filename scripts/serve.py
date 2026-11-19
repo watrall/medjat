@@ -22,7 +22,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
     server = Server(("127.0.0.1", args.port), partial(Handler, directory=str(root)))
-    print(f"Ancient Egypt Research Explorer: http://127.0.0.1:{args.port}", flush=True)
+    print(f"Medjat: http://127.0.0.1:{args.port}", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

@@ -97,7 +97,7 @@ export function downloadFile(
   const url = URL.createObjectURL(new Blob([text], { type: mime }));
   const link = document.createElement('a');
   link.href = url;
-  link.download = `ancient-egypt-${scope}${count ? `-${count}` : ''}-${date}.${extension}`;
+  link.download = `medjat-${scope}${count ? `-${count}` : ''}-${date}.${extension}`;
   document.body.append(link);
   link.click();
   link.remove();

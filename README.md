@@ -1,4 +1,6 @@
-# Ancient Egypt Research Explorer
+# Medjat
+
+**Ancient Egyptian Research Explorer**
 
 An independent research workspace for discovering ancient Egyptian scholarship through Crossref metadata. Search the literature, examine whole-search patterns, trace shared references, review ancient-place evidence, and maintain a reusable bibliography.
 
@@ -29,6 +31,8 @@ For a citation without a DOI, request up to three possible Crossref matches, ins
 Switch to **Your collection** to inspect place associations in saved Crossref records. Confirm or reject suggestions, assign places using your reading, mark nonspatial scholarship as not place-specific, and export the exact place/evidence subset in RIS, BibTeX, CSV, or JSON. Applied search names, topics, and evidence scope survive refresh and history navigation. Assignment has local search, full publication identity, a preview, and a direct entry above the list. Removal has local Undo; marking a work not place-specific retains its reviews for reversal. On mobile the selected-place map is compact and expandable, with search refinements disclosed on demand. Publications may have multiple places. The interface accounts for unassigned and nonspatial records; it never claims to map the entire Crossref query.
 
 **Living bibliography**, inside Collection, checks saved DOIs against current Crossref metadata on request. Compare changed fields, inspect the current record, and accept or defer each update. Accepted changes preserve the original save time and retain previous metadata in the research backup. Concurrent changes or removals in another tab prevent stale acceptance. Update notices expose their deposited type, source, and DOI; read the notice to establish its meaning. A check finding no notices is not proof that a work has no correction or retraction.
+
+Repository: [watrall/medjat](https://github.com/watrall/medjat).
 
 ## Run locally
 
@@ -69,7 +73,7 @@ Approximate historical ranges follow the [Egypt Exploration Society chronology](
 
 Searches go directly from the browser to Crossref. Requests identify the application contact through `mailto=ethan.watrall@gmail.com`; there are no credentials in the frontend. The client caches recent responses in memory, cancels superseded searches, applies timeouts, and backs off on appropriate transient errors.
 
-The collection is stored in IndexedDB on the current browser and origin. Read/write transactions protect concurrent saves, removals, and imports; open tabs refresh through change notifications. Existing localStorage collections migrate once without deleting the original backup. The collection is not synchronized between devices or between localhost and a hosted deployment. Private browsing, clearing browser data, and storage limits can remove it. The interface reports storage failures and keeps changes in memory for the visit when persistence is unavailable; export a JSON backup to keep a portable copy. Collections support up to 500 publications.
+Medjat retains the existing browser storage identifiers and accepts collection backups exported under the former Ancient Egypt Research Explorer name. The collection is stored in IndexedDB on the current browser and origin. Read/write transactions protect concurrent saves, removals, and imports; open tabs refresh through change notifications. Existing localStorage collections migrate once without deleting the original backup. The collection is not synchronized between devices or between localhost and a hosted deployment. Private browsing, clearing browser data, and storage limits can remove it. The interface reports storage failures and keeps changes in memory for the visit when persistence is unavailable; export a JSON backup to keep a portable copy. Collections support up to 500 publications.
 
 Research review decisions are stored per item in localStorage, with a session fallback when storage is unavailable. JSON version 2 backups include these decisions and remain compatible with version 1 publication-only imports. Scoped JSON exports include the scoped publications and the current decisions for the single reading list. Research backups preserve review dates; they are not an immutable audit log. Places reads a bundled Pleiades gazetteer. Place-name/topic searches are sent to Crossref. OpenStreetMap supplies map tiles and receives map-area requests, the normal browser Referer, and network information; publication records and review decisions are not sent to the tile provider. Local name matching does not send publication text to Pleiades. The map can be used through its place selector and publication list if tiles are unavailable.
 

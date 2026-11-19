@@ -256,7 +256,7 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
             const url = URL.createObjectURL(
               new Blob([serializeCollection(getSaved())], { type: 'application/json' }),
             );
-            el('a', { href: url, download: 'egypt-research-backup.json' }).click();
+            el('a', { href: url, download: 'medjat-research-backup.json' }).click();
             setTimeout(() => URL.revokeObjectURL(url), 1000);
           },
         },

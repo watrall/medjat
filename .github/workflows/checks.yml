@@ -1,4 +1,4 @@
-name: Check the research explorer
+name: Check Medjat
 on:
   push:
   pull_request:

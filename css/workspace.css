@@ -1997,3 +1997,29 @@ p {
   cursor: pointer;
   font-weight: 650;
 }
+
+/* Medjat wordmark: retain the existing typography and allow its full subtitle to reflow. */
+.brand {
+  min-inline-size: 0;
+  flex-shrink: 1;
+}
+.brand-name {
+  font-size: var(--text-section);
+  min-inline-size: 0;
+}
+.brand-name span {
+  line-height: 1.3;
+  letter-spacing: 0;
+}
+.brand-mark {
+  flex-shrink: 0;
+}
+@media (max-width: 639px) {
+  .brand-name {
+    font-size: var(--text-lead);
+  }
+  .brand-name span {
+    font-size: var(--text-caption);
+    max-inline-size: 28ch;
+  }
+}

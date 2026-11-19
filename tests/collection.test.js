@@ -37,6 +37,6 @@ test('invalid imports are rejected before replacing the collection', () => {
     () => parseCollection('{"version":1,"records":[{"raw":{"DOI":"javascript:bad"}}]}'),
     /valid DOI/,
   );
-  assert.throws(() => parseCollection('{"records":[]}'), /not an Ancient/);
+  assert.throws(() => parseCollection('{"records":[]}'), /not a supported/);
   assert.equal(records.size, 1);
 });

@@ -12,7 +12,7 @@ export function parseCollection(text) {
     throw new Error('This file is not valid JSON. Choose an exported collection.');
   }
   if (![1, 2].includes(data?.version) || !Array.isArray(data.records))
-    throw new Error('This file is not an Ancient Egypt Research Explorer collection.');
+    throw new Error('This file is not a supported Medjat collection backup.');
   if (data.records.length > MAX_SAVED)
     throw new Error(
       `Collections support up to ${MAX_SAVED} publications. Import a smaller collection.`,
@@ -37,7 +37,7 @@ export function parseCollection(text) {
 export function serializeCollection(records) {
   return JSON.stringify(
     {
-      format: 'Ancient Egypt Research Explorer collection',
+      format: 'Medjat collection',
       version: Object.keys(researchData()).length ? 2 : 1,
       research: researchData(),
       exportedAt: new Date().toISOString(),
