@@ -272,7 +272,11 @@ export function createPlaceCollection(
       el(
         'div',
         { class: 'place-bibliography-export' },
-        el('p', {}, `${works.length} saved publications under these controls`),
+        el(
+          'p',
+          {},
+          `${works.length} saved ${noun(works.length)} · ${current?.name || 'All places'} · ${status === 'confirmed' ? 'Researcher-confirmed' : status === 'suggested' ? 'Suggested from metadata' : 'Suggested and confirmed'}`,
+        ),
         el(
           'div',
           { class: 'place-export-controls' },

@@ -158,7 +158,7 @@ export function createPlaces(
     const selector = el(
       'select',
       { id: 'placeSelect', onchange: (event) => choose(event.target.value) },
-      el('option', { value: '' }, 'Choose an ancient place'),
+      el('option', { value: '' }, mode === 'collection' ? 'All places' : 'Choose an ancient place'),
       [...gazetteer.sites]
         .sort((a, b) => a.name.localeCompare(b.name))
         .map((site) => el('option', { value: site.id, selected: site.id === selected }, site.name)),
@@ -286,7 +286,7 @@ export function createPlaces(
               'button',
               { class: 'button', onclick: () => map?.overview() },
               icon('expand'),
-              'Show all places',
+              'Fit map',
             ),
             el(
               'a',
@@ -308,7 +308,7 @@ export function createPlaces(
           el(
             'p',
             { class: 'scope-note' },
-            'Modern geographic context with ancient place locations. Select a marker or use the place selector. Pinch or use +/− to zoom.',
+            'Numbers group nearby places, not publications. Fit map changes the view only. Select a place to change the publication scope.',
           ),
           el(
             'details',
@@ -374,6 +374,8 @@ export function createPlaces(
     loading = false;
     if (value !== 'collection') panels.collection.cancel();
     mode = value;
+    panels.selector.options[0].textContent =
+      mode === 'collection' ? 'All places' : 'Choose an ancient place';
     for (const button of root.querySelectorAll('[data-places-mode]'))
       button.setAttribute('aria-pressed', String(button.dataset.placesMode === mode));
     panels.detail.hidden = true;

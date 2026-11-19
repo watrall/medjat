@@ -302,3 +302,35 @@ test('Places reverses classification and removal without losing association revi
   await expect(page.locator('.place-association')).toContainText('Researcher-confirmed');
   await expect(page.locator('#collectionCount')).toHaveText('1');
 });
+test('Fit map changes only the camera while All places changes bibliography scope', async ({
+  page,
+}) => {
+  await page.route('https://tile.openstreetmap.org/**', (r) => r.abort());
+  await page.route('https://api.crossref.org/**', (r) =>
+    r.fulfill({
+      json: {
+        message: {
+          items: [source, { DOI: '10.1234/thebes', title: ['Studies at Thebes'] }],
+          'total-results': 2,
+        },
+      },
+    }),
+  );
+  await page.goto('/');
+  for (const b of await page.locator('.save-button').all()) await b.click();
+  await page.locator('#placesNav').click();
+  await page.getByRole('button', { name: 'Your collection', exact: true }).click();
+  await page.locator('#placeSelect').selectOption('756512');
+  await page.getByRole('button', { name: 'Fit map', exact: true }).click();
+  await expect(page.locator('#placeSelect')).toHaveValue('756512');
+  await expect(
+    page.getByRole('button', { name: 'Export 1 publication', exact: true }),
+  ).toBeVisible();
+  await page.locator('#placeSelect').selectOption({ label: 'All places' });
+  await expect(
+    page.getByRole('button', { name: 'Export 2 publications', exact: true }),
+  ).toBeVisible();
+  await expect(page.locator('#places')).toContainText(
+    'Numbers group nearby places, not publications',
+  );
+});
