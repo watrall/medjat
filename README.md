@@ -26,7 +26,7 @@ For a citation without a DOI, request up to three possible Crossref matches, ins
 
 **Places** connects a real interactive map to Crossref research. Choose one of 25 curated Pleiades places to search Crossref by a place name and optional topic, inspect ranked candidates, and save useful publications. Explicit title/abstract mentions are shown with their evidence; other candidates stay available in a disclosure. Place mentions in publication details link directly to Places and retain the originating publication, unfinished search, and return path.
 
-Switch to **Your collection** to inspect place associations in saved Crossref records. Confirm or reject suggestions, assign places using your reading, mark nonspatial scholarship as not place-specific, and export the exact place/evidence subset in RIS, BibTeX, CSV, or JSON. Publications may have multiple places. The interface accounts for unassigned and nonspatial records; it never claims to map the entire Crossref query.
+Switch to **Your collection** to inspect place associations in saved Crossref records. Confirm or reject suggestions, assign places using your reading, mark nonspatial scholarship as not place-specific, and export the exact place/evidence subset in RIS, BibTeX, CSV, or JSON. Applied search names, topics, and evidence scope survive refresh and history navigation. Assignment has local search, full publication identity, a preview, and a direct entry above the list. Removal has local Undo; marking a work not place-specific retains its reviews for reversal. On mobile the selected-place map is compact and expandable, with search refinements disclosed on demand. Publications may have multiple places. The interface accounts for unassigned and nonspatial records; it never claims to map the entire Crossref query.
 
 **Living bibliography**, inside Collection, checks saved DOIs against current Crossref metadata on request. Compare changed fields, inspect the current record, and accept or defer each update. Accepted changes preserve the original save time and retain previous metadata in the research backup. Concurrent changes or removals in another tab prevent stale acceptance. Update notices expose their deposited type, source, and DOI; read the notice to establish its meaning. A check finding no notices is not proof that a work has no correction or retraction.
 
@@ -73,7 +73,7 @@ The collection is stored in IndexedDB on the current browser and origin. Read/wr
 
 Research review decisions are stored per item in localStorage, with a session fallback when storage is unavailable. JSON version 2 backups include these decisions and remain compatible with version 1 publication-only imports. Scoped JSON exports include the scoped publications and the current decisions for the single reading list. Research backups preserve review dates; they are not an immutable audit log. Places reads a bundled Pleiades gazetteer. Place-name/topic searches are sent to Crossref. OpenStreetMap supplies map tiles and receives map-area requests, the normal browser Referer, and network information; publication records and review decisions are not sent to the tile provider. Local name matching does not send publication text to Pleiades. The map can be used through its place selector and publication list if tiles are unavailable.
 
-The current view and inspected DOI are addressable in the URL. Per-tab session storage retains unfinished query changes, collection search, and the reference reading trail, including expanded references and focus position. This is reading-position convenience, not a backup. Search results are retrieved again on refresh and may change; saved publications remain independent of those results.
+The current view and inspected DOI are addressable in the URL. Per-tab session storage retains unfinished query changes, collection search, and the reference reading trail, including expanded references and focus position. This is reading-position convenience, not a backup. Places URLs also retain the applied name, topic, and evidence scope; per-tab state retains draft refinements, map expansion, assignment choices, and an inspected publication. A shared collection-filter URL uses the receiving browser’s local saved list. Search results are retrieved again on refresh and may change; saved publications remain independent of those results.
 
 Publication-date sorts use offset pagination, limited here to the first 10,000 candidates; relevance uses cursor pagination. Narrow the topic or publication years for deeper date-specific research. These controls follow the [current Crossref API contract](https://api.crossref.org/swagger-ui/index.html); publication dates are never replaced with deposit dates.
 
@@ -83,32 +83,35 @@ Open Library cover requests contain the deposited ISBN of the inspected book. Co
 
 Quicksand typography, Lucide icons, and the supplied papyrus mark define the interface. The layout moves from a refinement/list/inspector workspace on desktop to linked list and detail views on mobile.
 
-| Module                   | Responsibility                                                                     |
-| ------------------------ | ---------------------------------------------------------------------------------- |
-| `js/main.js`             | Query state, view transitions, result rendering, and collection actions            |
-| `js/data.js`             | Scholarly period presets, normalization, identifiers, and shareable query state    |
-| `js/crossref.js`         | API requests, cancellation, caching, retries, pagination, and citation negotiation |
-| `js/inspector.js`        | Publication metadata, references, relationships, and citation views                |
-| `js/collection.js`       | Collection validation, legacy storage input, and import/backup format              |
-| `js/collection-store.js` | Transactional browser persistence and cross-tab change notifications               |
-| `js/collection-tools.js` | Collection search, scoped export, selection feedback, and import                   |
-| `js/session.js`          | Per-tab reading-position persistence                                               |
-| `js/export.js`           | Bibliography conversion, CSV, JSON, and downloads                                  |
-| `js/aggregates.js`       | Whole-query Crossref facet and metadata-presence summaries                         |
-| `js/visualize.js`        | Accessible charts, refinement actions, and aggregate CSV                           |
-| `js/references.js`       | Pure reference overlap and provenance analysis                                     |
-| `js/research.js`         | Reference review, manual matching, and worker coordination                         |
-| `js/research-worker.js`  | Bounded local reference computation                                                |
-| `js/research-store.js`   | Per-item review persistence and portable decisions                                 |
-| `js/place-data.js`       | Pleiades index, metadata mention evidence, and Crossref place queries              |
-| `js/place-map.js`        | Lazy-loaded Leaflet map, clustering, and geographic navigation                     |
-| `js/places.js`           | Linked place discovery, publication inspector, and return context                  |
-| `js/place-collection.js` | Reviewed saved-place associations and scoped bibliography export                   |
-| `js/changes.js`          | Explicit saved-metadata comparison and acceptance                                  |
-| `js/covers.js`           | ISBN validation and attributed Open Library covers                                 |
-| `js/dom.js`              | Text-safe DOM construction and shared interface helpers                            |
-| `css/tokens.css`         | Primitive and semantic design tokens                                               |
-| `css/workspace.css`      | Components, layout, responsive behavior, and interaction states                    |
+| Module                    | Responsibility                                                                     |
+| ------------------------- | ---------------------------------------------------------------------------------- |
+| `js/main.js`              | Query state, view transitions, result rendering, and collection actions            |
+| `js/data.js`              | Scholarly period presets, normalization, identifiers, and shareable query state    |
+| `js/crossref.js`          | API requests, cancellation, caching, retries, pagination, and citation negotiation |
+| `js/inspector.js`         | Publication metadata, references, relationships, and citation views                |
+| `js/collection.js`        | Collection validation, legacy storage input, and import/backup format              |
+| `js/collection-store.js`  | Transactional browser persistence and cross-tab change notifications               |
+| `js/collection-tools.js`  | Collection search, scoped export, selection feedback, and import                   |
+| `js/session.js`           | Per-tab reading-position persistence                                               |
+| `js/export.js`            | Bibliography conversion, CSV, JSON, and downloads                                  |
+| `js/aggregates.js`        | Whole-query Crossref facet and metadata-presence summaries                         |
+| `js/visualize.js`         | Accessible charts, refinement actions, and aggregate CSV                           |
+| `js/references.js`        | Pure reference overlap and provenance analysis                                     |
+| `js/research.js`          | Reference review, manual matching, and worker coordination                         |
+| `js/research-worker.js`   | Bounded local reference computation                                                |
+| `js/research-store.js`    | Per-item review persistence and portable decisions                                 |
+| `js/place-data.js`        | Pleiades index, metadata mention evidence, and Crossref place queries              |
+| `js/place-state.js`       | Applied Places URL parsing and serialization                                       |
+| `js/place-publication.js` | Shared bibliographic identity for place research                                   |
+| `js/place-focus.js`       | Focus continuity for updating place research surfaces                              |
+| `js/place-map.js`         | Lazy-loaded Leaflet map, clustering, and geographic navigation                     |
+| `js/places.js`            | Linked place discovery, publication inspector, and return context                  |
+| `js/place-collection.js`  | Reviewed saved-place associations and scoped bibliography export                   |
+| `js/changes.js`           | Explicit saved-metadata comparison and acceptance                                  |
+| `js/covers.js`            | ISBN validation and attributed Open Library covers                                 |
+| `js/dom.js`               | Text-safe DOM construction and shared interface helpers                            |
+| `css/tokens.css`          | Primitive and semantic design tokens                                               |
+| `css/workspace.css`       | Components, layout, responsive behavior, and interaction states                    |
 
 API-supplied text is rendered through DOM text nodes. Data is not embedded in inline event handlers. DOI, ORCID, ISBN, and external URL handling have explicit validation. Raw deposited records remain available for download.
 
@@ -137,6 +140,12 @@ The checked-in Lucide sprite contains only the icons used by the interface. Rege
 ```sh
 npm run build:icons
 ```
+
+## Maintaining place names
+
+`python3 scripts/build-gazetteer.py` rebuilds the 25-place index offline from the committed Pleiades name/coordinate snapshot and reviewed name policy. The output records its source hash and retrieval/review dates. Use `--refresh` to fetch canonical records, then review the policy against source changes before committing the refreshed bundle. Unknown approved names fail validation rather than silently disappearing.
+
+The policy retains selected attested and romanized variants with source and language information. It excludes ambiguous short names, fragments, and constituent-location names where treating them as equivalents would mislead. A name match remains candidate evidence. Gazetteer changes recompute suggestions without replacing the researcher’s confirmed, rejected, manual, or nonspatial decisions.
 
 ## Sources and licenses
 
