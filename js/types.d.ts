@@ -37,6 +37,7 @@ export interface Query {
   q: string;
   container: string;
   period: string;
+  context: boolean;
   type: string;
   from: string;
   to: string;

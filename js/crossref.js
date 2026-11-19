@@ -56,13 +56,15 @@ function dispatch() {
   dispatch();
 }
 
-export function bibliographicTerms(query) {
+export function addedSearchTerms(query) {
   const period = PERIODS.find((p) => p.id === query.period);
-  const text = query.q.trim();
-  const terms = [text || DEFAULT_QUERY];
-  if (period) terms.push(period.query);
-  if (!/\begypt(?:ian)?\b/i.test(text) && !period) terms.push('ancient Egypt');
-  return terms.join(' ');
+  if (period) return period.query;
+  return query.context !== false && !/\begypt(?:ian)?\b/i.test(query.q || DEFAULT_QUERY)
+    ? 'ancient Egypt'
+    : '';
+}
+export function bibliographicTerms(query) {
+  return [query.q.trim() || DEFAULT_QUERY, addedSearchTerms(query)].filter(Boolean).join(' ');
 }
 export function buildSearchURL(query, cursor = '*') {
   const params = new URLSearchParams({

@@ -175,6 +175,7 @@ export function readQuery(search = '') {
     q: (p.get('q') || DEFAULT_QUERY).slice(0, 500),
     container: (p.get('container') || '').slice(0, 500),
     period: PERIODS.some((x) => x.id === p.get('period')) ? p.get('period') : '',
+    context: p.get('context') !== '0',
     type: TYPES.has(p.get('type')) ? p.get('type') : '',
     from: year('from'),
     to: year('to'),
@@ -188,6 +189,8 @@ export function readQuery(search = '') {
 export function queryString(query) {
   const p = new URLSearchParams();
   for (const [key, value] of Object.entries(query))
-    if (value) p.set(key, typeof value === 'boolean' ? '1' : value);
+    if (key === 'context') {
+      if (value === false) p.set(key, '0');
+    } else if (value) p.set(key, typeof value === 'boolean' ? '1' : value);
   return p.toString();
 }

@@ -13,7 +13,13 @@ import {
   normalizeWork,
 } from './data.js';
 import { filterChips, readFilterControls, writeFilterControls } from './filters.js';
-import { searchWorks, getWork, bibliographicTerms, DATE_BROWSE_LIMIT } from './crossref.js';
+import {
+  searchWorks,
+  getWork,
+  addedSearchTerms,
+  bibliographicTerms,
+  DATE_BROWSE_LIMIT,
+} from './crossref.js';
 import { readSession, writeSession } from './session.js';
 import { createInspector } from './inspector.js';
 import { createCollectionStore } from './collection-store.js';
@@ -118,6 +124,7 @@ function readDraft() {
     q: $('searchInput').value.trim() || DEFAULT_QUERY,
     container: state.draft.container || '',
     period: filters.period,
+    context: filters.context,
     from: filters.from,
     to: filters.to,
     type: filters.type,
@@ -142,10 +149,30 @@ function renderAppliedQuery() {
     ? `Exact DOI lookup: ${query.q}. Topic and publication refinements do not apply.`
     : `Ranking context sent to Crossref: ${bibliographicTerms(query)}`;
   const chips = filterChips(query);
+  const addedContext = !state.doiLookup && !query.period && addedSearchTerms(query);
   $('activeQuery').replaceChildren(
+    ...(addedContext
+      ? [
+          el(
+            'button',
+            {
+              class: 'query-chip text-button',
+              'aria-label': 'Remove added ancient Egypt terms',
+              onclick: () => {
+                state.query = { ...query, context: false };
+                state.draft.context = false;
+                syncControls();
+                runSearch();
+                $('addEgyptContext').focus({ preventScroll: true });
+              },
+            },
+            'Added terms: ancient Egypt · Remove',
+          ),
+        ]
+      : []),
     ...chips.map((text) => el('span', { class: 'query-chip' }, text)),
   );
-  $('activeQuery').hidden = state.view === 'collection' || chips.length === 0;
+  $('activeQuery').hidden = state.view === 'collection' || (!addedContext && chips.length === 0);
 }
 const inspector = createInspector($('inspector'), {
   onClose: closeInspector,

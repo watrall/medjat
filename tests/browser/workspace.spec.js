@@ -709,3 +709,30 @@ test('a rejected changed search preserves clearly identified previous results', 
   await expect(page.locator('#resultCount')).not.toContainText('Previous results');
   await expect(page).not.toHaveURL(/a\+changed\+search/);
 });
+
+test('added context is removable without applying drafts and survives refresh and history', async ({
+  page,
+}) => {
+  const requests = await fixtures(page);
+  await page.goto('/?q=Hatshepsut');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await expect(page.locator('#resultCount')).toHaveText('25 results loaded');
+  await expect(page.locator('#effectiveQuery')).toContainText('Hatshepsut ancient Egypt');
+  await page.locator('#searchInput').fill('Unfinished topic');
+  await page.getByRole('button', { name: 'Remove added ancient Egypt terms', exact: true }).click();
+  await expect(page).toHaveURL(/context=0/);
+  await expect(page.locator('#effectiveQuery')).toHaveText(
+    'Ranking context sent to Crossref: Hatshepsut',
+  );
+  await expect(page.locator('#searchInput')).toHaveValue('Unfinished topic');
+  await expect(page.locator('#addEgyptContext')).not.toBeChecked();
+  expect(requests.at(-1).searchParams.get('query.bibliographic')).toBe('Hatshepsut');
+  await page.reload();
+  await expect(page.locator('#effectiveQuery')).toHaveText(
+    'Ranking context sent to Crossref: Hatshepsut',
+  );
+  await expect(page.locator('#addEgyptContext')).not.toBeChecked();
+  await page.goBack();
+  await expect(page.locator('#effectiveQuery')).toContainText('Hatshepsut ancient Egypt');
+  await expect(page.locator('#addEgyptContext')).toBeChecked();
+});

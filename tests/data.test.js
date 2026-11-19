@@ -53,6 +53,19 @@ test('query state round-trips and period queries do not become BCE publication f
   assert.doesNotMatch(params.get('filter'), /1550/);
   assert.equal(params.get('mailto'), 'admin@wunderkammer.dev');
 });
+test('added search context can be removed and restored through shared URLs', () => {
+  const query = readQuery('?q=Hatshepsut');
+  const terms = (query) => new URL(buildSearchURL(query)).searchParams.get('query.bibliographic');
+  assert.equal(terms(query), 'Hatshepsut ancient Egypt');
+  const withoutContext = { ...query, context: false };
+  assert.deepEqual(readQuery(queryString(withoutContext)), withoutContext);
+  assert.equal(terms(withoutContext), 'Hatshepsut');
+  assert.equal(terms(readQuery('?q=Egyptian+religion')), 'Egyptian religion');
+  assert.equal(
+    terms(readQuery('?q=Hatshepsut&period=new-kingdom&context=0')),
+    'Hatshepsut New Kingdom Egypt',
+  );
+});
 test('search validates the response, normalizes records, and carries a usable cursor', async () => {
   const items = Array.from({ length: 25 }, (_, i) => ({ ...raw, DOI: `10.1234/item${i}` }));
   const result = await searchWorks(readQuery('?q=test-cursor'), {
