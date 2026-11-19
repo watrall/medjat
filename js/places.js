@@ -5,6 +5,7 @@ import { PAGE_SIZE } from './crossref.js';
 import { createPlaceMap } from './place-map.js';
 import { createInspector } from './inspector.js';
 import { createPlaceCollection } from './place-collection.js';
+import { BREAKPOINTS } from './breakpoints.js';
 import { el, icon, externalLink, skeletons, notify } from './dom.js';
 
 export function createPlaces(
@@ -503,7 +504,8 @@ export function createPlaces(
     panels.detail.hidden = false;
     panels.inspector.show(work);
     panels.detail.querySelector('.detail-title')?.focus({ preventScroll: true });
-    if (matchMedia('(max-width: 899px)').matches) panels.detail.scrollIntoView({ block: 'start' });
+    if (matchMedia(BREAKPOINTS.placesMobile).matches)
+      panels.detail.scrollIntoView({ block: 'start' });
   }
   function renderPublications() {
     if (!panels) return;
@@ -561,7 +563,7 @@ export function createPlaces(
     );
     const refinementOpen =
       root.querySelector('.place-search-refinements')?.open ??
-      !matchMedia('(max-width:899px)').matches;
+      !matchMedia(BREAKPOINTS.placesMobile).matches;
     const refinementSummary = el('summary');
     function draftStatus() {
       const pending =

@@ -22,6 +22,7 @@ import { createCollectionTools } from './collection-tools.js';
 import { createResultRow } from './result-row.js';
 import { renderSearchFooter, renderSearchNotice } from './search-status.js';
 import { VIEW_CONFIG } from './view-config.js';
+import { BREAKPOINTS } from './breakpoints.js';
 import { el, icon, emptyState, notify, skeletons } from './dom.js';
 
 const $ = (id) => document.getElementById(id);
@@ -458,7 +459,7 @@ function selectWork(work) {
   renderInspector(work);
   $('inspector').scrollTop = 0;
   $('inspector').focus({ preventScroll: true });
-  if (matchMedia('(max-width:999px)').matches) {
+  if (matchMedia(BREAKPOINTS.mobile).matches) {
     $('research').classList.add('mobile-detail-open');
     $('inspector').focus();
     $('research').scrollIntoView({ block: 'start' });
@@ -826,7 +827,7 @@ async function restoreLocation(resume = null) {
       state.selected = work.id;
       renderList();
     }
-    if (detail && matchMedia('(max-width:999px)').matches)
+    if (detail && matchMedia(BREAKPOINTS.mobile).matches)
       $('research').classList.add('mobile-detail-open');
     else $('research').classList.remove('mobile-detail-open');
   } catch {
@@ -853,7 +854,7 @@ $('inspector').addEventListener('focusin', savePosition);
 $('places').addEventListener('focusin', savePosition);
 $('places').addEventListener('scroll', savePosition, { passive: true, capture: true });
 window.addEventListener('scroll', savePosition, { passive: true });
-const filterLayout = matchMedia('(min-width:1300px)');
+const filterLayout = matchMedia(BREAKPOINTS.desktop);
 $('refinements').open = filterLayout.matches;
 filterLayout.addEventListener('change', (event) => {
   $('refinements').open = event.matches;

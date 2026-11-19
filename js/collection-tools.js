@@ -1,4 +1,5 @@
 import { el, icon } from './dom.js';
+import { BREAKPOINTS } from './breakpoints.js';
 import { MAX_IMPORT_BYTES, parseCollection } from './collection.js';
 import { researchData } from './research-store.js';
 import { EXPORT_FORMATS, exportCollection, downloadFile, scopedRecords } from './export.js';
@@ -81,7 +82,7 @@ export function createCollectionTools(
     },
   });
   const exportSummary = el('summary', {}, 'Export bibliography');
-  const exportLayout = matchMedia('(min-width:1000px)');
+  const exportLayout = matchMedia(BREAKPOINTS.twoColumn);
   const exportOptions = el(
     'details',
     { class: 'collection-export-options', open: exportLayout.matches },
