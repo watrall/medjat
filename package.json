@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "python3 scripts/serve.py",
     "test": "node --test tests/*.test.js",
-    "check": "node --check js/main.js && node --check js/session.js && node --check js/data.js && node --check js/crossref.js && node --check js/collection.js && node --check js/collection-store.js && node --check js/collection-tools.js && node --check js/export.js && node --check js/inspector.js && node --check js/covers.js && node --check js/dom.js",
+    "check": "node scripts/check-syntax.mjs",
     "test:e2e": "playwright test",
     "test:live": "node scripts/smoke-crossref.mjs",
     "build:icons": "node scripts/build-icons.mjs"

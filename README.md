@@ -1,6 +1,6 @@
 # Ancient Egypt Research Explorer
 
-An independent research workspace for discovering ancient Egyptian scholarship through Crossref metadata. Search the literature, inspect publication records, follow deposited references, save useful works, and export a bibliography.
+An independent research workspace for discovering ancient Egyptian scholarship through Crossref metadata. Search the literature, examine whole-search patterns, trace shared references, review ancient-place evidence, and maintain a reusable bibliography.
 
 The explorer covers ancient Egypt from the Predynastic to Roman Egypt. It is built for research, teaching, and bibliography development, with explicit limits on coverage and metadata completeness.
 
@@ -13,6 +13,20 @@ The explorer covers ancient Egypt from the Predynastic to Roman Egypt. It is bui
 5. **Reuse.** Copy APA, MLA, or Chicago author-date citations. In Collection, choose all saved, matching, or selected records and export RIS, BibTeX, CSV, or JSON. The controls show the exact scope and count; selection can include records outside the current search. Export takes a snapshot and leaves the list and selection intact. JSON backups can be imported and merged without duplicating DOIs.
 
 Books and chapters can display an ISBN-matched cover from Open Library. A chapter's cover represents the containing book. Missing covers leave a text-only record.
+
+## Beyond search
+
+**Visualize** summarizes the entire applied Crossref query, including its period keywords and publication filters. Publication years, publication types, leading venues, and metadata availability come from server-side aggregates, not the first 25 results or the publications currently loaded. Select a supported chart category, then choose **Explore these publications** to refine the search. Unsubmitted topic edits remain in the search field. Tables provide the same chart values, and aggregate CSV includes the query, retrieval times, counts, and any unavailable summaries.
+
+Crossref facet counts are approximate. Year buckets are limited to 1,000 returned values, venues to ten, and unavailable buckets are not treated as zero. Availability counts overlap. Broad keyword results can include irrelevant scholarship; charts describe Crossref candidates, not a verified disciplinary corpus. Exact DOI lookup has a single-record summary instead of comparative charts.
+
+**Reference discovery**, inside Collection, compares deposited references from your selected publications, or all saved publications when nothing is selected. It finds sources cited by multiple seed works, DOI references missing from your bibliography, unresolved citations, and deposited relationships. The network is a bounded reading aid with equivalent connection lists: at most 50 seed works, 100 referenced nodes, and 500 displayed edges. It does not reconstruct a complete Cited-by graph. Review lists display the first 100 items in each category; select a narrower seed set to control the analysis.
+
+For a citation without a DOI, request up to three possible Crossref matches, inspect a candidate, and explicitly confirm it. Rebuilding discovery incorporates confirmed links with separate researcher provenance. Matches can be undone. References and unresolved citations support deferred/dismissed review decisions; saving a reference adds its actual Crossref record to Collection.
+
+**Atlas** uses 25 attributed Pleiades sites to suggest associations in the titles and abstracts of saved publications. Each association includes its matched text and source record, with Confirm, Reject, and Reset actions. The coordinate plot shows representative gazetteer points, not excavation boundaries or the geographical distribution of the whole search. Unlocated publications remain visible. Ambiguous names require judgment; absence of a match does not establish that a publication has no geographical subject. At most 200 association rows are displayed at once; narrow the place/status controls for larger sets.
+
+**Living bibliography**, inside Collection, checks saved DOIs against current Crossref metadata on request. Compare changed fields, inspect the current record, and accept or defer each update. Accepted changes preserve the original save time and retain previous metadata in the research backup. Concurrent changes or removals in another tab prevent stale acceptance. Update notices expose their deposited type, source, and DOI; read the notice to establish its meaning. A check finding no notices is not proof that a work has no correction or retraction.
 
 ## Run locally
 
@@ -55,6 +69,8 @@ Searches go directly from the browser to Crossref. Requests identify the applica
 
 The collection is stored in IndexedDB on the current browser and origin. Read/write transactions protect concurrent saves, removals, and imports; open tabs refresh through change notifications. Existing localStorage collections migrate once without deleting the original backup. The collection is not synchronized between devices or between localhost and a hosted deployment. Private browsing, clearing browser data, and storage limits can remove it. The interface reports storage failures and keeps changes in memory for the visit when persistence is unavailable; export a JSON backup to keep a portable copy. Collections support up to 500 publications.
 
+Research review decisions are stored per item in localStorage, with a session fallback when storage is unavailable. JSON version 2 backups include these decisions and remain compatible with version 1 publication-only imports. Scoped JSON exports include the scoped publications and the current decisions for the single reading list. Research backups preserve review dates; they are not an immutable audit log. Atlas reads a bundled Pleiades gazetteer without sending saved publications to another service.
+
 The current view and inspected DOI are addressable in the URL. Per-tab session storage retains unfinished query changes, collection search, and the reference reading trail, including expanded references and focus position. This is reading-position convenience, not a backup. Search results are retrieved again on refresh and may change; saved publications remain independent of those results.
 
 Publication-date sorts use offset pagination, limited here to the first 10,000 candidates; relevance uses cursor pagination. Narrow the topic or publication years for deeper date-specific research. These controls follow the [current Crossref API contract](https://api.crossref.org/swagger-ui/index.html); publication dates are never replaced with deposit dates.
@@ -76,6 +92,14 @@ Quicksand typography, Lucide icons, and the supplied papyrus mark define the int
 | `js/collection-tools.js` | Collection search, scoped export, selection feedback, and import                   |
 | `js/session.js`          | Per-tab reading-position persistence                                               |
 | `js/export.js`           | Bibliography conversion, CSV, JSON, and downloads                                  |
+| `js/aggregates.js`       | Whole-query Crossref facet and metadata-presence summaries                         |
+| `js/visualize.js`        | Accessible charts, refinement actions, and aggregate CSV                           |
+| `js/references.js`       | Pure reference overlap and provenance analysis                                     |
+| `js/research.js`         | Reference review, manual matching, and worker coordination                         |
+| `js/research-worker.js`  | Bounded local reference computation                                                |
+| `js/research-store.js`   | Per-item review persistence and portable decisions                                 |
+| `js/atlas.js`            | Attributed place evidence and coordinate plotting                                  |
+| `js/changes.js`          | Explicit saved-metadata comparison and acceptance                                  |
 | `js/covers.js`           | ISBN validation and attributed Open Library covers                                 |
 | `js/dom.js`              | Text-safe DOM construction and shared interface helpers                            |
 | `css/tokens.css`         | Primitive and semantic design tokens                                               |
@@ -116,6 +140,6 @@ npm run build:icons
 
 ## Sources and licenses
 
-Application code: [MIT](LICENSE). Lucide icons: [ISC](assets/LUCIDE-LICENSE). The papyrus logo was supplied by the project owner. Publication metadata is retrieved from Crossref; book cover images are provided by Open Library and are not relicensed by this repository.
+Application code: [MIT](LICENSE). Lucide icons: [ISC](assets/LUCIDE-LICENSE). The papyrus logo was supplied by the project owner. Publication metadata is retrieved from Crossref; book cover images are provided by Open Library and are not relicensed by this repository. The bundled Pleiades site data is attributed to Pleiades contributors, the Ancient World Mapping Center, and the Institute for the Study of the Ancient World under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/); each site retains its canonical source link.
 
 Service documentation: [Crossref API guidance](https://www.crossref.org/documentation/retrieve-metadata/rest-api/tips-for-using-the-crossref-rest-api/), [content negotiation](https://www.crossref.org/documentation/retrieve-metadata/content-negotiation/), and [Open Library cover service](https://openlibrary.org/dev/docs/api/covers).

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { searchWorks, getCitation, getWork } from '../js/crossref.js';
 import { readQuery } from '../js/data.js';
 import { exportCollection } from '../js/export.js';
+import { aggregateSearch } from '../js/aggregates.js';
 const query = readQuery('?q=Deir+el-Medina&period=new-kingdom&type=journal-article');
 const first = await searchWorks(query);
 assert.ok(first.items.length > 0);
@@ -38,4 +39,23 @@ report.citation = citation;
 const records = new Map([[work.id, { work, savedAt: new Date().toISOString() }]]);
 report.ris = (await exportCollection(records, 'ris')).slice(0, 80);
 report.bibtex = (await exportCollection(records, 'bibtex')).slice(0, 80);
+const summary = await aggregateSearch(query, { fresh: true });
+assert.deepEqual(summary.errors, {});
+assert.ok(summary.total > first.items.length, 'Aggregates must describe more than the loaded page');
+assert.ok(Object.keys(summary.facets.published.values).length > 0);
+assert.ok(Object.keys(summary.facets['type-name'].values).length > 0);
+assert.ok(Object.keys(summary.facets['container-title'].values).length > 0);
+const container = Object.keys(summary.facets['container-title'].values).find(
+  (name) => !name.includes(','),
+);
+assert.ok(container);
+const venue = await searchWorks({ ...query, container });
+assert.ok(venue.items.length > 0);
+assert.ok(venue.items.every((item) => item.raw['container-title'].includes(container)));
+report.wholeSearch = {
+  total: summary.total,
+  yearBuckets: Object.keys(summary.facets.published.values).length,
+  availability: summary.availability,
+  venueRefinement: container,
+};
 console.log(JSON.stringify(report, null, 2));
