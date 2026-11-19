@@ -66,10 +66,17 @@ export function createPlaces(
       scrollY: window.scrollY,
     };
   }
-  async function show(options = {}) {
-    if (!Object.keys(options).length && initialSession)
-      options = { ...initialSession, session: initialSession };
+  async function restore() {
+    const session = initialSession;
     initialSession = null;
+    if (session) return apply({ ...session, session }, false);
+    return apply({}, true);
+  }
+  async function show(options = {}) {
+    initialSession = null;
+    return apply(options, false);
+  }
+  async function apply(options, restoreReading) {
     const queryChanged =
       ('term' in options && term !== options.term) ||
       ('topic' in options && topic !== options.topic);
@@ -100,7 +107,7 @@ export function createPlaces(
       ...searchDraft,
       ...(options.term !== undefined ? { term, topic } : {}),
     };
-    reading = options.session || (Object.keys(options).length ? null : reading);
+    reading = options.session || (restoreReading ? reading : null);
     if (reading?.mapExpanded !== undefined) mapExpanded = reading.mapExpanded;
     origin = options.origin === undefined ? origin : options.origin;
     try {
@@ -185,7 +192,11 @@ export function createPlaces(
         root.replaceChildren(
           el('h1', {}, 'Places'),
           el('p', { role: 'alert' }, error.message),
-          el('button', { class: 'button', onclick: () => show(options) }, 'Retry Places'),
+          el(
+            'button',
+            { class: 'button', onclick: () => apply(options, restoreReading) },
+            'Retry Places',
+          ),
         );
     }
   }
@@ -732,6 +743,7 @@ export function createPlaces(
   }
   return {
     show,
+    restore,
     capture,
     cancel,
     location,

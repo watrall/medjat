@@ -379,7 +379,8 @@ function setView(view, { navigate = true, syncURL = true, load = true, placeOpti
     collectionTools.cancel();
     visualizer.cancel();
     renderStatus();
-    places.show(placeOptions);
+    if (placeOptions) places.show(placeOptions);
+    else places.restore();
     if (syncURL) updateURL({ push: navigate });
     return;
   }
