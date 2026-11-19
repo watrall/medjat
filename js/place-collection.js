@@ -232,6 +232,21 @@ export function createPlaceCollection(
         'Association evidence',
         filter,
       ),
+      el(
+        'button',
+        {
+          class: 'text-button',
+          onclick: () => {
+            const assignment = root.querySelector('.place-assignment');
+            assignment.open = true;
+            root.querySelector('#assignPlaceSearch').focus({ preventScroll: true });
+            assignment.scrollIntoView({ block: 'start' });
+          },
+          disabled: !getSaved().size,
+        },
+        icon('map-pin'),
+        'Assign a publication',
+      ),
     );
     root.append(
       el(

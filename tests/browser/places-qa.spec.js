@@ -142,7 +142,9 @@ test('500 saved works remain searchable and accessible at narrow widths and enla
   );
   await page.goto('/?view=places&placesMode=collection&place=756512');
   await expect(page.locator('#collectionCount')).toHaveText('500');
-  await page.locator('.place-assignment > summary').click();
+  await page.getByRole('button', { name: 'Assign a publication', exact: true }).click();
+  await expect(page.locator('#assignPlaceSearch')).toBeFocused();
+  await expect(page.locator('#assignPlaceSearch')).toBeInViewport();
   await page.locator('#assignPlaceSearch').fill('Researcher499');
   await expect(page.locator('#assignPlaceWork option')).toHaveCount(3); // placeholder, one match, retained selection
   await page.locator('#assignPlaceWork').selectOption('10.1234/large-499');
@@ -168,4 +170,48 @@ test('500 saved works remain searchable and accessible at narrow widths and enla
     .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
     .analyze();
   expect(audit.violations).toEqual([]);
+});
+
+test('return from a publication place link restores a nonzero page position and focus after reload', async ({
+  page,
+}) => {
+  await tiles(page);
+  const source = { ...work, abstract: 'Research on burial in ancient Egypt. '.repeat(100) };
+  await page.route('https://api.crossref.org/**', (r) =>
+    r.fulfill({
+      json: {
+        message:
+          new URL(r.request().url()).pathname === '/works'
+            ? { items: [source], 'total-results': 1 }
+            : source,
+      },
+    }),
+  );
+  await page.goto('/?q=burial');
+  await page.locator('#searchInput').fill('An unfinished chronology');
+  const link = page.getByRole('button', { name: 'Explore Abydos in Places', exact: true });
+  await link.waitFor();
+  await page.evaluate(() => window.scrollTo(0, 240));
+  await link.click();
+  await expect(page.locator('.place-results-status')).toBeVisible();
+  await page.reload();
+  await page.getByRole('button', { name: 'Back to publication', exact: true }).click();
+  await expect(link).toBeFocused();
+  await expect(page.locator('#searchInput')).toHaveValue('An unfinished chronology');
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(240);
+});
+
+test('unsupported place URL values fall back to an explicit valid scope', async ({ page }) => {
+  await tiles(page);
+  await page.route('https://api.crossref.org/**', (r) =>
+    r.fulfill({ json: { message: { items: [work], 'total-results': 1 } } }),
+  );
+  await page.goto(
+    '/?view=places&place=756512&placeName=NotAnIndexedAlias&placeEvidence=unknown&placesMode=unknown',
+  );
+  await expect(page.locator('.place-results-status')).toBeVisible();
+  await expect(page.locator('#placeSearchName')).toHaveValue('Abydos');
+  await expect(page.locator('#placePublications')).toContainText('Applied search: Abydos');
+  await expect(page.locator('#toast')).toContainText('Using the primary place name');
+  await expect(page).not.toHaveURL(/NotAnIndexedAlias/);
 });

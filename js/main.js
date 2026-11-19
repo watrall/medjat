@@ -314,7 +314,7 @@ const places = createPlaces($('places'), {
   onSave: toggleSave,
   getRemoved: () => state.lastRemoved,
   onUndo: restoreRemoved,
-  onLocation: () => updateURL({ push: true }),
+  onLocation: (_, { push = true } = {}) => updateURL({ push }),
   onSession: saveSession,
 });
 function placeOrigin(context) {

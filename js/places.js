@@ -5,7 +5,7 @@ import { createPlaceMap } from './place-map.js';
 import { createInspector } from './inspector.js';
 import { createPlaceCollection } from './place-collection.js';
 import { doiURL } from './data.js';
-import { el, icon, externalLink, skeletons } from './dom.js';
+import { el, icon, externalLink, skeletons, notify } from './dom.js';
 
 export function createPlaces(
   root,
@@ -106,6 +106,23 @@ export function createPlaces(
         term = '';
         topic = '';
         searchDraft = { term: '', topic: '' };
+      }
+      if (place()) {
+        const names = new Set([place().name, ...place().aliases]);
+        if (term && !names.has(term)) {
+          term = place().name;
+          works = [];
+          total = null;
+          next = null;
+          notify(
+            'That search name is not in the current place index. Using the primary place name.',
+          );
+          onLocation(location(), { push: false });
+        }
+        searchDraft = {
+          term: names.has(searchDraft.term) ? searchDraft.term : term || place().name,
+          topic: typeof searchDraft.topic === 'string' ? searchDraft.topic.slice(0, 300) : topic,
+        };
       }
       panels?.collection?.cancel();
       map?.destroy();
@@ -595,6 +612,7 @@ export function createPlaces(
     const topicInput = el('input', {
       id: 'placeTopic',
       type: 'search',
+      maxlength: 300,
       value: searchDraft.topic,
       oninput: (event) => {
         searchDraft.topic = event.target.value;
