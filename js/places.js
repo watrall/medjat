@@ -1,11 +1,10 @@
 import { preservePlaceFocus } from './place-focus.js';
-import { publicationMetadata } from './place-publication.js';
 import { loadGazetteer, placeEvidence, searchPlaceWorks } from './place-data.js';
+import { createPlacePublicationRow } from './place-publication-row.js';
 import { PAGE_SIZE } from './crossref.js';
 import { createPlaceMap } from './place-map.js';
 import { createInspector } from './inspector.js';
 import { createPlaceCollection } from './place-collection.js';
-import { doiURL } from './data.js';
 import { el, icon, externalLink, skeletons, notify } from './dom.js';
 
 export function createPlaces(
@@ -495,51 +494,6 @@ export function createPlaces(
     panels.detail.querySelector('.detail-title')?.focus({ preventScroll: true });
     if (matchMedia('(max-width: 899px)').matches) panels.detail.scrollIntoView({ block: 'start' });
   }
-  function publicationRow(work) {
-    const evidence = placeEvidence(work, place());
-    const save = el(
-      'button',
-      {
-        class: 'text-button',
-        'aria-pressed': String(getSaved().has(work.id)),
-        onclick: async () => {
-          save.disabled = true;
-          try {
-            await onSave(work);
-            save.textContent = getSaved().has(work.id)
-              ? 'Remove from collection'
-              : 'Save to collection';
-            save.setAttribute('aria-pressed', String(getSaved().has(work.id)));
-          } finally {
-            save.disabled = false;
-            syncUndo();
-          }
-        },
-      },
-      icon(getSaved().has(work.id) ? 'bookmark-check' : 'bookmark'),
-      getSaved().has(work.id) ? 'Remove from collection' : 'Save to collection',
-    );
-    return el(
-      'li',
-      { class: 'place-publication', 'data-place-work': work.id },
-      el('button', { class: 'place-publication-title', onclick: () => inspect(work) }, work.title),
-      publicationMetadata(work),
-      evidence &&
-        el(
-          'p',
-          { class: 'place-evidence-label' },
-          icon('map-pin'),
-          `“${evidence.alias}” mentioned in ${evidence.field}. Relevance needs review.`,
-        ),
-      evidence && el('blockquote', {}, evidence.text),
-      el(
-        'div',
-        { class: 'place-publication-actions' },
-        save,
-        externalLink('Open publication', doiURL(work.doi)),
-      ),
-    );
-  }
   function renderPublications() {
     if (!panels) return;
     const restore = preservePlaceFocus(panels.publications);
@@ -583,6 +537,14 @@ export function createPlaces(
       );
       return;
     }
+    const renderPublicationRow = (work) =>
+      createPlacePublicationRow(work, {
+        place: current,
+        isSaved: (id) => getSaved().has(id),
+        onInspect: inspect,
+        onSave,
+        onSync: syncUndo,
+      });
     const aliases = [...new Set([current.name, ...current.aliases])].filter(
       (name) => name.length >= 4 && name.length <= 60,
     );
@@ -737,7 +699,7 @@ export function createPlaces(
           ),
         ),
         explicit.length
-          ? el('ol', { class: 'place-publications' }, explicit.map(publicationRow))
+          ? el('ol', { class: 'place-publications' }, explicit.map(renderPublicationRow))
           : el(
               'p',
               {},
@@ -755,7 +717,7 @@ export function createPlaces(
               { class: 'scope-note' },
               'These records have no recognized mention in the title or supplied abstract. Inspect them before associating them with this place.',
             ),
-            el('ol', { class: 'place-publications' }, other.map(publicationRow)),
+            el('ol', { class: 'place-publications' }, other.map(renderPublicationRow)),
           ),
         );
       if (next)
