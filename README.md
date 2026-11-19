@@ -71,7 +71,7 @@ Approximate historical ranges follow the [Egypt Exploration Society chronology](
 
 ## Data, storage, and privacy
 
-Searches go directly from the browser to Crossref. Requests identify the application contact through `mailto=ethan.watrall@gmail.com`; there are no credentials in the frontend. The client caches recent responses in memory, cancels superseded searches, applies timeouts, and backs off on appropriate transient errors.
+Searches go directly from the browser to Crossref. Requests identify the application contact through `mailto=admin@wunderkammer.dev`; there are no credentials in the frontend. The client caches recent responses in memory, cancels superseded searches, applies timeouts, and backs off on appropriate transient errors.
 
 Medjat retains the existing browser storage identifiers and accepts collection backups exported under the former Ancient Egypt Research Explorer name. The collection is stored in IndexedDB on the current browser and origin. Read/write transactions protect concurrent saves, removals, and imports; open tabs refresh through change notifications. Existing localStorage collections migrate once without deleting the original backup. The collection is not synchronized between devices or between localhost and a hosted deployment. Private browsing, clearing browser data, and storage limits can remove it. The interface reports storage failures and keeps changes in memory for the visit when persistence is unavailable; export a JSON backup to keep a portable copy. Collections support up to 500 publications.
 

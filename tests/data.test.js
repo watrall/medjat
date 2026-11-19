@@ -51,7 +51,7 @@ test('query state round-trips and period queries do not become BCE publication f
   assert.match(params.get('query.bibliographic'), /New Kingdom Egypt/);
   assert.match(params.get('filter'), /from-pub-date:2000-01-01/);
   assert.doesNotMatch(params.get('filter'), /1550/);
-  assert.equal(params.get('mailto'), 'ethan.watrall@gmail.com');
+  assert.equal(params.get('mailto'), 'admin@wunderkammer.dev');
 });
 test('search validates the response, normalizes records, and carries a usable cursor', async () => {
   const items = Array.from({ length: 25 }, (_, i) => ({ ...raw, DOI: `10.1234/item${i}` }));

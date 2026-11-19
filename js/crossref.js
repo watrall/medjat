@@ -2,7 +2,7 @@ import { DEFAULT_QUERY, PERIODS, normalizeDOI, normalizeWork } from './data.js';
 import { queryFilters } from './filters.js';
 
 export const API = 'https://api.crossref.org';
-export const CONTACT = 'ethan.watrall@gmail.com';
+export const CONTACT = 'admin@wunderkammer.dev';
 export const PAGE_SIZE = 25;
 export const DATE_BROWSE_LIMIT = 10000;
 const cache = new Map();
