@@ -82,8 +82,10 @@ function saveSession() {
 function updateURL({ push = false } = {}) {
   const params = new URLSearchParams(queryString(state.query));
   if (state.view !== 'explore') params.set('view', state.view);
-  if (state.view === 'places' && places.location().place)
-    params.set('place', places.location().place);
+  if (state.view === 'places') {
+    if (places.location().place) params.set('place', places.location().place);
+    if (places.location().mode === 'collection') params.set('placesMode', 'collection');
+  }
   const work = inspector.getCurrentWork();
   if (work) params.set('record', work.doi);
   if ($('research').classList.contains('mobile-detail-open')) params.set('detail', '1');
@@ -166,7 +168,7 @@ const inspector = createInspector($('inspector'), {
       mobileDetail: $('research').classList.contains('mobile-detail-open'),
     };
     setView('places', {
-      placeOptions: { place: place.id, origin: placeOrigin(placeReturnContext) },
+      placeOptions: { place: place.id, mode: 'discover', origin: placeOrigin(placeReturnContext) },
     });
   },
   isSaved: (id) => state.collection.has(id),
@@ -844,6 +846,7 @@ collectionStore.subscribe(({ records, warning }) => {
   renderList();
   renderStatus();
   inspector.refresh();
+  if (state.view === 'places') places.refresh();
 });
 async function restoreLocation(resume = null) {
   locationController?.abort();
@@ -881,7 +884,11 @@ async function restoreLocation(resume = null) {
       navigate: false,
       syncURL: false,
       load: false,
-      placeOptions: { place: params.get('place') || '', origin: placeOrigin(placeReturnContext) },
+      placeOptions: {
+        place: params.get('place') || '',
+        mode: params.get('placesMode') || 'discover',
+        origin: placeOrigin(placeReturnContext),
+      },
     });
     if (
       view === 'explore' &&

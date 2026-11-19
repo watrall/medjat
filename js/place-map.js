@@ -1,5 +1,8 @@
 // Loaded only when Places opens. Geographic data and tiles have separate provenance.
-export async function createPlaceMap(root, { sites, onSelect, onError }) {
+export async function createPlaceMap(
+  root,
+  { sites, onSelect, onError, isVisible = () => true, getCount = () => null },
+) {
   const L = await import('../assets/vendor/leaflet/leaflet-src.esm.js');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const map = L.map(root, {
@@ -7,6 +10,7 @@ export async function createPlaceMap(root, { sites, onSelect, onError }) {
     minZoom: 4,
     maxZoom: 15,
     zoomAnimation: !reduced,
+    markerZoomAnimation: false,
     fadeAnimation: !reduced,
   });
   const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -15,22 +19,26 @@ export async function createPlaceMap(root, { sites, onSelect, onError }) {
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     className: 'places-basemap',
   }).addTo(map);
-  let failed = false;
+  let failed = false,
+    destroyed = false;
   tiles.on('tileerror', () => {
     if (!failed) {
       failed = true;
       onError();
     }
   });
-  const overview = () =>
+  const overview = () => {
+    const visible = sites.filter((site) => isVisible(site.id));
     map.fitBounds(
-      sites.map((site) => [site.latitude, site.longitude]),
+      (visible.length ? visible : sites).map((site) => [site.latitude, site.longitude]),
       { padding: [35, 35], animate: false },
     );
+  };
   overview();
   const layer = L.layerGroup().addTo(map);
   let selected = '';
   function draw() {
+    if (destroyed) return;
     const focused =
       root.contains(document.activeElement) &&
       document.activeElement.classList.contains('place-pin');
@@ -42,6 +50,7 @@ export async function createPlaceMap(root, { sites, onSelect, onError }) {
       (a, b) => Number(b.id === selected) - Number(a.id === selected) || b.latitude - a.latitude,
     );
     for (const site of ordered) {
+      if (!isVisible(site.id) && site.id !== selected) continue;
       const point = map.latLngToContainerPoint([site.latitude, site.longitude]);
       if (
         point.x < 25 ||
@@ -77,7 +86,12 @@ export async function createPlaceMap(root, { sites, onSelect, onError }) {
         }),
       }).addTo(layer);
       const label = document.createElement('span');
-      label.textContent = multiple ? group.sites.map((site) => site.name).join(' · ') : site.name;
+      label.textContent = group.sites
+        .map(
+          (site) =>
+            `${site.name}${getCount(site.id) === null ? '' : ` · ${getCount(site.id)} saved`}`,
+        )
+        .join(' / ');
       marker.bindTooltip(label, { direction: 'top', offset: [0, -8] });
       marker.on('click', () => {
         if (multiple) {
@@ -100,7 +114,9 @@ export async function createPlaceMap(root, { sites, onSelect, onError }) {
   }
   map.on('moveend zoomend resize', draw);
   draw();
-  const observer = new ResizeObserver(() => map.invalidateSize());
+  const observer = new ResizeObserver(() => {
+    if (!destroyed) map.invalidateSize({ pan: false });
+  });
   observer.observe(root);
   return {
     select(id, { focus = false } = {}) {
@@ -113,9 +129,12 @@ export async function createPlaceMap(root, { sites, onSelect, onError }) {
       draw();
     },
     overview,
+    refresh: draw,
     resize: () => map.invalidateSize(),
     destroy() {
+      destroyed = true;
       observer.disconnect();
+      map.off('moveend zoomend resize', draw);
       map.remove();
     },
   };

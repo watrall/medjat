@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
 const source = {
   DOI: '10.1234/abydos',
   title: ['Excavations at Abydos'],
@@ -29,7 +30,7 @@ test('Places discovers Crossref works from a Pleiades place without a saved coll
   await expect(page.locator('#placeMap .leaflet-control-zoom-in')).toBeVisible();
   await page.locator('#placeSelect').selectOption('756512');
   await expect(page.locator('.place-results-status')).toHaveText(
-    '2 candidates loaded · 1 mention this place in title or abstract',
+    '2 candidates loaded · 1 with a place-name mention',
   );
   await expect(page.locator('.place-evidence-label')).toContainText('mentioned in title');
   expect(
@@ -50,6 +51,63 @@ test('Places discovers Crossref works from a Pleiades place without a saved coll
   await expect(page.locator('.places-map-tools')).toBeVisible();
   await expect(page.locator('#places')).toContainText('Map tiles could not be fully loaded');
   expect(errors).toEqual([]);
+});
+test('place bibliographies export their exact saved scope and retain manual research decisions', async ({
+  page,
+}) => {
+  const records = [
+    source,
+    { DOI: '10.1234/religion', title: ['Religion in ancient Egypt'] },
+    { DOI: '10.1234/grammar', title: ['An Egyptian grammar'] },
+  ];
+  await page.route('https://tile.openstreetmap.org/**', (route) => route.abort());
+  await page.route('https://api.crossref.org/**', (route) =>
+    route.fulfill({ json: { message: { items: records, 'total-results': 3 } } }),
+  );
+  await page.goto('/');
+  await expect(page.locator('.result-row')).toHaveCount(3);
+  for (let index = 0; index < 3; index++) await page.locator('.save-button').nth(index).click();
+  await page.locator('#placesNav').click();
+  await page.getByRole('button', { name: 'Your collection', exact: true }).click();
+  await page.locator('#placeSelect').selectOption('756512');
+  await expect(page.locator('.place-collection-coverage')).toContainText(
+    '3 saved publications · 1 with place associations · 2 with no place assigned',
+  );
+  await page.locator('#placeExportFormat').selectOption('csv');
+  let download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export 1 publication', exact: true }).click();
+  const csv = await readFile(await (await download).path(), 'utf8');
+  expect(csv).toContain('10.1234/abydos');
+  expect(csv).not.toContain('10.1234/religion');
+  await page.getByRole('button', { name: 'Confirm association', exact: true }).click();
+  await expect(page.locator('.place-association')).toContainText('Researcher-confirmed');
+  await page.locator('.place-assignment > summary').click();
+  await page.locator('#assignPlaceWork').selectOption('10.1234/religion');
+  await page.locator('#assignPlaceTarget').selectOption('786017');
+  await page.getByRole('button', { name: 'Assign place', exact: true }).click();
+  await expect(page.locator('#placeSelect')).toHaveValue('786017');
+  await expect(page.locator('.place-association')).toContainText('assigned manually');
+  await page.getByText('No place assigned (1)', { exact: true }).click();
+  await page.getByRole('button', { name: 'Not place-specific', exact: true }).click();
+  await expect(page.locator('.place-collection-coverage')).toContainText(
+    '0 with no place assigned · 1 marked not place-specific',
+  );
+  await page.locator('#placeExportFormat').selectOption('json');
+  download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export 1 publication', exact: true }).click();
+  const backup = JSON.parse(await readFile(await (await download).path(), 'utf8'));
+  expect(backup.records.map((entry) => entry.raw.DOI)).toEqual(['10.1234/religion']);
+  expect(backup.research['place:10.1234/religion:786017'].method).toBe('researcher');
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Your collection', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(page.locator('.place-association')).toContainText('assigned manually');
+  await page.getByRole('button', { name: 'Reject association', exact: true }).click();
+  await page.getByText('Rejected associations (1)', { exact: true }).click();
+  await page.getByRole('button', { name: 'Restore association', exact: true }).click();
+  await expect(page.locator('.place-association')).toContainText('assigned manually');
 });
 test('publication place links retain evidence and return to the search draft after refresh', async ({
   page,
@@ -81,4 +139,37 @@ test('publication place links retain evidence and return to the search draft aft
   await expect(page.locator('#inspector .detail-title')).toHaveText(source.title[0]);
   await expect(page.locator('.result-row')).toHaveCount(1);
   await expect(abydos).toBeFocused();
+});
+test('place pagination keeps its applied query while preserving unfinished topic edits', async ({
+  page,
+}) => {
+  const requested = [];
+  await page.route('https://tile.openstreetmap.org/**', (route) => route.abort());
+  await page.route('https://api.crossref.org/**', (route) => {
+    const url = new URL(route.request().url());
+    requested.push(url);
+    const second = url.searchParams.get('cursor') === 'page-two';
+    return route.fulfill({
+      json: {
+        message: {
+          items: Array.from({ length: 25 }, (_, i) => ({
+            DOI: `10.1234/abydos-${second ? 25 + i : i}`,
+            title: [`Abydos research ${second ? 25 + i : i}`],
+          })),
+          'total-results': 500,
+          'next-cursor': second ? 'page-three' : 'page-two',
+        },
+      },
+    });
+  });
+  await page.goto('/?view=places&place=756512');
+  await expect(page.locator('.place-results-status')).toContainText('25 candidates loaded');
+  await page.locator('#placeTopic').fill('An unfinished burial topic');
+  await page.getByRole('button', { name: 'Load 25 more candidates', exact: true }).click();
+  await expect(page.locator('.place-results-status')).toContainText('50 candidates loaded');
+  await expect(page.locator('#placeTopic')).toHaveValue('An unfinished burial topic');
+  expect(requested.at(-1).searchParams.get('query.bibliographic')).toBe('Abydos Egypt');
+  await page.getByRole('button', { name: 'Your collection', exact: true }).click();
+  await page.getByRole('button', { name: 'Discover in Crossref', exact: true }).click();
+  await expect(page.locator('#placeTopic')).toHaveValue('An unfinished burial topic');
 });

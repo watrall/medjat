@@ -1,6 +1,7 @@
 import { loadGazetteer, placeEvidence, placesForWork, searchPlaceWorks } from './place-data.js';
 import { createPlaceMap } from './place-map.js';
 import { createInspector } from './inspector.js';
+import { createPlaceCollection } from './place-collection.js';
 import { authorLine, doiURL } from './data.js';
 import { el, icon, externalLink, skeletons } from './dom.js';
 
@@ -8,6 +9,7 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
   let gazetteer,
     map,
     selected = '',
+    mode = 'discover',
     active = false,
     generation = 0,
     mountGeneration = 0,
@@ -23,6 +25,7 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
     error = '';
   let panels,
     origin = null;
+  let searchDraft = { term: '', topic: '' };
   const place = () => gazetteer?.sites.find((site) => site.id === selected);
   function cancel() {
     active = false;
@@ -30,15 +33,17 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
     generation++;
     mountGeneration++;
     controller?.abort();
+    panels?.collection?.cancel();
   }
   function location() {
-    return { place: selected };
+    return { place: selected, mode };
   }
   async function show(options = {}) {
     controller?.abort();
     generation++;
     loading = false;
     active = true;
+    if (options.mode) mode = options.mode === 'collection' ? 'collection' : 'discover';
     if ('place' in options && selected !== options.place) {
       selected = options.place;
       works = [];
@@ -46,12 +51,14 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
       total = null;
       term = '';
       topic = '';
+      searchDraft = { term: '', topic: '' };
     }
     origin = options.origin || null;
     try {
       gazetteer ||= await loadGazetteer();
       if (!active) return;
       if (!place()) selected = '';
+      panels?.collection?.cancel();
       map?.destroy();
       map = null;
       build();
@@ -59,6 +66,8 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
         const current = ++mountGeneration;
         const instance = await createPlaceMap(panels.map, {
           sites: gazetteer.sites,
+          isVisible: (id) => mode !== 'collection' || panels.collection.stats(id) > 0,
+          getCount: (id) => (mode === 'collection' ? panels.collection.stats(id) : null),
           onSelect: (id) => choose(id),
           onError: () => {
             panels.mapNotice.hidden = false;
@@ -77,7 +86,7 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
         panels.mapNotice.textContent =
           'The map could not load. The place selector and Crossref search remain available.';
       }
-      if (selected && !works.length) await search();
+      if (mode === 'discover' && selected && !works.length) await search();
     } catch (error) {
       if (active)
         root.replaceChildren(
@@ -105,6 +114,8 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
     });
     const mapNotice = el('p', { class: 'notice', role: 'status', hidden: true });
     const publications = el('section', {
+      id: 'placePublications',
+      tabindex: '-1',
       class: 'places-publications',
       'aria-label': 'Place publications',
     });
@@ -121,6 +132,7 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
       onClose: () => {
         detail.hidden = true;
         publications.hidden = false;
+        renderPublications();
         publications.querySelector('h2')?.focus({ preventScroll: true });
       },
       onSave: async (work) => {
@@ -129,7 +141,14 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
       },
       isSaved: (id) => getSaved().has(id),
     });
-    panels = { selector, map: mapRoot, mapNotice, publications, detail, inspector };
+    const collection = createPlaceCollection(publications, {
+      sites: gazetteer.sites,
+      getSaved,
+      onInspect: inspect,
+      onChoose: choose,
+      onRefresh: () => map?.refresh(),
+    });
+    panels = { selector, map: mapRoot, mapNotice, publications, detail, inspector, collection };
     root.replaceChildren(
       el(
         'div',
@@ -153,6 +172,25 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
       ),
       el(
         'div',
+        { class: 'places-modes', 'aria-label': 'Places research scope' },
+        ...[
+          ['discover', 'Discover in Crossref'],
+          ['collection', 'Your collection'],
+        ].map(([value, label]) =>
+          el(
+            'button',
+            {
+              class: 'inspector-tab',
+              'data-places-mode': value,
+              'aria-pressed': String(mode === value),
+              onclick: () => switchMode(value),
+            },
+            label,
+          ),
+        ),
+      ),
+      el(
+        'div',
         { class: 'places-layout' },
         el(
           'section',
@@ -166,6 +204,20 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
               { class: 'button', onclick: () => map?.overview() },
               icon('expand'),
               'Show all places',
+            ),
+            el(
+              'a',
+              {
+                href: '#placePublications',
+                class: 'text-button places-jump',
+                onclick: () => {
+                  detail.hidden = true;
+                  publications.hidden = false;
+                  renderPublications();
+                },
+              },
+              icon('book-open'),
+              'View publications',
             ),
           ),
           mapNotice,
@@ -206,6 +258,21 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
       );
     renderPublications();
   }
+  function switchMode(value) {
+    controller?.abort();
+    generation++;
+    loading = false;
+    if (value !== 'collection') panels.collection.cancel();
+    mode = value;
+    for (const button of root.querySelectorAll('[data-places-mode]'))
+      button.setAttribute('aria-pressed', String(button.dataset.placesMode === mode));
+    panels.detail.hidden = true;
+    panels.publications.hidden = false;
+    renderPublications();
+    map?.refresh();
+    onLocation(location());
+    if (mode === 'discover' && selected && !works.length) search();
+  }
   function choose(id) {
     controller?.abort();
     generation++;
@@ -217,13 +284,14 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
     retrieved = '';
     topic = '';
     term = place()?.name || '';
+    searchDraft = { term, topic: '' };
     panels.selector.value = selected;
     panels.detail.hidden = true;
     panels.publications.hidden = false;
     map?.select(selected, { focus: true });
     onLocation(location());
     renderPublications();
-    if (selected) search();
+    if (selected && mode === 'discover') search();
   }
   async function search(append = false) {
     if (!place()) return;
@@ -315,6 +383,11 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
   }
   function renderPublications() {
     if (!panels) return;
+    if (mode === 'collection') {
+      panels.collection.render(selected);
+      map?.refresh();
+      return;
+    }
     const root = panels.publications,
       current = place();
     if (!current) {
@@ -351,15 +424,27 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
     );
     const name = el(
       'select',
-      { id: 'placeSearchName' },
+      {
+        id: 'placeSearchName',
+        onchange: (event) => {
+          searchDraft.term = event.target.value;
+        },
+      },
       aliases.map((alias) =>
-        el('option', { value: alias, selected: alias === (term || current.name) }, alias),
+        el(
+          'option',
+          { value: alias, selected: alias === (searchDraft.term || term || current.name) },
+          alias,
+        ),
       ),
     );
     const topicInput = el('input', {
       id: 'placeTopic',
       type: 'search',
-      value: topic,
+      value: searchDraft.topic,
+      oninput: (event) => {
+        searchDraft.topic = event.target.value;
+      },
       placeholder: 'e.g. burial, ceramics, settlement',
     });
     root.replaceChildren(
@@ -444,7 +529,7 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
         el(
           'p',
           { role: 'status', class: 'place-results-status' },
-          `${works.length} candidates loaded · ${explicit.length} mention this place in title or abstract`,
+          `${works.length} ${works.length === 1 ? 'candidate' : 'candidates'} loaded · ${explicit.length} with a place-name mention`,
         ),
         el(
           'details',
@@ -490,7 +575,10 @@ export function createPlaces(root, { getSaved, onSave, onLocation = () => {} }) 
     location,
     choose,
     refresh: () => {
-      if (active) renderPublications();
+      if (active) {
+        renderPublications();
+        panels.inspector.refresh();
+      }
     },
   };
 }

@@ -6,7 +6,7 @@ test('research views retain accessible controls and reflow across desktop and mo
 }) => {
   test.setTimeout(60000);
   const errors = [];
-  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('pageerror', (error) => errors.push(error.stack));
   const source = {
     DOI: '10.1234/abydos',
     title: ['Archaeology at Abydos'],
@@ -40,14 +40,19 @@ test('research views retain accessible controls and reflow across desktop and mo
   await expect(page.locator('.result-row')).toHaveCount(1);
   await page.locator('.save-button').click();
   await page.route('https://tile.openstreetmap.org/**', (route) => route.abort());
-  for (const view of ['visualize', 'places', 'collection']) {
-    await page.locator(`#${view}Nav`).click();
+  for (const view of ['visualize', 'places', 'places-collection', 'collection']) {
+    await page.locator(`#${view === 'places-collection' ? 'places' : view}Nav`).click();
+    if (view === 'places-collection') {
+      await page.getByRole('button', { name: 'Your collection', exact: true }).click();
+      await expect(page.locator('.place-collection-coverage')).toContainText('1 saved publication');
+      await page.locator('.place-assignment > summary').click();
+    }
     if (view === 'visualize')
       await expect(page.locator('#visualize')).toContainText('9,000,000 Crossref candidates');
     if (view === 'places') {
       await expect(page.locator('#placeMap .leaflet-marker-icon').first()).toBeVisible();
       await page.locator('#placeSelect').selectOption('756512');
-      await expect(page.locator('.place-results-status')).toContainText('1 candidates loaded');
+      await expect(page.locator('.place-results-status')).toContainText('1 candidate loaded');
     }
     if (view === 'collection') {
       await page

@@ -1,6 +1,7 @@
 import { API, CONTACT, request } from './crossref.js';
 import { normalizeWork } from './data.js';
 let gazetteer;
+const matchers = new WeakMap();
 export async function loadGazetteer() {
   if (!gazetteer)
     gazetteer = fetch(new URL('../data/sites.json', import.meta.url))
@@ -15,17 +16,24 @@ export async function loadGazetteer() {
   return gazetteer;
 }
 export function placeEvidence(work, place) {
+  let expressions = matchers.get(place);
+  if (!expressions) {
+    expressions = [...new Set([place.name, ...place.aliases])]
+      .filter((name) => name.length >= 4)
+      .map((alias) => {
+        const escaped = alias
+          .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+          .replace(/[\s\u2010-\u2015-]+/g, '[\\s\\u2010-\\u2015-]+');
+        return new RegExp(`(?<![\\p{L}])${escaped}(?![\\p{L}])`, 'iu');
+      });
+    matchers.set(place, expressions);
+  }
   for (const [field, text] of [
     ['title', work.title || ''],
     ['abstract', work.abstract || ''],
   ]) {
-    for (const alias of [...new Set([place.name, ...place.aliases])].filter(
-      (name) => name.length >= 4,
-    )) {
-      const escaped = alias
-        .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-        .replace(/[\s\u2010-\u2015-]+/g, '[\\s\\u2010-\\u2015-]+');
-      const match = new RegExp(`(?<![\\p{L}])${escaped}(?![\\p{L}])`, 'iu').exec(text);
+    for (const expression of expressions) {
+      const match = expression.exec(text);
       if (match)
         return {
           field,

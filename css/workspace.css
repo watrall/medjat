@@ -1577,6 +1577,60 @@ p {
 .places-heading h1 {
   margin-block: var(--space-xs) var(--space-sm);
 }
+.places-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-lg);
+  border-block-end: 1px solid var(--color-line);
+  margin-block-end: var(--space-xl);
+}
+.place-status-control {
+  display: grid;
+  gap: var(--space-xs);
+  margin-block: var(--space-base);
+  font-size: var(--text-label);
+}
+.place-collection-coverage {
+  margin-block: var(--space-base) var(--space-sm);
+  font-size: var(--text-label);
+  font-weight: 600;
+}
+.place-bibliography-export {
+  margin-block: var(--space-lg);
+  padding-block: var(--space-base);
+  border-block: 1px solid var(--color-line);
+}
+.place-export-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-base);
+  margin-block: var(--space-sm);
+}
+.place-export-controls label {
+  display: grid;
+  gap: var(--space-xs);
+  font-size: var(--text-label);
+}
+.place-association {
+  margin-block-start: var(--space-base);
+}
+.place-assignment > summary {
+  min-height: 44px;
+  padding-block: var(--space-md);
+  cursor: pointer;
+}
+.place-review-works {
+  padding-inline-start: var(--space-base);
+}
+.place-review-works li {
+  padding-block: var(--space-base);
+  border-block-end: 1px solid var(--color-line);
+  overflow-wrap: anywhere;
+}
+.place-review-works .text-button {
+  margin-inline-end: var(--space-base);
+}
 .eyebrow {
   font-size: var(--text-caption);
   font-weight: 650;
@@ -1608,6 +1662,9 @@ p {
   display: grid;
   gap: var(--space-xs);
   flex: 1 1 13rem;
+}
+.places-jump {
+  display: none;
 }
 .places-map {
   height: clamp(24rem, 62vh, 42rem);
@@ -1817,6 +1874,11 @@ p {
   color: var(--color-secondary);
 }
 @media (max-width: 899px) {
+  .places-jump {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+  }
   .places-layout {
     grid-template-columns: minmax(0, 1fr);
   }
