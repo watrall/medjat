@@ -85,15 +85,15 @@ export function createPlaceCollection(
     refresh();
     notify(`Marked “${work.title}” not place-specific. Your association reviews are retained.`);
   }
-  let draft = initialDraft || {};
+  let draft = {
+    query: '',
+    work: '',
+    target: '',
+    format: '',
+    open: false,
+    ...(initialDraft || {}),
+  };
   function capture() {
-    draft = {
-      query: root.querySelector('#assignPlaceSearch')?.value ?? draft.query ?? '',
-      work: root.querySelector('#assignPlaceWork')?.value ?? draft.work,
-      target: root.querySelector('#assignPlaceTarget')?.value ?? draft.target,
-      format: root.querySelector('#placeExportFormat')?.value ?? draft.format,
-      open: root.querySelector('.place-assignment')?.open ?? draft.open,
-    };
     return draft;
   }
   const decide = (key, value) => {
@@ -424,6 +424,7 @@ export function createPlaceCollection(
     const savedWorks = [...getSaved().values()].map(({ work }) => work);
     const publication = el('select', { id: 'assignPlaceWork', required: true });
     let chosen = getSaved().has(draftWork) ? draftWork : savedWorks[0]?.id || '';
+    draft.work = chosen;
     const preview = el('div', {
       class: 'place-assignment-preview',
       'aria-label': 'Selected publication',
@@ -463,12 +464,14 @@ export function createPlaceCollection(
       value: draft.query || '',
       placeholder: 'Title, author, year or DOI',
       oninput: () => {
+        draft.query = assignmentSearch.value;
         filterAssignments();
         onDraft();
       },
     });
     publication.addEventListener('change', () => {
       chosen = publication.value;
+      draft.work = chosen;
       showPreview();
       onDraft();
     });
@@ -503,6 +506,7 @@ export function createPlaceCollection(
           type: 'button',
           onclick: () => {
             assignmentSearch.value = '';
+            draft.query = '';
             filterAssignments();
             assignmentSearch.focus();
             onDraft();
@@ -545,12 +549,24 @@ export function createPlaceCollection(
     );
     root.append(assignment);
     assignment.open = assignmentOpen || false;
-    assignment.addEventListener('toggle', onDraft);
-    target.addEventListener('change', onDraft);
-    format.addEventListener('change', onDraft);
+    draft.open = assignment.open;
+    assignment.addEventListener('toggle', () => {
+      draft.open = assignment.open;
+      onDraft();
+    });
+    target.addEventListener('change', () => {
+      draft.target = target.value;
+      onDraft();
+    });
+    format.addEventListener('change', () => {
+      draft.format = format.value;
+      onDraft();
+    });
 
     if (draftTarget && sites.some((site) => site.id === draftTarget)) target.value = draftTarget;
     if (draftFormat) format.value = draftFormat;
+    draft.target = target.value;
+    draft.format = format.value;
     function workList(title, rows, decision) {
       const list = el('ul', { class: 'place-review-works' });
       for (const work of rows)
