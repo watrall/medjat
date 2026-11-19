@@ -446,11 +446,16 @@ test('search and collection views have no detected WCAG AA violations', async ({
   await fixtures(page);
   await page.goto('/');
   await expect(page.locator('.result-row')).toHaveCount(25);
+  const measurements = { widths: [], targets: [], scans: [] };
+  const measureTarget = async (label, locator) =>
+    measurements.targets.push({ label, box: await locator.boundingBox() });
+  await measureTarget('Desktop result title', page.locator('.result-open').first());
+  await measureTarget('Desktop Cite', page.getByRole('button', { name: 'Cite', exact: true }));
   const check = async () => {
     const result = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
       .analyze();
-    expect(result.violations).toEqual([]);
+    measurements.scans.push({ violations: result.violations });
   };
   await check();
   await page.getByRole('button', { name: 'Connections', exact: true }).click();
@@ -463,11 +468,28 @@ test('search and collection views have no detected WCAG AA violations', async ({
   await check();
   for (const width of [1024, 768, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
-    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
-      width,
-    );
+    const documentWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+    measurements.widths.push({ width, documentWidth });
   }
   await check();
+  await page.locator('.result-open').first().click();
+  await measureTarget('Mobile Cite', page.getByRole('button', { name: 'Cite', exact: true }));
+  await check();
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = '200%';
+  });
+  measurements.widths.push({
+    width: 320,
+    documentWidth: await page.evaluate(() => document.documentElement.scrollWidth),
+    textScale: 2,
+  });
+  await test.info().attach('audit-measurements', {
+    body: JSON.stringify(measurements, null, 2),
+    contentType: 'application/json',
+  });
+  expect(measurements.scans.flatMap((scan) => scan.violations)).toEqual([]);
+  for (const measure of measurements.widths)
+    expect(measure.documentWidth).toBeLessThanOrEqual(measure.width);
 });
 test('untrusted metadata remains text instead of executable markup', async ({ page }) => {
   await fixtures(page, { hostile: true });
