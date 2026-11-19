@@ -60,6 +60,14 @@ export function queryFilters(query) {
   return filters;
 }
 
+/**
+ * @param {string | false | undefined} label
+ * @returns {label is string}
+ */
+function hasChip(label) {
+  return typeof label === 'string' && label.length > 0;
+}
+
 /** @param {Query} query @returns {string[]} */
 export function filterChips(query) {
   const period = PERIODS.find((entry) => entry.id === query.period);
@@ -72,7 +80,7 @@ export function filterChips(query) {
     query.abstract && 'Has abstract',
     query.orcid && 'Has ORCID',
     query.references && 'Has references',
-  ].filter((label) => typeof label === 'string' && label.length > 0);
+  ].filter(hasChip);
 }
 
 /** @param {Query} query @returns {string} */
