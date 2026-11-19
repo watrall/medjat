@@ -1,4 +1,4 @@
-import { PERIODS, normalizeDOI, normalizeWork } from './data.js';
+import { DEFAULT_QUERY, PERIODS, normalizeDOI, normalizeWork } from './data.js';
 
 export const API = 'https://api.crossref.org';
 export const CONTACT = 'ethan.watrall@gmail.com';
@@ -58,7 +58,7 @@ function dispatch() {
 export function bibliographicTerms(query) {
   const period = PERIODS.find((p) => p.id === query.period);
   const text = query.q.trim();
-  const terms = [text || 'ancient egypt'];
+  const terms = [text || DEFAULT_QUERY];
   if (period) terms.push(period.query);
   if (!/\begypt(?:ian)?\b/i.test(text) && !period) terms.push('ancient Egypt');
   return terms.join(' ');

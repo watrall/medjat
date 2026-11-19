@@ -1,4 +1,4 @@
-import { API, CONTACT, request } from './crossref.js';
+import { API, CONTACT, PAGE_SIZE, request } from './crossref.js';
 import { normalizeWork } from './data.js';
 let gazetteer;
 const matchers = new WeakMap();
@@ -54,7 +54,7 @@ export function placesForWork(work, sites) {
 export function placeSearchURL(place, { term = place.name, topic = '', cursor = '*' } = {}) {
   const params = new URLSearchParams({
     'query.bibliographic': `${term} Egypt ${topic}`.trim(),
-    rows: '25',
+    rows: String(PAGE_SIZE),
     cursor,
     sort: 'score',
     order: 'desc',
@@ -80,7 +80,7 @@ export async function searchPlaceWorks(place, { signal, term, topic, cursor, fre
     total: message['total-results'],
     retrievedAt: response.retrievedAt,
     next:
-      message.items.length === 25 && message['next-cursor'] !== (cursor || '*')
+      message.items.length === PAGE_SIZE && message['next-cursor'] !== (cursor || '*')
         ? message['next-cursor'] || null
         : null,
     query: new URL(url).searchParams.get('query.bibliographic'),

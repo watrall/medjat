@@ -5,6 +5,7 @@ import { createResearch } from './research.js';
 import { importResearch } from './research-store.js';
 import { createVisualize } from './visualize.js';
 import {
+  DEFAULT_QUERY,
   PERIODS,
   TYPES,
   readQuery,
@@ -13,7 +14,13 @@ import {
   doiURL,
   normalizeWork,
 } from './data.js';
-import { searchWorks, getWork, bibliographicTerms, DATE_BROWSE_LIMIT } from './crossref.js';
+import {
+  searchWorks,
+  getWork,
+  bibliographicTerms,
+  DATE_BROWSE_LIMIT,
+  PAGE_SIZE,
+} from './crossref.js';
 import { readSession, writeSession } from './session.js';
 import { createInspector } from './inspector.js';
 import { createCollectionStore } from './collection-store.js';
@@ -116,7 +123,7 @@ function syncControls() {
 }
 function readDraft() {
   return {
-    q: $('searchInput').value.trim() || 'ancient egypt',
+    q: $('searchInput').value.trim() || DEFAULT_QUERY,
     container: state.draft.container || '',
     period: $('periodSelect').value,
     from: $('yearFrom').value,
@@ -664,7 +671,7 @@ function renderStatus() {
       el(
         'button',
         { class: 'button', disabled: state.loading, onclick: () => runSearch(true) },
-        state.loading ? 'Loading…' : 'Load 25 more publications',
+        state.loading ? 'Loading…' : `Load ${PAGE_SIZE} more publications`,
       ),
       el(
         'p',

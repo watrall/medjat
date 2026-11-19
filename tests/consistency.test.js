@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, readdir, stat } from 'node:fs/promises';
 import { siteFiles } from '../scripts/release-files.mjs';
+import { DEFAULT_QUERY } from '../js/data.js';
 
 const root = new URL('../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
@@ -20,6 +21,12 @@ test('every runtime module is listed and every listed file exists', async () => 
     const info = await stat(new URL(file, root));
     assert.ok(info.isFile(), `Listed runtime file is missing or not a file: ${file}`);
   }
+});
+
+test('the HTML default search text matches the shared query default', async () => {
+  const html = await read('index.html');
+  const input = html.match(/id="searchInput"[\s\S]*?value="([^"]*)"/);
+  assert.equal(input?.[1], DEFAULT_QUERY);
 });
 
 test('static document IDs are unique', async () => {

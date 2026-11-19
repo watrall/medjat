@@ -2,9 +2,12 @@ import { normalizeWork } from './data.js';
 import { researchData } from './research-store.js';
 const COLLECTION_KEY = 'ancient-egypt-research-collection-v1';
 export const MAX_SAVED = 500;
+export const MAX_IMPORT_BYTES = 10 * 1024 * 1024;
 export function parseCollection(text) {
-  if (typeof text !== 'string' || text.length > 10 * 1024 * 1024)
-    throw new Error('Choose a collection JSON file smaller than 10 MB.');
+  if (typeof text !== 'string' || text.length > MAX_IMPORT_BYTES)
+    throw new Error(
+      `Choose a collection JSON file smaller than ${MAX_IMPORT_BYTES / 1024 / 1024} MB.`,
+    );
   let data;
   try {
     data = JSON.parse(text);

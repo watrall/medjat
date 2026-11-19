@@ -1,6 +1,7 @@
 import { preservePlaceFocus } from './place-focus.js';
 import { publicationMetadata } from './place-publication.js';
 import { loadGazetteer, placeEvidence, searchPlaceWorks } from './place-data.js';
+import { PAGE_SIZE } from './crossref.js';
 import { createPlaceMap } from './place-map.js';
 import { createInspector } from './inspector.js';
 import { createPlaceCollection } from './place-collection.js';
@@ -759,7 +760,11 @@ export function createPlaces(
         );
       if (next)
         root.append(
-          el('button', { class: 'button', onclick: () => search(true) }, 'Load 25 more candidates'),
+          el(
+            'button',
+            { class: 'button', onclick: () => search(true) },
+            `Load ${PAGE_SIZE} more candidates`,
+          ),
         );
     }
   }

@@ -1,6 +1,14 @@
 import { normalizeDOI, plainText } from './data.js';
+
+export const RESEARCH_LIMITS = Object.freeze({
+  seeds: 50,
+  referencedNodes: 100,
+  edges: 500,
+  reviewRows: 100,
+});
+
 export function analyzeReferences(seeds, savedIDs = [], decisions = {}) {
-  const works = seeds.slice(0, 50),
+  const works = seeds.slice(0, RESEARCH_LIMITS.seeds),
     saved = new Set(savedIDs),
     sources = new Map(),
     unresolved = [],

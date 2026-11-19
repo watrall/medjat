@@ -1,4 +1,5 @@
 // Approximate ranges follow the Egypt Exploration Society's Chronology of Egypt.
+export const DEFAULT_QUERY = 'ancient egypt';
 export const PERIODS = [
   { id: 'predynastic', name: 'Predynastic', dates: 'c. 4400–3000 BCE', query: 'Predynastic Egypt' },
   {
@@ -171,7 +172,7 @@ export function readQuery(search = '') {
   const p = new URLSearchParams(search);
   const year = (key) => (/^\d{4}$/.test(p.get(key) || '') ? p.get(key) : '');
   return {
-    q: (p.get('q') || 'ancient egypt').slice(0, 500),
+    q: (p.get('q') || DEFAULT_QUERY).slice(0, 500),
     container: (p.get('container') || '').slice(0, 500),
     period: PERIODS.some((x) => x.id === p.get('period')) ? p.get('period') : '',
     type: TYPES.has(p.get('type')) ? p.get('type') : '',

@@ -4,8 +4,9 @@ import { el, notify } from './dom.js';
 import { researchData, reviewDecision } from './research-store.js';
 import { serializeCollection } from './collection.js';
 import { downloadText } from './download.js';
+import { RESEARCH_LIMITS } from './references.js';
 function network(data) {
-  const refs = data.references.slice(0, 100),
+  const refs = data.references.slice(0, RESEARCH_LIMITS.referencedNodes),
     seeds = data.seeds;
   const ns = 'http://www.w3.org/2000/svg',
     svg = document.createElementNS(ns, 'svg');
@@ -23,7 +24,7 @@ function network(data) {
   };
   for (const edge of data.edges
     .filter((edge) => ['cites', 'researcher-confirmed citation match'].includes(edge.type))
-    .slice(0, 500)) {
+    .slice(0, RESEARCH_LIMITS.edges)) {
     const a = seeds.findIndex((seed) => seed.id === edge.source),
       b = refs.findIndex((ref) => ref.doi === edge.target);
     if (a >= 0 && b >= 0)
@@ -245,7 +246,7 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
       el(
         'p',
         {},
-        `${data.seeds.length} seed publications analyzed${total > 50 ? ` of ${total}; select up to 50 records to control this set` : ''}. ${data.missingReferenceLists} have no deposited reference list. This is a bounded research set, not the whole search.`,
+        `${data.seeds.length} seed publications analyzed${total > RESEARCH_LIMITS.seeds ? ` of ${total}; select up to ${RESEARCH_LIMITS.seeds} records to control this set` : ''}. ${data.missingReferenceLists} have no deposited reference list. This is a bounded research set, not the whole search.`,
       ),
     );
     root.append(
@@ -266,7 +267,11 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
     const graph = el(
       'details',
       {},
-      el('summary', {}, 'View citation network (up to 150 nodes and 500 edges)'),
+      el(
+        'summary',
+        {},
+        `View citation network (up to ${RESEARCH_LIMITS.seeds + RESEARCH_LIMITS.referencedNodes} nodes and ${RESEARCH_LIMITS.edges} edges)`,
+      ),
       el(
         'p',
         { class: 'scope-note' },
@@ -286,14 +291,22 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
           {},
           el('summary', {}, `${title} (${rows.length})`),
           rows.length
-            ? el('ol', { class: 'review-list' }, rows.slice(0, 100).map(builder))
+            ? el(
+                'ol',
+                { class: 'review-list' },
+                rows.slice(0, RESEARCH_LIMITS.reviewRows).map(builder),
+              )
             : el(
                 'p',
                 {},
                 'No items in this category. Missing deposited references can limit discovery.',
               ),
-          rows.length > 100 &&
-            el('p', {}, 'First 100 items shown. Narrow the selected seed set to review more.'),
+          rows.length > RESEARCH_LIMITS.reviewRows &&
+            el(
+              'p',
+              {},
+              `First ${RESEARCH_LIMITS.reviewRows} items shown. Narrow the selected seed set to review more.`,
+            ),
         ),
       );
     }
@@ -336,7 +349,7 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
         ),
       );
     worker.postMessage({
-      seeds: seeds.slice(0, 50),
+      seeds: seeds.slice(0, RESEARCH_LIMITS.seeds),
       savedIDs: [...getSaved().keys()],
       decisions: researchData(),
     });

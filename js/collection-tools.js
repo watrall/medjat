@@ -1,5 +1,5 @@
 import { el, icon } from './dom.js';
-import { parseCollection } from './collection.js';
+import { MAX_IMPORT_BYTES, parseCollection } from './collection.js';
 import { EXPORT_FORMATS, exportCollection, downloadFile, scopedRecords } from './export.js';
 
 export function createCollectionTools(
@@ -66,8 +66,10 @@ export function createCollectionTools(
       if (!selected) return;
       exportOptions.open = true;
       try {
-        if (selected.size > 10 * 1024 * 1024)
-          throw new Error('Choose a collection file smaller than 10 MB.');
+        if (selected.size > MAX_IMPORT_BYTES)
+          throw new Error(
+            `Choose a collection file smaller than ${MAX_IMPORT_BYTES / 1024 / 1024} MB.`,
+          );
         status.textContent = await onImport(parseCollection(await selected.text()));
         sync();
       } catch (error) {
