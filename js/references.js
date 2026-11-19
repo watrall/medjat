@@ -1,5 +1,5 @@
 import { normalizeDOI, plainText } from './data.js';
-export function analyzeReferences(seeds, savedIDs = []) {
+export function analyzeReferences(seeds, savedIDs = [], decisions = {}) {
   const works = seeds.slice(0, 50),
     saved = new Set(savedIDs),
     sources = new Map(),
@@ -8,13 +8,16 @@ export function analyzeReferences(seeds, savedIDs = []) {
   for (const work of works) {
     const seen = new Set();
     for (const ref of work.references || []) {
-      const doi = normalizeDOI(ref.DOI);
+      let doi = normalizeDOI(ref.DOI);
+      const deposited = Boolean(doi);
       const label =
         plainText(ref.unstructured) ||
         [ref.author, ref['article-title'], ref['journal-title'], ref.year]
           .map((value) => plainText(String(value || '')))
           .filter(Boolean)
           .join('. ');
+      const decision = decisions[`citation:${work.id}:${label}`];
+      if (!doi && decision?.decision === 'confirmed') doi = normalizeDOI(decision.doi);
       if (!doi) {
         if (label && !seen.has(label)) {
           unresolved.push({ source: work.id, sourceTitle: work.title, label });
@@ -25,8 +28,14 @@ export function analyzeReferences(seeds, savedIDs = []) {
       if (seen.has(doi)) continue;
       seen.add(doi);
       if (!sources.has(doi)) sources.set(doi, { doi, label: label || doi, sources: [] });
-      sources.get(doi).sources.push({ id: work.id, title: work.title });
-      edges.push({ source: work.id, target: doi, type: 'cites' });
+      sources
+        .get(doi)
+        .sources.push({ id: work.id, title: work.title, label, researcherConfirmed: !deposited });
+      edges.push({
+        source: work.id,
+        target: doi,
+        type: deposited ? 'cites' : 'researcher-confirmed citation match',
+      });
     }
     for (const [relation, entries] of Object.entries(work.relations || {}))
       for (const item of Array.isArray(entries) ? entries : []) {

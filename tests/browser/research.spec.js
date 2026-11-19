@@ -40,3 +40,49 @@ test('reference discovery explains overlap, records decisions, and preserves the
     .click();
   await expect(page.locator('#researchTools')).toContainText('Review: deferred');
 });
+test('unresolved citations require confirmation and can be undone after rebuilding discovery', async ({
+  page,
+}) => {
+  await page.route('https://api.crossref.org/**', (route) => {
+    const url = new URL(route.request().url());
+    const matching = url.searchParams.get('query.bibliographic') === 'An older book';
+    return route.fulfill({
+      json: {
+        message: {
+          'total-results': 1,
+          items: [
+            matching
+              ? { DOI: '10.1234/matched', title: ['A possible older book'] }
+              : {
+                  DOI: '10.1234/source',
+                  title: ['Abydos research'],
+                  reference: [{ unstructured: 'An older book' }],
+                },
+          ],
+        },
+      },
+    });
+  });
+  await page.goto('/');
+  await expect(page.locator('.result-row')).toHaveCount(1);
+  await page.locator('.save-button').click();
+  await page.locator('#collectionNav').click();
+  await page
+    .getByRole('button', { name: 'Discover references from selected or saved publications' })
+    .click();
+  await page.locator('#researchTools summary').filter({ hasText: 'Unresolved citations' }).click();
+  await page.getByRole('button', { name: 'Find possible matches' }).click();
+  await expect(page.locator('#researchTools')).toContainText('Candidates are suggestions');
+  expect(
+    await page.evaluate(() =>
+      localStorage.getItem('egypt-research-review:citation:10.1234/source:An older book'),
+    ),
+  ).toBeNull();
+  await page.getByRole('button', { name: 'Confirm this match' }).click();
+  await page.getByRole('button', { name: 'Rebuild from current selection' }).click();
+  await expect(page.locator('#researchTools')).toContainText('Unresolved citations (0)');
+  await page.locator('#researchTools summary').filter({ hasText: 'Missing from' }).click();
+  await expect(page.locator('#researchTools')).toContainText('[researcher-confirmed match]');
+  await page.getByRole('button', { name: 'Undo citation match from Abydos research' }).click();
+  await expect(page.locator('#researchTools')).toContainText('Unresolved citations (1)');
+});

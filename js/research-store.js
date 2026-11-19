@@ -11,8 +11,14 @@ export function researchData() {
   } catch {}
   return data;
 }
-export function reviewDecision(key, value) {
-  const entry = { ...value, reviewedAt: new Date().toISOString() };
+export function reviewDecision(key, value, { imported = false } = {}) {
+  const entry = {
+    ...value,
+    reviewedAt:
+      imported && typeof value.reviewedAt === 'string'
+        ? value.reviewedAt
+        : new Date().toISOString(),
+  };
   try {
     localStorage.setItem(PREFIX + key, JSON.stringify(entry));
     memory.delete(key);
@@ -26,6 +32,6 @@ export function importResearch(data) {
   if (!data || typeof data !== 'object' || Array.isArray(data)) return;
   for (const [key, value] of Object.entries(data)) {
     if (key.length > 2000 || !value || typeof value !== 'object') continue;
-    reviewDecision(key, value);
+    reviewDecision(key, value, { imported: true });
   }
 }

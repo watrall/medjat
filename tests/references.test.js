@@ -31,3 +31,14 @@ test('reference overlap deduplicates each source and distinguishes missing and u
   assert.equal(result.missingReferenceLists, 1);
   assert.ok(result.edges.some((edge) => edge.type === 'is-version-of'));
 });
+test('manual citation matches contribute to discovery with separate provenance', () => {
+  const result = analyzeReferences(
+    [{ id: '10.1234/a', title: 'A', references: [{ unstructured: 'An older book' }] }],
+    [],
+    { 'citation:10.1234/a:An older book': { decision: 'confirmed', doi: '10.1234/book' } },
+  );
+  assert.equal(result.unresolved.length, 0);
+  assert.equal(result.missing[0].doi, '10.1234/book');
+  assert.equal(result.missing[0].sources[0].researcherConfirmed, true);
+  assert.equal(result.edges[0].type, 'researcher-confirmed citation match');
+});

@@ -20,7 +20,9 @@ function network(data) {
     if (text) n.textContent = text;
     svg.append(n);
   };
-  for (const edge of data.edges.filter((edge) => edge.type === 'cites').slice(0, 500)) {
+  for (const edge of data.edges
+    .filter((edge) => ['cites', 'researcher-confirmed citation match'].includes(edge.type))
+    .slice(0, 500)) {
     const a = seeds.findIndex((seed) => seed.id === edge.source),
       b = refs.findIndex((ref) => ref.doi === edge.target);
     if (a >= 0 && b >= 0)
@@ -30,6 +32,7 @@ function network(data) {
         x2: 600,
         y2: b * 32 + 25,
         stroke: 'var(--color-control)',
+        'stroke-dasharray': edge.type === 'cites' ? '' : '5 4',
       });
   }
   seeds.forEach((seed, i) =>
@@ -65,7 +68,7 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
       el(
         'p',
         { class: 'scope-note' },
-        `Referenced by ${ref.sources.length}: ${ref.sources.map((source) => source.title).join('; ')}`,
+        `Referenced by ${ref.sources.length}: ${ref.sources.map((source) => (source.researcherConfirmed ? '[researcher-confirmed match] ' : '') + source.title).join('; ')}`,
       ),
     );
     const status = el(
@@ -125,6 +128,24 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
         ),
       );
     row.append(status);
+    for (const source of ref.sources.filter((source) => source.researcherConfirmed))
+      row.append(
+        el(
+          'button',
+          {
+            class: 'text-button',
+            onclick: () => {
+              decide(`citation:${source.id}:${source.label}`, {
+                decision: 'unmatched',
+                source: source.id,
+                label: source.label,
+              });
+              run();
+            },
+          },
+          `Undo citation match from ${source.title}`,
+        ),
+      );
     return row;
   }
   function unresolvedRow(ref) {
@@ -132,8 +153,8 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
     const status = el(
       'p',
       { role: 'status' },
-      researchData()[key]?.doi
-        ? 'A DOI match was confirmed.'
+      researchData()[key]?.decision
+        ? `Review: ${researchData()[key].decision}. No confirmed DOI match.`
         : 'No DOI supplied. Matching requires your confirmation.',
     );
     const matches = el('div');
@@ -199,6 +220,19 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
           },
         },
         'Find possible matches',
+      ),
+      ...['deferred', 'dismissed'].map((decision) =>
+        el(
+          'button',
+          {
+            class: 'text-button',
+            onclick: () => {
+              decide(key, { decision, source: ref.source, label: ref.label });
+              status.textContent = `Review: ${decision}. No confirmed DOI match.`;
+            },
+          },
+          decision === 'deferred' ? 'Defer citation' : 'Dismiss citation',
+        ),
       ),
       matches,
       status,
@@ -268,7 +302,10 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
           'ul',
           {},
           data.edges
-            .filter((edge) => edge.type !== 'cites')
+            .filter(
+              (edge) =>
+                edge.type !== 'cites' && edge.type !== 'researcher-confirmed citation match',
+            )
             .map((edge) => el('li', {}, `${edge.source} → ${edge.type} → ${edge.target}`)),
         ),
       ),
@@ -294,7 +331,17 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
           'Reference comparison could not run. Try a smaller selected set.',
         ),
       );
-    worker.postMessage({ seeds: seeds.slice(0, 50), savedIDs: [...getSaved().keys()] });
+    worker.postMessage({
+      seeds: seeds.slice(0, 50),
+      savedIDs: [...getSaved().keys()],
+      decisions: researchData(),
+    });
   }
-  return { run };
+  return {
+    run,
+    cancel() {
+      generation++;
+      worker?.terminate();
+    },
+  };
 }
