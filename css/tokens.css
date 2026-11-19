@@ -1,7 +1,6 @@
 :root {
   color-scheme: light;
   --red-700: oklch(48% 0.19 29);
-  --red-600: oklch(54% 0.21 29);
   --red-100: oklch(96% 0.025 29);
   --ink-950: oklch(20% 0.025 330);
   --ink-700: oklch(39% 0.018 330);
@@ -26,7 +25,6 @@
   --color-warning-bg: oklch(97% 0.025 80);
   --color-error: oklch(43% 0.17 24);
   --font-body: 'Quicksand', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-mono: ui-monospace, 'SFMono-Regular', Consolas, monospace;
   --text-caption: 0.8125rem;
   --text-label: 0.875rem;
   --text-body: 1rem;
@@ -40,12 +38,10 @@
   --space-lg: 1.5rem;
   --space-xl: 2rem;
   --space-2xl: 3rem;
-  --space-3xl: 4rem;
   --radius-sm: 0.25rem;
   --radius-base: 0.5rem;
   --radius-round: 999px;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --duration-fast: 140ms;
-  --layer-sticky: 10;
   --layer-notice: 30;
 }

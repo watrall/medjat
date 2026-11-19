@@ -11,10 +11,6 @@ const names = [
   'library-big',
   'download',
   'external-link',
-  'chevron-down',
-  'x',
-  'check',
-  'sliders-horizontal',
   'book-open',
   'file-text',
   'user-round',
@@ -22,8 +18,6 @@ const names = [
   'copy',
   'info',
   'circle-alert',
-  'link',
-  'undo-2',
   'arrow-left',
 ];
 const symbols = await Promise.all(
