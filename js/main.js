@@ -140,7 +140,7 @@ function renderAppliedQuery() {
   const query = state.resultQuery || state.query;
   $('effectiveQuery').textContent = state.doiLookup
     ? `Exact DOI lookup: ${query.q}. Topic and publication refinements do not apply.`
-    : `Keywords sent to Crossref: ${bibliographicTerms(query)}`;
+    : `Ranking context sent to Crossref: ${bibliographicTerms(query)}`;
   const chips = filterChips(query);
   $('activeQuery').replaceChildren(
     ...chips.map((text) => el('span', { class: 'query-chip' }, text)),
