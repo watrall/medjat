@@ -199,7 +199,7 @@ function reconcileCollection() {
 }
 function visibleWorks() {
   if (state.view === 'explore') return state.items;
-  const query = state.collectionQuery.toLowerCase();
+  const query = state.collectionQuery.trim().toLowerCase();
   return [...state.collection.values()]
     .map((x) => x.work)
     .filter(

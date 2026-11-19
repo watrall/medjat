@@ -120,10 +120,10 @@ test('refresh restores collection scope, selected record, and an unfinished sear
   await page.locator('.save-button').nth(1).click();
   await page.locator('#searchInput').fill('Abydos');
   await page.locator('#collectionNav').click();
-  await page.locator('#collectionSearch').fill('Settlement');
+  await page.locator('#collectionSearch').fill('  Settlement  ');
   await page.reload();
   await expect(page.locator('#collectionNav')).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('#collectionSearch')).toHaveValue('Settlement');
+  await expect(page.locator('#collectionSearch')).toHaveValue('  Settlement  ');
   await expect(page.locator('.result-row')).toHaveCount(1);
   await expect(page.locator('.detail-title')).toHaveText(/Settlement/);
   await expect(page.locator('#searchInput')).toHaveValue('Abydos');

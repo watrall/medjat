@@ -36,6 +36,14 @@ test('metadata URLs reject executable schemes and attribute injection', () => {
     'Evidence from Egypt.',
   );
 });
+test('uncommon and absent publication types have readable labels without changing deposited data', () => {
+  assert.equal(normalizeWork({ ...raw, type: 'other' }).typeLabel, 'Other publication');
+  assert.equal(normalizeWork({ ...raw, type: 'peer-review' }).typeLabel, 'Peer review');
+  const missing = normalizeWork(raw);
+  assert.equal(missing.typeLabel, 'Publication type not supplied');
+  assert.equal(missing.raw.type, undefined);
+  assert.equal(normalizeWork({ ...raw, type: 'other' }).raw.type, 'other');
+});
 test('query state round-trips and period queries do not become BCE publication filters', () => {
   const query = readQuery('?q=Deir+el-Medina&period=new-kingdom&from=2000&abstract=1');
   assert.deepEqual(readQuery(queryString(query)), query);

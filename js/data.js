@@ -128,6 +128,8 @@ export function normalizeWork(raw) {
         .map((a) => plainText(a?.name))
         .filter(Boolean),
     }));
+  const type = typeof raw.type === 'string' ? raw.type : '';
+  const suppliedTypeLabel = plainText(type).replaceAll('-', ' ');
   return {
     id: doi,
     doi,
@@ -135,8 +137,14 @@ export function normalizeWork(raw) {
     authors,
     year: date?.[0] ?? null,
     container: firstText(raw['container-title']),
-    type: typeof raw.type === 'string' ? raw.type : '',
-    typeLabel: TYPES.get(raw.type) || plainText(raw.type)?.replaceAll('-', ' ') || 'Publication',
+    type,
+    typeLabel:
+      TYPES.get(type) ||
+      (type === 'other'
+        ? 'Other publication'
+        : suppliedTypeLabel
+          ? suppliedTypeLabel[0].toUpperCase() + suppliedTypeLabel.slice(1)
+          : 'Publication type not supplied'),
     abstract: plainText(raw.abstract),
     publisher: plainText(raw.publisher),
     volume: plainText(raw.volume),
