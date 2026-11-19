@@ -17,8 +17,9 @@
     "check:repository": "node scripts/check-repository.mjs --history"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
+  "packageManager": "npm@11.9.0",
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
     "@eslint/js": "^10.0.1",

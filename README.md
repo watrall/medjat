@@ -125,10 +125,14 @@ Use Node 24 and Python 3:
 
 ```sh
 npm ci
+npm run format:check
+npm run lint
 npm run check
 npm test
 npm run test:e2e
 ```
+
+The application targets current evergreen browsers with ES modules, OKLCH color, `AbortSignal.any`, and `structuredClone` (Safari 17.4+, Chrome/Edge 116+, Firefox 124+ or later).
 
 Local browser tests use installed Google Chrome. In CI they use Playwright Chromium; install it with `npx playwright install --with-deps chromium`. Browser tests isolate synthetic fixtures under `tests/browser`; fixtures are not served as fallback research results. The suite covers the discover/inspect/save/export/import workflow, persistence, keyboard focus, period/filter queries, pagination, history, references, narrow layouts, errors, empty responses, untrusted metadata, and automated accessibility checks.
 
