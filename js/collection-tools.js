@@ -32,9 +32,8 @@ export function createCollectionTools(
       sync();
     },
   });
-  const labels = { ris: 'RIS', bibtex: 'BibTeX', csv: 'CSV metadata', json: 'JSON backup' };
-  for (const value of Object.keys(EXPORT_FORMATS))
-    format.append(el('option', { value }, labels[value]));
+  for (const [value, metadata] of Object.entries(EXPORT_FORMATS))
+    format.append(el('option', { value }, metadata.shortLabel));
   const scopeHelp = el('p', { id: 'exportScopeHelp', class: 'export-scope-help' });
   const formatHelp = el('p', { id: 'exportFormatHelp', class: 'export-format-help' });
   scope.setAttribute('aria-describedby', 'exportScopeHelp');
@@ -173,7 +172,7 @@ export function createCollectionTools(
         ? 'JSON preserves source metadata and can be imported here.'
         : state.format === 'csv'
           ? 'CSV contains bibliographic metadata for a spreadsheet.'
-          : `${labels[state.format]} is formatted by Crossref for reference managers. Check imported citations against the publications.`;
+          : `${EXPORT_FORMATS[state.format].shortLabel} is formatted by Crossref for reference managers. Check imported citations against the publications.`;
     const hidden = [...state.selection].filter(
       (id) => state.records.has(id) && !state.visible.some((work) => work.id === id),
     ).length;

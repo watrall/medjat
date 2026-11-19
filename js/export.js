@@ -1,15 +1,12 @@
 import { API, CONTACT, request } from './crossref.js';
 import { authorLine, doiURL } from './data.js';
 import { serializeCollection } from './collection.js';
+import { downloadText } from './download.js';
 export const EXPORT_FORMATS = {
-  ris: {
-    label: 'RIS (Zotero, EndNote)',
-    mime: 'application/x-research-info-systems',
-    extension: 'ris',
-  },
-  bibtex: { label: 'BibTeX', mime: 'application/x-bibtex', extension: 'bib' },
-  csv: { label: 'CSV metadata', mime: 'text/csv;charset=utf-8', extension: 'csv' },
-  json: { label: 'Collection backup (JSON)', mime: 'application/json', extension: 'json' },
+  ris: { shortLabel: 'RIS', mime: 'application/x-research-info-systems', extension: 'ris' },
+  bibtex: { shortLabel: 'BibTeX', mime: 'application/x-bibtex', extension: 'bib' },
+  csv: { shortLabel: 'CSV metadata', mime: 'text/csv;charset=utf-8', extension: 'csv' },
+  json: { shortLabel: 'JSON backup', mime: 'application/json', extension: 'json' },
 };
 export function csvCell(value) {
   let text = String(value ?? '');
@@ -94,12 +91,8 @@ export function downloadFile(
   { scope = 'all', count, date = new Date().toISOString().slice(0, 10) } = {},
 ) {
   const { mime, extension } = EXPORT_FORMATS[format];
-  const url = URL.createObjectURL(new Blob([text], { type: mime }));
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `medjat-${scope}${count ? `-${count}` : ''}-${date}.${extension}`;
-  document.body.append(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  downloadText(text, {
+    type: mime,
+    filename: `medjat-${scope}${count ? `-${count}` : ''}-${date}.${extension}`,
+  });
 }

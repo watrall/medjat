@@ -2,7 +2,7 @@ import { preservePlaceFocus } from './place-focus.js';
 import { publicationMetadata, assignmentLabel } from './place-publication.js';
 import { placeEvidence } from './place-data.js';
 import { researchData, reviewDecision } from './research-store.js';
-import { exportCollection, downloadFile } from './export.js';
+import { EXPORT_FORMATS, exportCollection, downloadFile } from './export.js';
 import { el, icon, notify } from './dom.js';
 const noun = (count) => (count === 1 ? 'publication' : 'publications');
 
@@ -283,12 +283,9 @@ export function createPlaceCollection(
     const format = el(
       'select',
       { id: 'placeExportFormat' },
-      [
-        ['ris', 'RIS'],
-        ['bibtex', 'BibTeX'],
-        ['csv', 'CSV metadata'],
-        ['json', 'JSON backup'],
-      ].map(([value, label]) => el('option', { value }, label)),
+      Object.entries(EXPORT_FORMATS).map(([value, metadata]) =>
+        el('option', { value }, metadata.shortLabel),
+      ),
     );
     root.append(
       el(
