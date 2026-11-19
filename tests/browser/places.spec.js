@@ -365,7 +365,11 @@ test('search and review updates preserve keyboard position without stealing back
   expect(await page.evaluate(() => document.activeElement.tagName)).not.toBe('BODY');
   await page.getByRole('button', { name: 'Remove from collection', exact: true }).click();
   await page.getByRole('button', { name: 'Undo removal', exact: true }).click();
-  expect(await page.evaluate(() => document.activeElement.tagName)).not.toBe('BODY');
+  // Undo awaits browser storage before rebuilding the list and restoring focus.
+  await expect(page.locator('#collectionCount')).toHaveText('1');
+  await expect(
+    page.getByRole('heading', { name: 'Abydos in your collection', exact: true }),
+  ).toBeFocused();
 });
 test('mobile Places compacts geography, retains expansion choice and brings publications forward', async ({
   page,
