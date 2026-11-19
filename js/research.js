@@ -3,6 +3,7 @@ import { normalizeWork } from './data.js';
 import { el, notify } from './dom.js';
 import { researchData, reviewDecision } from './research-store.js';
 import { serializeCollection } from './collection.js';
+import { downloadText } from './download.js';
 function network(data) {
   const refs = data.references.slice(0, 100),
     seeds = data.seeds;
@@ -252,13 +253,11 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
         'button',
         {
           class: 'text-button',
-          onclick: () => {
-            const url = URL.createObjectURL(
-              new Blob([serializeCollection(getSaved())], { type: 'application/json' }),
-            );
-            el('a', { href: url, download: 'medjat-research-backup.json' }).click();
-            setTimeout(() => URL.revokeObjectURL(url), 1000);
-          },
+          onclick: () =>
+            downloadText(serializeCollection(getSaved()), {
+              type: 'application/json',
+              filename: 'medjat-research-backup.json',
+            }),
         },
         'Download research backup with review decisions',
       ),

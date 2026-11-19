@@ -1,6 +1,7 @@
 import { doiURL, normalizeDOI, normalizeWork, plainText, safeURL } from './data.js';
 import { getWork, getCitation } from './crossref.js';
 import { el, icon, externalLink, emptyState, notify } from './dom.js';
+import { downloadText } from './download.js';
 import { createCover } from './covers.js';
 import { loadGazetteer, placesForWork } from './place-data.js';
 
@@ -321,15 +322,11 @@ export function createInspector(
           'button',
           {
             class: 'text-button',
-            onclick: () => {
-              const blob = new Blob([JSON.stringify(work.raw, null, 2)], {
+            onclick: () =>
+              downloadText(JSON.stringify(work.raw, null, 2), {
                 type: 'application/json',
-              });
-              const url = URL.createObjectURL(blob);
-              const link = el('a', { href: url, download: 'crossref-record.json' });
-              link.click();
-              setTimeout(() => URL.revokeObjectURL(url), 1000);
-            },
+                filename: 'crossref-record.json',
+              }),
           },
           icon('download'),
           'Download source metadata',

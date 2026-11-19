@@ -1,6 +1,7 @@
 import { aggregateSearch, facetRows, typeID, decadeRows } from './aggregates.js';
 import { bibliographicTerms } from './crossref.js';
 import { el, icon } from './dom.js';
+import { downloadText } from './download.js';
 import { csvCell } from './export.js';
 import { TYPES } from './data.js';
 function filterDescription(query) {
@@ -59,14 +60,10 @@ export function createVisualize(root, { onRefine }) {
       'Scope',
       'Whole applied Crossref query; approximate facets; missing buckets are not zero; keyword candidates are not a verified subject corpus.',
     );
-    const url = URL.createObjectURL(
-      new Blob([rows.map((row) => row.map(csvCell).join(',')).join('\r\n')], {
-        type: 'text/csv;charset=utf-8',
-      }),
-    );
-    const link = el('a', { href: url, download: 'medjat-whole-search-summary.csv' });
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    downloadText(rows.map((row) => row.map(csvCell).join(',')).join('\r\n'), {
+      type: 'text/csv;charset=utf-8',
+      filename: 'medjat-whole-search-summary.csv',
+    });
   }
   function panel(title, rows, { note, refine = () => null, denominator = null } = {}) {
     const section = el(
