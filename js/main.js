@@ -1,3 +1,4 @@
+import { createVisualize } from './visualize.js';
 import { PERIODS, TYPES, readQuery, queryString, authorLine, doiURL } from './data.js';
 import { searchWorks, getWork, bibliographicTerms, DATE_BROWSE_LIMIT } from './crossref.js';
 import { readSession, writeSession } from './session.js';
@@ -66,7 +67,7 @@ function saveSession() {
 }
 function updateURL({ push = false } = {}) {
   const params = new URLSearchParams(queryString(state.query));
-  if (state.view === 'collection') params.set('view', 'collection');
+  if (state.view !== 'explore') params.set('view', state.view);
   const work = inspector.getCurrentWork();
   if (work) params.set('record', work.doi);
   if ($('research').classList.contains('mobile-detail-open')) params.set('detail', '1');
@@ -97,6 +98,7 @@ function syncControls() {
 function readDraft() {
   return {
     q: $('searchInput').value.trim() || 'ancient egypt',
+    container: state.draft.container || '',
     period: $('periodSelect').value,
     from: $('yearFrom').value,
     to: $('yearTo').value,
@@ -125,6 +127,7 @@ function renderAppliedQuery() {
   const chips = [
     period && `Period keywords: ${period.name}`,
     query.type && TYPES.get(query.type),
+    query.container && `Venue: ${query.container}`,
     query.from && `From ${query.from}`,
     query.to && `To ${query.to}`,
     query.abstract && 'Has abstract',
@@ -248,8 +251,31 @@ async function toggleSave(work) {
       $('undoRemoval')
     )?.focus({ preventScroll: true });
 }
+const visualizer = createVisualize($('visualize'), {
+  onRefine(filter) {
+    Object.assign(state.query, filter);
+    Object.assign(state.draft, filter);
+    syncControls();
+    setView('explore', { load: false });
+    runSearch();
+  },
+});
 function setView(view, { navigate = true, syncURL = true, load = true } = {}) {
   if (navigate) cancelRestoration();
+  $('visualize').hidden = view !== 'visualize';
+  $('research').hidden = view === 'visualize';
+  $('visualizeNav').setAttribute('aria-pressed', String(view === 'visualize'));
+  if (view === 'visualize') {
+    state.view = view;
+    document.body.classList.remove('is-collection');
+    $('exploreNav').setAttribute('aria-pressed', 'false');
+    $('collectionNav').setAttribute('aria-pressed', 'false');
+    collectionTools.cancel();
+    visualizer.show({ ...(state.resultQuery || state.query) });
+    if (syncURL) updateURL({ push: navigate });
+    return;
+  }
+  visualizer.cancel();
   if (view !== 'collection') collectionTools.cancel();
   $('research').classList.toggle('collection-view', view === 'collection');
   document.body.classList.toggle('is-collection', view === 'collection');
@@ -634,6 +660,7 @@ $('discardDraft').addEventListener('click', () => {
   $('searchInput').focus();
 });
 $('clearFilters').addEventListener('click', (e) => {
+  state.draft.container = '';
   $('filterForm').reset();
   updatePeriodHint();
   submitSearch(e);
@@ -644,6 +671,7 @@ $('aboutToggle').addEventListener('click', () => {
   $('aboutToggle').setAttribute('aria-expanded', String(open));
 });
 $('exploreNav').addEventListener('click', () => setView('explore'));
+$('visualizeNav').addEventListener('click', () => setView('visualize'));
 $('collectionNav').disabled = false;
 $('collectionNav').addEventListener('click', () => setView('collection'));
 $('dismissUndo').addEventListener('click', () => {
@@ -714,7 +742,9 @@ async function restoreLocation(resume = null) {
       : 'ris';
     state.selected = resume?.selected || record;
     syncControls();
-    const view = params.get('view') === 'collection' ? 'collection' : 'explore';
+    const view = ['collection', 'visualize'].includes(params.get('view'))
+      ? params.get('view')
+      : 'explore';
     setView(view, { navigate: false, syncURL: false, load: false });
     if (
       view === 'explore' &&
@@ -722,6 +752,7 @@ async function restoreLocation(resume = null) {
     )
       await runSearch();
     if (navigation !== navigationGeneration) return;
+    if (view === 'visualize') return;
     if (resume?.inspector) inspector.restore(resume.inspector);
     else if (record) {
       const work =

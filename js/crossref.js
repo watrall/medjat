@@ -29,6 +29,7 @@ export function buildSearchURL(query, cursor = '*') {
     params.set('offset', String(offset));
   }
   const filters = [];
+  if (query.container) filters.push(`container-title:${query.container}`);
   if (query.type) filters.push(`type:${query.type}`);
   if (query.from) filters.push(`from-pub-date:${query.from}-01-01`);
   if (query.to) filters.push(`until-pub-date:${query.to}-12-31`);
@@ -58,11 +59,11 @@ function wait(ms, signal) {
 
 export async function request(
   url,
-  { signal, format = 'json', headers = {}, fetcher = fetch } = {},
+  { signal, format = 'json', headers = {}, fetcher = fetch, fresh = false } = {},
 ) {
   const key = `${format}:${url}:${JSON.stringify(headers)}`;
   const found = cache.get(key);
-  if (found && Date.now() - found.time < TTL) return { ...found.result, cached: true };
+  if (!fresh && found && Date.now() - found.time < TTL) return { ...found.result, cached: true };
   const timeout = AbortSignal.timeout(25000);
   const combined = signal ? AbortSignal.any([signal, timeout]) : timeout;
   for (let attempt = 0; attempt < 3; attempt++) {

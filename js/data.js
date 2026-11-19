@@ -174,6 +174,7 @@ export function readQuery(search = '') {
   const year = (key) => (/^\d{4}$/.test(p.get(key) || '') ? p.get(key) : '');
   return {
     q: (p.get('q') || 'ancient egypt').slice(0, 500),
+    container: (p.get('container') || '').slice(0, 500),
     period: PERIODS.some((x) => x.id === p.get('period')) ? p.get('period') : '',
     type: TYPES.has(p.get('type')) ? p.get('type') : '',
     from: year('from'),

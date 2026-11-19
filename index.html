@@ -32,6 +32,7 @@
           <button id="collectionNav" class="nav-button" aria-pressed="false" disabled>
             Collection <span id="collectionCount" class="nav-count">0</span>
           </button>
+          <button id="visualizeNav" class="nav-button" aria-pressed="false">Visualize</button>
         </nav>
         <a
           class="crossref-attribution header-attribution"
@@ -153,6 +154,12 @@
           <button id="discardDraft" class="text-button" type="button">Discard changes</button>
         </div>
       </section>
+      <section
+        id="visualize"
+        class="analysis-view"
+        aria-label="Whole-search visualizations"
+        hidden
+      ></section>
       <section id="research" class="workspace" aria-label="Research workspace" tabindex="-1">
         <details id="refinements" class="refinements" open>
           <summary>Refine search</summary>
