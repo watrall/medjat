@@ -11,8 +11,9 @@ import {
   queryString,
   authorLine,
   normalizeWork,
+  normalizeDOI,
 } from './data.js';
-import { filterChips, readFilterControls, writeFilterControls } from './filters.js';
+import { filterChips, filterEntries, readFilterControls, writeFilterControls } from './filters.js';
 import {
   searchWorks,
   getWork,
@@ -27,6 +28,7 @@ import { createCollectionTools } from './collection-tools.js';
 import { createResultRow } from './result-row.js';
 import { renderSearchFooter, renderSearchNotice } from './search-status.js';
 import { VIEW_CONFIG } from './view-config.js';
+import { createSearchHandoff } from './search-handoff.js';
 import { BREAKPOINTS } from './breakpoints.js';
 import { el, icon, emptyState, notify, skeletons } from './dom.js';
 
@@ -67,9 +69,31 @@ const state = {
   browseLimited: false,
 };
 
+const searchHandoff = createSearchHandoff();
+
 let initialized = false,
   restoringLocation = false;
 let placeReturnContext = null;
+let chartReturn = null;
+let chartPosition = null;
+let chartSearch = false;
+const workspacePositions = new Map();
+
+function captureWorkspace() {
+  return {
+    scrollY: window.scrollY,
+    selected: state.selected,
+    outsideList: Boolean(
+      state.selected && !visibleWorks().some((work) => work.id === state.selected),
+    ),
+    inspector: inspector.capture(),
+    mobileDetail: $('research').classList.contains('mobile-detail-open'),
+  };
+}
+function focusHeading(heading) {
+  heading?.focus({ preventScroll: true });
+  heading?.scrollIntoView({ block: 'start', behavior: 'instant' });
+}
 let navigationGeneration = 0,
   locationController;
 function cancelRestoration() {
@@ -97,9 +121,11 @@ function updateURL({ push = false } = {}) {
   if (state.view === 'places') {
     writePlaceState(params, places.location());
   }
-  const work = inspector.getCurrentWork();
-  if (work) params.set('record', work.doi);
-  if ($('research').classList.contains('mobile-detail-open')) params.set('detail', '1');
+  if (state.view === 'explore' || state.view === 'collection') {
+    const work = inspector.getCurrentWork();
+    if (work) params.set('record', work.doi);
+    if ($('research').classList.contains('mobile-detail-open')) params.set('detail', '1');
+  }
   const next = `${location.pathname}?${params}${location.hash}`;
   if (next !== `${location.pathname}${location.search}${location.hash}`)
     history[initialized && push && !restoringLocation ? 'pushState' : 'replaceState'](
@@ -111,7 +137,15 @@ function updateURL({ push = false } = {}) {
   saveSession();
 }
 function syncControls() {
+  $('searchInput').setCustomValidity('');
+  $('navSearchInput').setCustomValidity('');
   $('searchInput').value = state.draft.q;
+  $('navSearchInput').value = state.draft.q;
+  $('searchField').value = state.draft.field || '';
+  const extraType = document.querySelector(
+    '#morePublicationTypes input[value="' + CSS.escape(state.draft.type || '') + '"]',
+  );
+  if (extraType) setMoreTypes(true);
   writeFilterControls(document, state.draft);
   $('sortSelect').value = state.query.sort;
   updatePeriodHint();
@@ -122,6 +156,7 @@ function readDraft() {
   const filters = readFilterControls(document);
   return {
     q: $('searchInput').value.trim() || DEFAULT_QUERY,
+    ...($('searchField').value ? { field: $('searchField').value } : {}),
     container: state.draft.container || '',
     period: filters.period,
     context: filters.context,
@@ -135,60 +170,138 @@ function readDraft() {
   };
 }
 function renderDraftStatus() {
-  const pending = queryString(state.draft) !== queryString(state.resultQuery || state.query);
-  $('pendingQuery').hidden = !pending || state.loading || state.view === 'collection';
+  const applied = (state.error && state.resultQuery) || state.query;
+  const pending = state.draft.q !== applied.q || state.draft.field !== applied.field;
+  $('pendingQuery').hidden = !pending;
+  $('navSearchDraft').hidden = !pending;
+  const explore = state.view === 'explore';
+  $('primarySearchSubmit').textContent = explore ? 'Search' : 'Search in Explore';
+  $('navSearchForm')
+    .querySelector('button')
+    .setAttribute('aria-label', explore ? 'Search Crossref' : 'Search Crossref and open Explore');
+  $('yearPending').hidden =
+    state.draft.from === state.query.from && state.draft.to === state.query.to;
+  const mode = $('searchField').value;
+  $('navSearchInput').placeholder =
+    mode === 'author'
+      ? 'Search author names'
+      : mode === 'doi'
+        ? 'Enter a DOI'
+        : 'Search publications';
+  $('searchScope').textContent =
+    mode === 'doi'
+      ? 'Look up one exact Crossref record. Publication refinements do not apply.'
+      : mode === 'author'
+        ? 'Search author names in Crossref, with your selected research context.'
+        : 'Search publication metadata in Crossref. Paste a DOI for an exact record.';
 }
 function captureDraft() {
   state.draft = readDraft();
   renderDraftStatus();
   saveSession();
 }
+function focusRefinementAction() {
+  const target = $('clearFilters').disabled
+    ? document.querySelector('.current-filters > summary')
+    : $('clearFilters');
+  target.focus({ preventScroll: true });
+}
+function applyRefinement(patch) {
+  cancelRestoration();
+  state.query = { ...state.query, ...patch };
+  state.draft = { ...state.draft, ...patch };
+  syncControls();
+  runSearch();
+}
 function renderAppliedQuery() {
-  const query = state.resultQuery || state.query;
+  const query = chartSearch && state.loading ? state.query : state.resultQuery || state.query;
   $('effectiveQuery').textContent = state.doiLookup
     ? `Exact DOI lookup: ${query.q}. Topic and publication refinements do not apply.`
-    : `Ranking context sent to Crossref: ${bibliographicTerms(query)}`;
-  const chips = filterChips(query);
-  const addedContext = !state.doiLookup && !query.period && addedSearchTerms(query);
-  $('activeQuery').replaceChildren(
-    ...(addedContext
-      ? [
+    : query.field === 'author'
+      ? `Author names: ${query.q}. Added bibliographic terms: ${addedSearchTerms(query) || 'none'}.`
+      : `Ranking context sent to Crossref: ${bibliographicTerms(query)}`;
+  const current = state.query;
+  const doi = Boolean(normalizeDOI(current.q)) || current.field === 'doi';
+  const entries = doi ? [] : filterEntries(current);
+  if (!doi && !current.period && addedSearchTerms(current))
+    entries.unshift({ key: 'context', label: 'Added terms: ancient Egypt' });
+  const focusedKey = $('currentFilters').contains(document.activeElement)
+    ? document.activeElement?.getAttribute('data-filter-key')
+    : null;
+  $('currentFilters').replaceChildren(
+    el(
+      'p',
+      { class: 'current-search' },
+      `${current.field === 'author' ? 'Author' : doi ? 'DOI' : 'All metadata'}: ${current.q}`,
+    ),
+    ...(entries.length
+      ? entries.map(({ key, label }) =>
           el(
-            'button',
-            {
-              class: 'query-chip text-button',
-              'aria-label': 'Remove added ancient Egypt terms',
-              onclick: () => {
-                state.query = { ...query, context: false };
-                state.draft.context = false;
-                syncControls();
-                runSearch();
-                $('addEgyptContext').focus({ preventScroll: true });
+            'div',
+            { class: 'current-filter' },
+            el('span', {}, label),
+            el(
+              'button',
+              {
+                type: 'button',
+                class: 'remove-filter',
+                'data-filter-key': key,
+                'aria-label':
+                  key === 'context'
+                    ? 'Remove added ancient Egypt terms'
+                    : `Remove filter: ${label}`,
+                onclick: () => {
+                  applyRefinement({
+                    [key]: ['context', 'abstract', 'orcid', 'references'].includes(key)
+                      ? false
+                      : '',
+                  });
+                  focusRefinementAction();
+                },
               },
-            },
-            'Added terms: ancient Egypt · Remove',
+              icon('x'),
+            ),
           ),
-        ]
-      : []),
-    ...chips.map((text) => el('span', { class: 'query-chip' }, text)),
+        )
+      : [
+          el(
+            'p',
+            { class: 'filter-help' },
+            doi ? 'Refinements do not apply to DOI lookups.' : 'No refinements applied.',
+          ),
+        ]),
   );
-  $('activeQuery').hidden = state.view === 'collection' || (!addedContext && chips.length === 0);
+  if (focusedKey)
+    $('currentFilters')
+      .querySelector(`[data-filter-key="${focusedKey}"]`)
+      ?.focus({ preventScroll: true });
+  $('filterCount').textContent = entries.length ? `(${entries.length})` : '';
+  $('clearFilters').disabled = !entries.length;
+  $('activeQuery').replaceChildren(
+    ...filterChips(query).map((text) => el('span', { class: 'query-chip' }, text)),
+  );
+  $('activeQuery').hidden =
+    state.view === 'collection' ||
+    Boolean(normalizeDOI(query.q)) ||
+    query.field === 'doi' ||
+    !$('activeQuery').childElementCount;
 }
 const inspector = createInspector($('inspector'), {
   onClose: closeInspector,
   onSave: toggleSave,
   onPlace: (place) => {
-    placeReturnContext = {
-      view: state.view === 'collection' ? 'collection' : 'explore',
-      inspector: inspector.capture(),
-      selected: state.selected,
-      mobileDetail: $('research').classList.contains('mobile-detail-open'),
-    };
+    placeReturnContext = { view: state.view, ...captureWorkspace() };
     setView('places', {
-      placeOptions: { place: place.id, mode: 'discover', origin: placeOrigin(placeReturnContext) },
+      placeOptions: {
+        place: place.id,
+        mode: 'discover',
+        origin: placeOrigin(placeReturnContext),
+        focus: true,
+      },
     });
   },
   isSaved: (id) => state.collection.has(id),
+  savedLabel: 'Remove from collection',
   onChange: saveSession,
   onNavigate: () => {
     cancelRestoration();
@@ -226,6 +339,20 @@ const collectionTools = createCollectionTools($('collectionTools'), {
     if (format) state.exportFormat = format;
     saveSession();
   },
+  onMap() {
+    placeReturnContext = { view: 'collection', mapCollection: true, ...captureWorkspace() };
+    setView('places', {
+      placeOptions: {
+        place: '',
+        mode: 'collection',
+        status: 'all',
+        origin: placeOrigin(placeReturnContext),
+        focus: true,
+      },
+    });
+  },
+  onReview: () => changeReview.run(),
+  onDiscover: () => researcher.run(),
   async onImport(imported) {
     const result = await collectionStore.change({ import: imported.records });
     state.collection = result.records;
@@ -237,7 +364,7 @@ const collectionTools = createCollectionTools($('collectionTools'), {
     return `Imported collection. ${state.collection.size} publications saved. Records are matched by DOI.${result.warning ? ' Changes are kept for this visit only.' : ''}`;
   },
 });
-const changeReview = createChangeReview($('changeReview'), {
+const changeReview = createChangeReview(collectionTools.changeReview, {
   getRecords: () => state.collection,
   onInspect: selectWork,
   onAccept: async (work, savedAt, expectedRaw) => {
@@ -246,10 +373,11 @@ const changeReview = createChangeReview($('changeReview'), {
     state.storageWarning = result.warning;
     renderList();
     renderStatus();
-    if (inspector.getCurrentWork()?.id === work.id) renderInspector(work);
+    if (state.view === 'collection' && inspector.getCurrentWork()?.id === work.id)
+      renderInspector(work);
   },
 });
-const researcher = createResearch($('researchTools'), {
+const researcher = createResearch(collectionTools.research, {
   getSeeds: () =>
     [...state.collection.values()]
       .map((entry) => entry.work)
@@ -335,38 +463,71 @@ const places = createPlaces($('places'), {
   onSession: saveSession,
 });
 function placeOrigin(context) {
-  if (!context?.inspector?.current?.raw) return null;
+  if (!context?.mapCollection && !context?.inspector?.current?.raw) return null;
+  const mapCollection = context.mapCollection;
   return {
-    work: normalizeWork(context.inspector.current.raw),
+    work: mapCollection ? null : normalizeWork(context.inspector.current.raw),
+    label: mapCollection ? 'Back to collection' : 'Back to publication',
     async return() {
-      setView(context.view === 'collection' ? 'collection' : 'explore', {
-        load: false,
-        syncURL: false,
-      });
+      placeReturnContext = null;
+      places.clearOrigin();
+      workspacePositions.set(context.view, context);
+      setView(context.view, { load: false, syncURL: false });
       const navigation = navigationGeneration;
       const needsSearch = state.view === 'explore' && !state.resultQuery;
       if (needsSearch) await runSearch();
-      if (navigation !== navigationGeneration || state.view === 'places') return;
-      state.selected = context.selected;
-      inspector.restore(context.inspector);
-      renderList();
-      if (context.mobileDetail) $('research').classList.add('mobile-detail-open');
+      if (navigation !== navigationGeneration || state.view !== context.view) return;
+      if (mapCollection) {
+        $('mapCollection').focus({ preventScroll: true });
+        window.scrollTo({ top: context.scrollY || 0, behavior: 'instant' });
+      } else {
+        state.selected = context.selected;
+        renderList();
+        if (context.mobileDetail) $('research').classList.add('mobile-detail-open');
+        inspector.restore(context.inspector);
+      }
       updateURL({ push: !needsSearch });
     },
   };
 }
 const visualizer = createVisualize($('visualize'), {
-  onRefine(filter) {
-    Object.assign(state.query, filter);
+  onRefine(query, filter, trigger) {
+    chartReturn = { trigger, scrollY: window.scrollY };
+    chartSearch = true;
+    state.query = { ...query, ...filter };
     Object.assign(state.draft, filter);
     syncControls();
-    setView('explore', { load: false });
+    setView('explore', { load: false, syncURL: false });
     runSearch();
+    focusHeading($('resultsTitle'));
   },
 });
-function setView(view, { navigate = true, syncURL = true, load = true, placeOptions } = {}) {
+$('backToChart').addEventListener('click', () => {
+  const { trigger, scrollY } = chartReturn;
+  setView('visualize', { resumeChart: true });
+  window.scrollTo({ top: scrollY, behavior: 'instant' });
+  trigger.focus({ preventScroll: true });
+});
+$('visualizeResults').addEventListener('click', () => {
+  setView('visualize');
+  focusHeading($('visualize').querySelector('h2'));
+});
+function setView(
+  view,
+  { navigate = true, syncURL = true, load = true, placeOptions, resumeChart = false } = {},
+) {
+  const previousView = state.view;
+  const switching = view !== previousView;
+  if (navigate && !switching && !placeOptions) return;
   if (navigate) cancelRestoration();
+  if (navigate && switching && (previousView === 'explore' || previousView === 'collection'))
+    workspacePositions.set(previousView, captureWorkspace());
+  if (switching && previousView === 'places') places.cancel();
+  if (switching && previousView === 'visualize')
+    chartPosition = { title: $('visualize').querySelector('h2'), scrollY: window.scrollY };
+  const position = navigate ? workspacePositions.get(view) : null;
   const config = VIEW_CONFIG[view];
+  searchHandoff.setView(view);
   const skip = document.querySelector('.skip-link');
   skip.href = `#${config.skipTarget}`;
   skip.textContent = config.skipLabel;
@@ -381,33 +542,31 @@ function setView(view, { navigate = true, syncURL = true, load = true, placeOpti
   $('places').hidden = view !== 'places';
   $('visualize').hidden = view !== 'visualize';
   $('research').hidden = view === 'places' || view === 'visualize';
-  if (view !== 'places') places.cancel();
-  if (view !== 'collection') {
-    changeReview.cancel();
-    researcher.cancel();
-  }
+  state.view = view;
+  renderDraftStatus();
+  if (view !== 'collection') collectionTools.cancel();
+  if (view !== 'visualize') visualizer.cancel();
   if (view === 'places') {
-    state.view = view;
-    collectionTools.cancel();
-    visualizer.cancel();
     renderStatus();
+    if (navigate) window.scrollTo({ top: 0, behavior: 'instant' });
     if (placeOptions) places.show(placeOptions);
     else places.restore();
     if (syncURL) updateURL({ push: navigate });
     return;
   }
   if (view === 'visualize') {
-    state.view = view;
-    collectionTools.cancel();
-    visualizer.show({ ...(state.resultQuery || state.query) });
+    renderStatus();
+    if (!resumeChart) {
+      chartReturn = null;
+      visualizer.show({ ...(state.resultQuery || state.query) });
+      const sameChart = chartPosition?.title === $('visualize').querySelector('h2');
+      if (navigate)
+        window.scrollTo({ top: sameChart ? chartPosition.scrollY : 0, behavior: 'instant' });
+    }
     if (syncURL) updateURL({ push: navigate });
     return;
   }
-  visualizer.cancel();
-  if (view !== 'collection') collectionTools.cancel();
   $('research').classList.toggle('collection-view', view === 'collection');
-  state.view = view;
-  renderDraftStatus();
   $('research').classList.remove('mobile-detail-open');
   $('refinements').hidden = view === 'collection';
   $('sortSelect').parentElement.hidden = view === 'collection';
@@ -416,42 +575,31 @@ function setView(view, { navigate = true, syncURL = true, load = true, placeOpti
   const title = view === 'collection' ? 'Your collection' : 'Publications';
   if ($('resultsTitle').tagName.toLowerCase() !== heading)
     $('resultsTitle').replaceWith(
-      el(heading, { id: 'resultsTitle', class: 'results-title' }, title),
+      el(heading, { id: 'resultsTitle', class: 'results-title', tabindex: '-1' }, title),
     );
   else $('resultsTitle').textContent = title;
   $('collectionTools').hidden = view !== 'collection';
-  $('researchTools').hidden = view !== 'collection';
-  $('changeReview').hidden = view !== 'collection';
-  if (view !== 'collection') changeReview.cancel();
   $('searchExplanation').hidden = view === 'collection';
-  if (view === 'collection') renderCollectionTools();
-  const work = visibleWorks().find((w) => w.id === state.selected) || visibleWorks()[0];
-  state.selected = work?.id || null;
-  renderInspector(work);
+  const selected = navigate ? position?.selected : state.selected;
+  const works = visibleWorks();
+  const work = works.find((work) => work.id === selected) || works[0];
+  const reading = position?.inspector;
+  // References and inspected candidates may have no corresponding row.
+  const restore = reading && (work?.id === selected || position.outsideList);
+  state.selected = restore ? selected : work?.id || null;
   renderList();
+  if (restore) {
+    if (position.mobileDetail && matchMedia(BREAKPOINTS.mobile).matches)
+      $('research').classList.add('mobile-detail-open');
+    inspector.restore(reading, { restorePage: false });
+  } else {
+    renderInspector(work);
+    $('inspector').scrollTop = 0;
+  }
   renderStatus();
+  if (navigate) window.scrollTo({ top: position?.scrollY || 0, behavior: 'instant' });
   if (syncURL) updateURL({ push: navigate });
   if (view === 'explore' && !state.resultQuery && !state.loading && load) runSearch();
-}
-function renderCollectionTools() {
-  changeReview.cancel();
-  researcher.cancel();
-  $('changeReview').replaceChildren(
-    el(
-      'button',
-      { class: 'button', onclick: () => changeReview.run() },
-      'Check saved publications for metadata changes',
-    ),
-  );
-  $('researchTools').hidden = false;
-  $('researchTools').replaceChildren(
-    el(
-      'button',
-      { class: 'button', onclick: () => researcher.run() },
-      'Discover references from selected or saved publications',
-    ),
-  );
-  collectionTools.sync();
 }
 function renderInspector(work) {
   inspector.show(work);
@@ -480,7 +628,7 @@ function selectWork(work) {
 function renderList() {
   const list = $('resultList');
   list.setAttribute('aria-busy', String(state.view === 'explore' && state.loading));
-  if (state.view === 'explore' && state.loading && !state.items.length) {
+  if (state.view === 'explore' && state.loading && (!state.items.length || chartSearch)) {
     list.replaceChildren(...skeletons());
     return;
   }
@@ -554,10 +702,17 @@ function toggleSelection(id, checked) {
   saveSession();
 }
 function renderStatus() {
+  $('research').classList.toggle(
+    'chart-searching',
+    state.view === 'explore' && state.loading && chartSearch,
+  );
   $('collectionUndo').hidden = !state.lastRemoved;
   if (state.lastRemoved)
     $('removedTitle').textContent = `Removed “${state.lastRemoved.work.title}”.`;
   $('collectionCount').textContent = state.collection.size;
+  $('visualizeResults').hidden =
+    state.view !== 'explore' || !state.resultQuery || state.doiLookup || state.loading;
+  $('backToChart').hidden = state.view !== 'explore' || !chartReturn;
   if (state.view === 'collection') {
     collectionTools.sync();
     $('resultCount').textContent =
@@ -572,6 +727,7 @@ function renderStatus() {
       );
     return;
   }
+  if (state.view !== 'explore') return;
   const previous =
     state.items.length &&
     state.resultQuery &&
@@ -588,7 +744,9 @@ function renderStatus() {
       : `Sorted by publication date, ${resultQuery.sort === 'oldest' ? 'oldest' : 'newest'} first`;
   $('scopeNote').textContent = state.doiLookup
     ? 'DOI lookup opens one exact Crossref record; topic and publication filters do not apply.'
-    : `${previous ? `Showing the last successful search for “${resultQuery.q}”. ` : `Results for “${resultQuery.q}”. `}${ranking}${state.retrievedAt ? ` · ${state.cached ? 'cached' : 'retrieved'} ${new Date(state.retrievedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}. Relevance and coverage vary.${resultQuery.sort !== 'relevance' ? ` Date-sorted browsing covers the first ${DATE_BROWSE_LIMIT.toLocaleString()} candidates; narrow your search for more focused results.` : ''}`;
+    : chartSearch && state.loading
+      ? `Applying chart filters in Crossref for “${state.query.q}”.`
+      : `${previous ? `Showing the last successful search for “${resultQuery.q}”. ` : `Results for “${resultQuery.q}”. `}${ranking}${state.retrievedAt ? ` · ${state.cached ? 'cached' : 'retrieved'} ${new Date(state.retrievedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}. Relevance and coverage vary.${resultQuery.sort !== 'relevance' ? ` Date-sorted browsing covers the first ${DATE_BROWSE_LIMIT.toLocaleString()} candidates; narrow your search for more focused results.` : ''}`;
   renderSearchNotice($('requestNotice'), {
     error: state.error,
     retryable: state.errorRetryable,
@@ -637,8 +795,7 @@ async function runSearch(append = false) {
     state.doiLookup = result.doiLookup;
     state.browseLimited = result.browseLimited;
     state.resultQuery = requestedQuery;
-    renderAppliedQuery();
-    if (!append) {
+    if (!append && state.view === 'explore') {
       const selected = state.items.find((work) => work.id === state.selected) || state.items[0];
       state.selected = selected?.id || null;
       renderInspector(selected);
@@ -656,8 +813,12 @@ async function runSearch(append = false) {
   } finally {
     if (requestId === state.requestId) {
       state.loading = false;
-      renderList();
-      renderStatus();
+      chartSearch = false;
+      renderAppliedQuery();
+      if (state.view === 'explore') {
+        renderList();
+        renderStatus();
+      }
       renderDraftStatus();
       updateURL();
     }
@@ -671,44 +832,102 @@ function updatePeriodHint() {
 for (const period of PERIODS) {
   $('periodSelect').append(el('option', { value: period.id }, period.name));
 }
-$('periodSelect').addEventListener('change', updatePeriodHint);
+function setMoreTypes(open) {
+  $('morePublicationTypes').hidden = !open;
+  $('showPublicationTypes').setAttribute('aria-expanded', String(open));
+  $('showPublicationTypes').textContent = open ? 'Show fewer types' : 'Show more types';
+}
+$('showPublicationTypes').addEventListener('click', () =>
+  setMoreTypes($('morePublicationTypes').hidden),
+);
 $('sortSelect').addEventListener('change', (e) => {
   cancelRestoration();
   state.query.sort = e.target.value;
   state.draft = readDraft();
   runSearch();
 });
-function submitSearch(e) {
-  e.preventDefault();
-  for (const control of $('filterForm').elements) {
-    if (!control.checkValidity()) {
+function validateYears() {
+  for (const id of ['yearFrom', 'yearTo']) {
+    if (!$(id).checkValidity()) {
       $('refinements').open = true;
-      control.reportValidity();
-      return;
+      $('yearRefinement').open = true;
+      $(id).reportValidity();
+      return false;
     }
   }
   const from = $('yearFrom').value;
   const to = $('yearTo').value;
-  if (from && to && Number(from) > Number(to)) {
+  const invalid = from && to && Number(from) > Number(to);
+  $('filterError').hidden = !invalid;
+  if (invalid) {
     $('refinements').open = true;
+    $('yearRefinement').open = true;
     $('filterError').textContent = 'The start year must come before the end year.';
-    $('filterError').hidden = false;
     $('filterError').setAttribute('tabindex', '-1');
     $('filterError').focus();
+    return false;
+  }
+  return true;
+}
+function submitSearch(e) {
+  e.preventDefault();
+  captureDraft();
+  $('searchError').hidden = true;
+  if (state.draft.field === 'doi' && !normalizeDOI(state.draft.q)) {
+    $('searchError').textContent =
+      'Enter a complete DOI, such as 10.1234/example, or choose All metadata.';
+    $('searchError').hidden = false;
+    searchHandoff.searchInput().setCustomValidity($('searchError').textContent);
+    searchHandoff.searchInput().reportValidity();
     return;
   }
-  $('filterError').hidden = true;
+  if (!validateYears()) return;
   cancelRestoration();
-  state.draft = readDraft();
+  const fromWorkspace = state.view !== 'explore';
+  chartReturn = null;
+  chartSearch = false;
   state.query = { ...state.draft };
   runSearch();
+  if (fromWorkspace) focusHeading($('resultsTitle'));
 }
-$('searchForm').addEventListener('submit', submitSearch);
-$('filterForm').addEventListener('submit', submitSearch);
-for (const form of [$('searchForm'), $('filterForm')]) {
-  form.addEventListener('input', captureDraft);
-  form.addEventListener('change', captureDraft);
+for (const id of ['searchForm', 'navSearchForm']) $(id).addEventListener('submit', submitSearch);
+$('filterForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  if (!validateYears()) return;
+  applyRefinement({ from: $('yearFrom').value, to: $('yearTo').value });
+});
+for (const id of ['searchInput', 'navSearchInput']) {
+  $(id).addEventListener('input', () => {
+    const other = id === 'searchInput' ? 'navSearchInput' : 'searchInput';
+    $(other).value = $(id).value;
+    $('searchInput').setCustomValidity('');
+    $('navSearchInput').setCustomValidity('');
+    $('searchError').hidden = true;
+    captureDraft();
+  });
 }
+$('searchField').addEventListener('change', () => {
+  $('searchInput').setCustomValidity('');
+  $('navSearchInput').setCustomValidity('');
+  $('searchError').hidden = true;
+  captureDraft();
+});
+$('filterForm').addEventListener('input', captureDraft);
+$('filterForm').addEventListener('change', (e) => {
+  captureDraft();
+  const target = e.target;
+  const filter =
+    target.name === 'publicationType'
+      ? 'type'
+      : {
+          periodSelect: 'period',
+          addEgyptContext: 'context',
+          hasAbstract: 'abstract',
+          hasOrcid: 'orcid',
+          hasReferences: 'references',
+        }[target.id];
+  if (filter) applyRefinement({ [filter]: state.draft[filter] });
+});
 $('discardDraft').addEventListener('click', () => {
   state.draft = { ...(state.resultQuery || state.query) };
   state.query = { ...state.draft };
@@ -716,18 +935,29 @@ $('discardDraft').addEventListener('click', () => {
   syncControls();
   renderStatus();
   updateURL();
-  $('searchInput').focus();
+  searchHandoff.searchInput().focus();
 });
-$('clearFilters').addEventListener('click', (e) => {
-  state.draft.container = '';
-  $('filterForm').reset();
-  updatePeriodHint();
-  submitSearch(e);
+$('clearFilters').addEventListener('click', () => {
+  applyRefinement({
+    period: '',
+    context: false,
+    container: '',
+    type: '',
+    from: '',
+    to: '',
+    abstract: false,
+    orcid: false,
+    references: false,
+  });
+  focusRefinementAction();
 });
-$('aboutToggle').addEventListener('click', () => {
-  const open = $('aboutPanel').hidden;
-  $('aboutPanel').hidden = !open;
-  $('aboutToggle').setAttribute('aria-expanded', String(open));
+document.querySelector('.search-help-link').addEventListener('click', (event) => {
+  event.preventDefault();
+  if (state.view !== 'explore') setView('explore');
+  $('searchExplanation').open = true;
+  const summary = $('searchExplanation').querySelector('summary');
+  summary.focus();
+  summary.scrollIntoView({ block: 'nearest' });
 });
 $('exploreNav').addEventListener('click', () => setView('explore'));
 $('placesNav').addEventListener('click', () => setView('places'));

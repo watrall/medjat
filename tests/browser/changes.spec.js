@@ -19,6 +19,7 @@ test('metadata changes require explicit acceptance', async ({ page }) => {
   await expect(page.locator('.result-row')).toHaveCount(1);
   await page.locator('.save-button').click();
   await page.locator('#collectionNav').click();
+  await page.getByText('Collection tools', { exact: true }).click();
   await page.getByRole('button', { name: 'Check saved publications for metadata changes' }).click();
   await expect(page.locator('#changeReview')).toContainText('2 changed fields');
   await expect(page.locator('.result-open')).toHaveText('Excavations at Abydos');

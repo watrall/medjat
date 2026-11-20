@@ -8,7 +8,7 @@ The explorer covers ancient Egypt from the Predynastic to Roman Egypt. It is bui
 
 ## Research workflow
 
-1. **Discover.** Search a topic, site, author, or DOI. Use the left-hand refinements to add a historical period, publication year, type, or metadata requirement. Historical period adds keywords; the other controls use supported Crossref filters. Apply these together with Update search or the main Search button.
+1. **Discover.** Search a topic, site, author, or DOI. Use the left-hand refinements to add a historical period, publication year, type, or metadata requirement. Historical period adds keywords; the other controls use supported Crossref filters. Discrete refinements apply immediately while unfinished search text stays intact. Apply publication years with Apply range. The main search and the compact search in the sticky header share a draft; either Search action opens Explore.
 2. **Evaluate.** Open a publication beside the results. Read its deposited abstract, authors, identifiers, affiliations, funding, licenses, and source metadata where available.
 3. **Follow connections.** Inspect references and deposited relations without losing the original results. Return to the preceding publication in the inspector.
 4. **Collect.** Save publications from either the results or the inspector. The collection is matched by DOI and retained in the current browser.

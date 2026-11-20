@@ -1,5 +1,6 @@
 import { aggregateSearch, typeID } from './aggregates.js';
-import { bibliographicTerms } from './crossref.js';
+import { addedSearchTerms, bibliographicTerms } from './crossref.js';
+import { queryString } from './data.js';
 import { el, icon } from './dom.js';
 import { downloadText } from './download.js';
 import { csvCell } from './export.js';
@@ -7,7 +8,7 @@ import { filterDescription } from './filters.js';
 export function createVisualize(root, { onRefine }) {
   let controller,
     generation = 0,
-    current;
+    renderedQuery;
   const number = (value) => Number(value).toLocaleString();
   function download(result) {
     const rows = [
@@ -53,7 +54,7 @@ export function createVisualize(root, { onRefine }) {
       filename: 'medjat-whole-search-summary.csv',
     });
   }
-  function panel(title, rows, { note, refine = () => null, denominator = null } = {}) {
+  function panel(title, rows, { query, note, refine = () => null, denominator = null } = {}) {
     const section = el(
       'section',
       { class: 'chart-panel' },
@@ -61,7 +62,7 @@ export function createVisualize(root, { onRefine }) {
       el('p', { class: 'scope-note' }, note),
     );
     if (!rows.length) {
-      section.append(el('p', {}, 'No aggregate values were supplied for this chart.'));
+      section.append(el('p', { class: 'scope-note' }, 'No data for this chart in the sample.'));
       return section;
     }
     const max = Math.max(...rows.map(([, count]) => count), denominator || 1);
@@ -90,19 +91,37 @@ export function createVisualize(root, { onRefine }) {
                 'button',
                 {
                   class: 'chart-category',
-                  onclick: () => {
-                    const choice = el(
-                      'div',
-                      { class: 'chart-choice', role: 'status' },
-                      el('p', {}, `${label}: approximately ${number(count)} candidates.`),
+                  'aria-expanded': 'false',
+                  onclick: (event) => {
+                    const category = event.currentTarget;
+                    const expanded = category.getAttribute('aria-expanded') === 'true';
+                    list
+                      .querySelector('[aria-expanded="true"]')
+                      ?.setAttribute('aria-expanded', 'false');
+                    list.querySelector('.chart-choice')?.remove();
+                    if (expanded) return;
+                    category.setAttribute('aria-expanded', 'true');
+                    category.after(
                       el(
-                        'button',
-                        { class: 'button', onclick: () => onRefine(filter) },
-                        'Explore these publications',
+                        'div',
+                        { class: 'chart-choice' },
+                        el(
+                          'p',
+                          { class: 'scope-note' },
+                          'Run a fresh Crossref search with this filter.',
+                        ),
+                        el(
+                          'button',
+                          {
+                            class: 'button',
+                            onclick: (event) => onRefine(query, filter, event.currentTarget),
+                          },
+                          filter.type && label === 'Book chapter'
+                            ? 'Search for book chapters'
+                            : `Search by ${filter.type ? 'type' : filter.container ? 'venue' : 'date'}: ${label}`,
+                        ),
                       ),
                     );
-                    section.querySelector('.chart-choice')?.remove();
-                    section.append(choice);
                   },
                 },
                 content,
@@ -143,25 +162,33 @@ export function createVisualize(root, { onRefine }) {
     );
     return section;
   }
+  function heading(query) {
+    return el(
+      'h2',
+      { tabindex: '-1' },
+      query.field === 'author'
+        ? `Analyzing Crossref results for author “${query.q}”`
+        : `Analyzing Crossref results for “${query.q}”`,
+    );
+  }
   async function show(query, fresh = false) {
+    const key = queryString(query);
+    if (!fresh && renderedQuery === key) return;
+    renderedQuery = null;
     controller?.abort();
     controller = new AbortController();
     const id = ++generation;
+    const title = heading(query);
     root.replaceChildren(
-      el('h2', {}, 'Visualize your search'),
-      el(
-        'p',
-        { class: 'analysis-intro' },
-        'Ranked summaries from Crossref. These charts describe the first matches by relevance, not a corpus census.',
-      ),
-      el('p', {}, `Ranking context: ${bibliographicTerms(query)}`),
-      el('p', { role: 'status' }, 'Retrieving ranked summaries…'),
+      title,
+      el('p', { class: 'scope-note', role: 'status' }, 'Retrieving ranked summaries…'),
     );
+    if (fresh) title.focus();
     try {
       const result = await aggregateSearch(query, { signal: controller.signal, fresh });
       if (id !== generation) return;
-      current = result;
-      root.replaceChildren(el('h2', {}, 'Visualize your search'));
+      renderedQuery = key;
+      title.nextElementSibling.remove();
       if (result.doi) {
         root.append(
           el('p', {}, 'An exact DOI identifies one record, not a comparative search.'),
@@ -174,18 +201,28 @@ export function createVisualize(root, { onRefine }) {
         );
         return;
       }
+      const sample = `${number(result.window)} relevance-ranked ${result.window === 1 ? 'match' : 'matches'}`;
+      const summary = !result.window
+        ? 'Crossref returned no records for this chart sample.'
+        : result.total === null
+          ? `Charts describe ${sample}. The overall match count is unavailable.`
+          : result.total > result.window
+            ? `Charts describe the first ${sample}. Crossref lists ${number(result.total)} keyword matches.`
+            : `Charts include all ${sample}.`;
       root.append(
+        el('p', { class: 'analysis-intro' }, summary),
         el(
           'p',
-          { class: 'analysis-intro' },
-          `${result.total === null ? 'Match total unavailable' : result.total > result.window ? `Charts describe the first ${number(result.window)} relevance-ranked matches. Crossref lists ${number(result.total)} keyword matches, a count that includes any matching word.` : `${number(result.total)} ranked matches. All are included in the charts.`}`,
+          { class: 'scope-note' },
+          query.field === 'author'
+            ? `Added bibliographic terms: ${addedSearchTerms(query) || 'none'}.`
+            : `Ranking terms: ${bibliographicTerms(query)}`,
         ),
-        el('p', {}, `Ranking context: ${bibliographicTerms(query)}`),
         el('p', { class: 'scope-note' }, filterDescription(query)),
         el(
           'p',
           { class: 'scope-note' },
-          `Ranked matches retrieved ${new Date(result.finishedAt).toLocaleString()}. Crossref totals count records matching any keyword, so they are not a disciplinary census; the sample can differ between requests.`,
+          `Retrieved ${new Date(result.finishedAt).toLocaleString()}. Crossref counts records that match any keyword. The ranked sample can change between requests.`,
         ),
         el(
           'div',
@@ -198,7 +235,7 @@ export function createVisualize(root, { onRefine }) {
           ),
           el(
             'button',
-            { class: 'button', onclick: () => download(current) },
+            { class: 'button', onclick: () => download(result) },
             icon('download'),
             'Download aggregate CSV',
           ),
@@ -215,6 +252,7 @@ export function createVisualize(root, { onRefine }) {
             ? [...years].reverse()
             : result.decades.map(([year, count]) => [`${year}s`, count]).reverse(),
           {
+            query,
             note: 'Modern publication dates in the ranked sample, newest first. Years absent from the sample are not asserted to be zero. CSV retains individual years.',
             refine: (label) => {
               const year = label.replace(/s$/, '');
@@ -246,12 +284,14 @@ export function createVisualize(root, { onRefine }) {
       grid.append(yearView);
       grid.append(
         panel('Publication types', result.types, {
+          query,
           note: 'Types in the ranked sample. Select a supported category to refine Explore.',
           refine: (label) => (typeID(label) ? { type: typeID(label) } : null),
         }),
       );
       grid.append(
         panel('Leading publication venues', result.venues, {
+          query,
           note: 'Top ten venues in the ranked sample; records without a supplied container title are not counted. Venues containing commas cannot be refined through the API filter.',
           refine: (container) => (container.includes(',') ? null : { container }),
         }),

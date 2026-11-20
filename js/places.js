@@ -141,6 +141,7 @@ export function createPlaces(
       map?.destroy();
       map = null;
       build();
+      if (options.focus) root.querySelector('h1')?.focus({ preventScroll: true });
       try {
         const current = ++mountGeneration;
         const instance = await createPlaceMap(panels.map, {
@@ -298,7 +299,12 @@ export function createPlaces(
       el(
         'div',
         { class: 'places-heading' },
-        el('div', {}, el('h1', {}, 'Places'), el('p', {}, 'Explore scholarship by ancient place.')),
+        el(
+          'div',
+          {},
+          el('h1', { tabindex: '-1' }, 'Places'),
+          el('p', {}, 'Explore scholarship by ancient place.'),
+        ),
         externalLink(['Pleiades gazetteer', icon('external-link')], 'https://pleiades.stoa.org/', {
           class: 'text-button',
         }),
@@ -384,7 +390,7 @@ export function createPlaces(
           'button',
           { class: 'text-button place-return', onclick: () => origin.return() },
           icon('arrow-left'),
-          'Back to publication',
+          origin.label || 'Back to publication',
         ),
       );
     renderPublications();
@@ -628,13 +634,13 @@ export function createPlaces(
               search();
             },
           },
-          el('label', { for: 'placeSearchName' }, 'Search name', name),
-          el('label', { for: 'placeTopic' }, 'Topic (optional)', topicInput),
+          el('label', { for: 'placeSearchName' }, 'Place name in Crossref', name),
+          el('label', { for: 'placeTopic' }, 'Topic for this place (optional)', topicInput),
           el(
             'button',
             { class: 'button button-primary', type: 'submit', disabled: loading },
             icon('search'),
-            'Search Crossref',
+            'Search this place',
           ),
         ),
       ),
@@ -654,7 +660,7 @@ export function createPlaces(
         ),
       ),
     );
-    if (origin) {
+    if (origin?.work) {
       const evidence = placeEvidence(origin.work, current);
       root.insertBefore(
         el(
@@ -747,6 +753,9 @@ export function createPlaces(
     show,
     restore,
     capture,
+    clearOrigin: () => {
+      origin = null;
+    },
     cancel,
     location,
     choose,

@@ -152,3 +152,25 @@ test('transient network failures are retried and aborted requests never fetch', 
     (error) => error.name === 'AbortError',
   );
 });
+
+test('author search keeps names separate from bibliographic refinements and persists its mode', () => {
+  const query = readQuery('?q=Ada+Researcher&field=author&period=new-kingdom');
+  assert.deepEqual(readQuery(queryString(query)), query);
+  const params = new URL(buildSearchURL(query)).searchParams;
+  assert.equal(params.get('query.author'), 'Ada Researcher');
+  assert.equal(params.get('query.bibliographic'), 'New Kingdom Egypt');
+  const plain = new URL(buildSearchURL(readQuery('?q=Ada&field=author&context=0'))).searchParams;
+  assert.equal(plain.has('query.bibliographic'), false);
+  assert.equal(readQuery('?field=title').field, undefined);
+});
+
+test('explicit DOI mode rejects incomplete values before making a request', async () => {
+  await assert.rejects(
+    searchWorks(readQuery('?q=incomplete&field=doi'), {
+      fetcher: async () => {
+        throw new Error('No request should be sent');
+      },
+    }),
+    (error) => error.retryable === false && /Enter a complete DOI/.test(error.message),
+  );
+});

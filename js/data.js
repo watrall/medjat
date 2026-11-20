@@ -174,6 +174,7 @@ export function readQuery(search = '') {
   return {
     q: (p.get('q') || DEFAULT_QUERY).slice(0, 500),
     container: (p.get('container') || '').slice(0, 500),
+    ...(['author', 'doi'].includes(p.get('field')) ? { field: p.get('field') } : {}),
     period: PERIODS.some((x) => x.id === p.get('period')) ? p.get('period') : '',
     context: p.get('context') !== '0',
     type: TYPES.has(p.get('type')) ? p.get('type') : '',

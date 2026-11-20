@@ -54,7 +54,10 @@ export function createInspector(
         : null,
     };
   }
-  function show(next, { fromReference = false, reading = null, silent = false } = {}) {
+  function show(
+    next,
+    { fromReference = false, reading = null, silent = false, restorePage = true } = {},
+  ) {
     generation++;
     work = next;
     tab = ['overview', 'connections', 'cite'].includes(reading?.tab) ? reading.tab : 'overview';
@@ -74,9 +77,10 @@ export function createInspector(
       const target =
         reading.focusKey &&
         root.querySelector(`[data-focus-key="${CSS.escape(reading.focusKey)}"]`);
-      (target || root.querySelector('.detail-title'))?.focus({ preventScroll: true });
+      if (restorePage)
+        (target || root.querySelector('.detail-title'))?.focus({ preventScroll: true });
       root.scrollTop = Number(reading.scrollTop) || 0;
-      window.scrollTo({ top: Number(reading.pageScroll) || 0 });
+      if (restorePage) window.scrollTo({ top: Number(reading.pageScroll) || 0 });
     } else if (fromReference) {
       root.scrollTop = 0;
       root.querySelector('.detail-title')?.focus({ preventScroll: true });
@@ -588,12 +592,12 @@ export function createInspector(
     refresh: render,
     getCurrentWork: () => work,
     capture: () => (work ? { current: readingPosition(), trail } : null),
-    restore(snapshot) {
+    restore(snapshot, { restorePage = true } = {}) {
       const next = normalizeWork(snapshot.current.raw);
       trail = Array.isArray(snapshot.trail)
         ? snapshot.trail.filter((entry) => normalizeDOI(entry?.raw?.DOI))
         : [];
-      show(next, { fromReference: true, reading: snapshot.current, silent: true });
+      show(next, { fromReference: true, reading: snapshot.current, silent: true, restorePage });
     },
   };
 }

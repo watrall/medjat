@@ -1,12 +1,11 @@
 import { el, icon } from './dom.js';
-import { BREAKPOINTS } from './breakpoints.js';
 import { MAX_IMPORT_BYTES, parseCollection } from './collection.js';
 import { researchData } from './research-store.js';
 import { EXPORT_FORMATS, exportCollection, downloadFile, scopedRecords } from './export.js';
 
 export function createCollectionTools(
   root,
-  { getState, onQuery, onSelect, onPreferences, onImport },
+  { getState, onQuery, onSelect, onPreferences, onImport, onMap, onReview, onDiscover },
 ) {
   const noun = (count) => (count === 1 ? 'publication' : 'publications');
   let controller = null,
@@ -82,10 +81,9 @@ export function createCollectionTools(
     },
   });
   const exportSummary = el('summary', {}, 'Export bibliography');
-  const exportLayout = matchMedia(BREAKPOINTS.twoColumn);
   const exportOptions = el(
     'details',
-    { class: 'collection-export-options', open: exportLayout.matches },
+    { class: 'collection-export-options' },
     exportSummary,
     el(
       'div',
@@ -104,8 +102,24 @@ export function createCollectionTools(
       'Saved in this browser. Export a JSON backup to keep a portable copy.',
     ),
   );
-  exportLayout.addEventListener('change', (event) => {
-    if (!controller) exportOptions.open = event.matches;
+  const map = el(
+    'button',
+    { id: 'mapCollection', class: 'text-button', onclick: onMap },
+    'Map saved publications',
+  );
+  const review = el(
+    'button',
+    { class: 'button', onclick: onReview },
+    'Check saved publications for metadata changes',
+  );
+  const discover = el('button', { class: 'button', onclick: onDiscover });
+  const changeReview = el('div', { id: 'changeReview', class: 'research-tools', hidden: true });
+  const research = el('div', { id: 'researchTools', class: 'research-tools', hidden: true });
+  review.addEventListener('click', () => {
+    changeReview.hidden = false;
+  });
+  discover.addEventListener('click', () => {
+    research.hidden = false;
   });
   root.replaceChildren(
     el(
@@ -119,19 +133,32 @@ export function createCollectionTools(
       ),
       el(
         'div',
-        { class: 'selection-controls' },
+        { class: 'collection-actions' },
         selectionSummary,
-        matching,
-        clear,
+        map,
         el(
-          'button',
-          { class: 'text-button', onclick: () => file.click() },
-          icon('library-big'),
-          'Import collection',
+          'details',
+          { class: 'collection-actions-menu' },
+          el('summary', {}, 'Collection tools'),
+          el(
+            'div',
+            { class: 'selection-controls' },
+            matching,
+            clear,
+            el(
+              'button',
+              { class: 'text-button', onclick: () => file.click() },
+              icon('library-big'),
+              'Import collection',
+            ),
+            file,
+          ),
+          exportOptions,
+          el('div', { class: 'selection-controls' }, review, discover),
+          changeReview,
+          research,
         ),
-        file,
       ),
-      exportOptions,
     ),
   );
   function counts() {
@@ -181,6 +208,10 @@ export function createCollectionTools(
       (id) => state.records.has(id) && !state.visible.some((work) => work.id === id),
     ).length;
     selectionSummary.textContent = `${totals.selected} selected${hidden ? ` (${hidden} outside this search)` : ''}`;
+    map.disabled = review.disabled = !totals.all;
+    const seedCount = totals.selected || totals.all;
+    discover.disabled = !seedCount;
+    discover.textContent = `Discover references from ${seedCount} ${totals.selected ? 'selected' : 'saved'} ${noun(seedCount)}`;
     matching.disabled = !totals.matching;
     matching.hidden = !totals.matching;
     clear.disabled = !totals.selected;
@@ -226,5 +257,5 @@ export function createCollectionTools(
       sync();
     }
   }
-  return { sync, cancel: () => controller?.abort() };
+  return { sync, changeReview, research, cancel: () => controller?.abort() };
 }

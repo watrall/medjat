@@ -26,8 +26,9 @@ test('reference discovery explains overlap, records decisions, and preserves the
   await page.locator('.save-button').nth(0).click();
   await page.locator('.save-button').nth(1).click();
   await page.locator('#collectionNav').click();
+  await page.getByText('Collection tools', { exact: true }).click();
   await page
-    .getByRole('button', { name: 'Discover references from selected or saved publications' })
+    .getByRole('button', { name: /Discover references from \d+ saved publications?/ })
     .click();
   await expect(page.locator('#researchTools')).toContainText('Shared foundations (1)');
   await page.locator('#researchTools summary').filter({ hasText: 'Shared foundations' }).click();
@@ -35,8 +36,9 @@ test('reference discovery explains overlap, records decisions, and preserves the
   await page.getByRole('button', { name: 'Defer', exact: true }).first().click();
   await expect(page.locator('#researchTools')).toContainText('Review: deferred');
   await page.reload();
+  await page.getByText('Collection tools', { exact: true }).click();
   await page
-    .getByRole('button', { name: 'Discover references from selected or saved publications' })
+    .getByRole('button', { name: /Discover references from \d+ saved publications?/ })
     .click();
   await expect(page.locator('#researchTools')).toContainText('Review: deferred');
 });
@@ -67,8 +69,9 @@ test('unresolved citations require confirmation and can be undone after rebuildi
   await expect(page.locator('.result-row')).toHaveCount(1);
   await page.locator('.save-button').click();
   await page.locator('#collectionNav').click();
+  await page.getByText('Collection tools', { exact: true }).click();
   await page
-    .getByRole('button', { name: 'Discover references from selected or saved publications' })
+    .getByRole('button', { name: /Discover references from \d+ saved publications?/ })
     .click();
   await page.locator('#researchTools summary').filter({ hasText: 'Unresolved citations' }).click();
   await page.getByRole('button', { name: 'Find possible matches' }).click();

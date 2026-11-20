@@ -1,6 +1,7 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 const names = [
   'search',
+  'x',
   'map-pin',
   'expand',
   'plus',

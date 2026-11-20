@@ -27,10 +27,10 @@ test('history restores actual results for different topics at the same place', a
   await page.goto('/?view=places&place=756512');
   await expect(page.locator('.place-results-status')).toBeVisible();
   await page.locator('#placeTopic').fill('burial');
-  await page.getByRole('button', { name: 'Search Crossref', exact: true }).click();
+  await page.getByRole('button', { name: 'Search this place', exact: true }).click();
   await expect(page.locator('.place-publication-title')).toHaveText('Abydos burial');
   await page.locator('#placeTopic').fill('pottery');
-  await page.getByRole('button', { name: 'Search Crossref', exact: true }).click();
+  await page.getByRole('button', { name: 'Search this place', exact: true }).click();
   await expect(page.locator('.place-publication-title')).toHaveText('Abydos pottery');
   await page.goBack();
   await expect(page.locator('#placeTopic')).toHaveValue('burial');

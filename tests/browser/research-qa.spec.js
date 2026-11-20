@@ -56,8 +56,9 @@ test('research views retain accessible controls and reflow across desktop and mo
       await expect(page.locator('.place-results-status')).toContainText('1 candidate loaded');
     }
     if (view === 'collection') {
+      await page.getByText('Collection tools', { exact: true }).click();
       await page
-        .getByRole('button', { name: 'Discover references from selected or saved publications' })
+        .getByRole('button', { name: /Discover references from \d+ saved publications?/ })
         .click();
       await expect(page.locator('#researchTools')).toContainText(
         'Missing from your bibliography (1)',

@@ -8,7 +8,7 @@ export const FILTER_CONTROLS = Object.freeze([
   { key: 'context', id: 'addEgyptContext', checked: true, default: true },
   { key: 'from', id: 'yearFrom' },
   { key: 'to', id: 'yearTo' },
-  { key: 'type', id: 'typeFilter' },
+  { key: 'type', id: 'typeFilter', radio: true },
   { key: 'abstract', id: 'hasAbstract', checked: true },
   { key: 'orcid', id: 'hasOrcid', checked: true },
   { key: 'references', id: 'hasReferences', checked: true },
@@ -31,6 +31,12 @@ export function readFilterControls(document) {
   const values = {};
   for (const filter of FILTER_CONTROLS) {
     const element = control(document, filter.id);
+    if (filter.radio) {
+      values[filter.key] =
+        document.querySelector('input[name="publicationType"]:checked')?.getAttribute('value') ||
+        '';
+      continue;
+    }
     values[filter.key] = filter.checked
       ? /** @type {HTMLInputElement} */ (element).checked
       : element.value;
@@ -43,6 +49,12 @@ export function writeFilterControls(document, query) {
   for (const filter of FILTER_CONTROLS) {
     const element = control(document, filter.id);
     const value = query[filter.key];
+    if (filter.radio) {
+      for (const radio of document.querySelectorAll('input[name="publicationType"]'))
+        /** @type {HTMLInputElement} */ (radio).checked =
+          radio.getAttribute('value') === (value || '');
+      continue;
+    }
     if (filter.checked)
       /** @type {HTMLInputElement} */ (element).checked = Boolean(value ?? filter.default);
     else element.value = String(value ?? '');
@@ -62,27 +74,24 @@ export function queryFilters(query) {
   return filters;
 }
 
-/**
- * @param {string | false | undefined} label
- * @returns {label is string}
- */
-function hasChip(label) {
-  return typeof label === 'string' && label.length > 0;
+/** @param {Query} query */
+export function filterEntries(query) {
+  const period = PERIODS.find((entry) => entry.id === query.period);
+  return [
+    { key: 'period', label: period && `Period keywords: ${period.name}` },
+    { key: 'type', label: query.type && TYPES.get(query.type) },
+    { key: 'container', label: query.container && `Venue: ${query.container}` },
+    { key: 'from', label: query.from && `From ${query.from}` },
+    { key: 'to', label: query.to && `To ${query.to}` },
+    { key: 'abstract', label: query.abstract && 'Has abstract' },
+    { key: 'orcid', label: query.orcid && 'Has ORCID' },
+    { key: 'references', label: query.references && 'Has references' },
+  ].filter((entry) => typeof entry.label === 'string' && entry.label.length > 0);
 }
 
 /** @param {Query} query @returns {string[]} */
 export function filterChips(query) {
-  const period = PERIODS.find((entry) => entry.id === query.period);
-  return [
-    period && `Period keywords: ${period.name}`,
-    query.type && TYPES.get(query.type),
-    query.container && `Venue: ${query.container}`,
-    query.from && `From ${query.from}`,
-    query.to && `To ${query.to}`,
-    query.abstract && 'Has abstract',
-    query.orcid && 'Has ORCID',
-    query.references && 'Has references',
-  ].filter(hasChip);
+  return filterEntries(query).map((entry) => /** @type {string} */ (entry.label));
 }
 
 /** @param {Query} query @returns {string} */

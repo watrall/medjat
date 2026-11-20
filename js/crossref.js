@@ -72,6 +72,12 @@ export function buildSearchURL(query, cursor = '*') {
     rows: String(PAGE_SIZE),
     mailto: CONTACT,
   });
+  if (query.field === 'author') {
+    params.set('query.author', query.q.trim() || DEFAULT_QUERY);
+    const context = addedSearchTerms(query);
+    if (context) params.set('query.bibliographic', context);
+    else params.delete('query.bibliographic');
+  }
   if (query.sort === 'relevance') params.set('cursor', cursor);
   else {
     const offset = cursor === '*' ? 0 : Number(cursor);
@@ -161,6 +167,11 @@ export async function request(
 
 export async function searchWorks(query, { cursor = '*', signal, fetcher } = {}) {
   const doi = normalizeDOI(query.q);
+  if (query.field === 'doi' && !doi)
+    throw Object.assign(
+      new Error('Enter a complete DOI, such as 10.1234/example, or choose All metadata.'),
+      { retryable: false },
+    );
   if (doi) {
     const response = await request(
       `${API}/works/${encodeURIComponent(doi)}?mailto=${encodeURIComponent(CONTACT)}`,

@@ -37,6 +37,30 @@
           <button id="visualizeNav" class="nav-button" aria-pressed="false">Visualize</button>
           <button id="placesNav" class="nav-button" aria-pressed="false">Places</button>
         </nav>
+        <div class="nav-search-slot">
+          <form
+            id="navSearchForm"
+            class="nav-search"
+            role="search"
+            aria-label="Search Crossref"
+            aria-hidden="true"
+            inert
+          >
+            <label class="sr-only" for="navSearchInput">Search publications from navigation</label>
+            <input
+              id="navSearchInput"
+              type="search"
+              maxlength="500"
+              placeholder="Search publications"
+              autocomplete="off"
+              aria-describedby="navSearchDraft"
+            />
+            <span id="navSearchDraft" class="nav-search-draft" hidden>Draft</span>
+            <button type="submit" aria-label="Search Crossref and open Explore">
+              <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#search" /></svg>
+            </button>
+          </form>
+        </div>
         <a
           class="crossref-attribution header-attribution"
           href="https://www.crossref.org/"
@@ -54,71 +78,8 @@
             decoding="async"
           />
         </a>
-        <button
-          id="aboutToggle"
-          class="about-button"
-          aria-label="About the data"
-          aria-expanded="false"
-          aria-controls="aboutPanel"
-        >
-          <span class="about-label">About the data</span
-          ><svg class="icon about-icon" aria-hidden="true">
-            <use href="assets/icons.svg#info" />
-          </svg>
-        </button>
       </div>
     </header>
-    <section id="aboutPanel" class="about-panel" aria-labelledby="aboutTitle" hidden>
-      <div class="shell">
-        <div class="about-content">
-          <h2 id="aboutTitle">A starting point for your research.</h2>
-          <p>
-            This independent tool helps you discover and reuse metadata deposited with
-            <a href="https://www.crossref.org/" target="_blank" rel="noopener noreferrer"
-              >Crossref</a
-            >. It covers ancient Egypt from the Predynastic to Roman Egypt.
-          </p>
-          <ul>
-            <li>
-              Crossref is not a comprehensive Egyptology bibliography. Older books, non-DOI
-              scholarship, and some journals may be absent.
-            </li>
-            <li>
-              Historical periods are search presets, not verified classifications of each
-              publication. Queries are relevance ranked, not exact-phrase or controlled-vocabulary
-              searches. Check titles and abstracts.
-            </li>
-            <li>
-              Missing abstracts, ORCIDs, or references mean they were not supplied in this record. A
-              DOI links to the publication; access to full text may be restricted.
-            </li>
-            <li>
-              Your collection stays in this browser. Export it to keep a copy or use it elsewhere.
-            </li>
-            <li>
-              Book covers, when available, are requested from Open Library using the ISBN deposited
-              in the record. Chapter covers show the containing book. No cover is inferred from a
-              title.
-            </li>
-          </ul>
-          <p>
-            Approximate historical ranges follow the
-            <a
-              href="https://www.ees.ac.uk/static/102ae8e9-31ea-432d-a8d7434e3c65917d/EES-Chronology-of-Egypt.pdf"
-              target="_blank"
-              rel="noopener noreferrer"
-              >Egypt Exploration Society chronology</a
-            >. Scholarly chronologies can differ.
-          </p>
-          <p>
-            Built by
-            <a href="https://github.com/watrall/medjat" target="_blank" rel="noopener noreferrer"
-              >Ethan Watrall</a
-            >. An independent project, not an official Crossref service.
-          </p>
-        </div>
-      </div>
-    </section>
     <main class="shell">
       <section class="intro" aria-labelledby="pageTitle">
         <div class="intro-top">
@@ -129,27 +90,50 @@
             Scholarship across ancient Egypt.<br />Discover, connect, and collect.
           </p>
         </div>
-        <form id="searchForm" class="search-form" role="search">
+        <form id="searchForm" class="search-form" role="search" aria-label="Search Crossref">
           <label class="search-label" for="searchInput">Search publications</label>
-          <div class="search-field">
-            <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#search" /></svg
-            ><input
-              id="searchInput"
-              name="q"
-              type="search"
-              value="ancient egypt"
-              maxlength="500"
-              placeholder="A topic, author, site, or DOI"
-              autocomplete="off"
-            />
+          <div id="primarySearchRow" class="primary-search-row">
+            <div class="search-field">
+              <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#search" /></svg>
+              <input
+                id="searchInput"
+                name="q"
+                type="search"
+                value="ancient egypt"
+                maxlength="500"
+                placeholder="A topic, author, site, or DOI"
+                autocomplete="off"
+                aria-describedby="searchScope"
+              />
+            </div>
+            <div class="search-mode">
+              <label class="sr-only" for="searchField">Search in</label>
+              <select id="searchField" name="field">
+                <option value="">All metadata</option>
+                <option value="author">Author</option>
+                <option value="doi">DOI</option>
+              </select>
+            </div>
+            <button
+              id="primarySearchSubmit"
+              class="button button-primary search-submit"
+              type="submit"
+            >
+              Search
+            </button>
           </div>
-          <button class="button button-primary search-submit" type="submit">Search</button>
         </form>
-        <p class="search-hint">Try a site such as Hierakonpolis, a topic, an author, or a DOI.</p>
+        <div class="search-details">
+          <p id="searchScope" class="search-hint">
+            Search publication metadata in Crossref. Paste a DOI for an exact record.
+          </p>
+          <a class="search-help-link" href="#searchExplanation">Search help</a>
+        </div>
+        <p id="searchError" class="filter-error" role="alert" hidden></p>
         <div id="pendingQuery" class="pending-query" hidden>
           <p>
-            Search changes are pending. Use Search or Update search to apply them. Sorting keeps
-            your draft.
+            Your search text has changed. Use Search to apply it. Filters and sorting keep your
+            draft.
           </p>
           <button id="discardDraft" class="text-button" type="button">Discard changes</button>
         </div>
@@ -170,87 +154,174 @@
       ></section>
       <section id="research" class="workspace" aria-label="Research workspace" tabindex="-1">
         <details id="refinements" class="refinements" open>
-          <summary>Refine search</summary>
-          <form id="filterForm" class="filter-form">
-            <fieldset class="filter-group">
-              <legend>Historical period</legend>
-              <label class="sr-only" for="periodSelect">Historical period</label>
-              <select id="periodSelect" aria-describedby="periodHelp periodDates">
-                <option value="">All periods</option>
-              </select>
-              <p id="periodDates" class="period-dates" hidden></p>
-              <p id="periodHelp" class="filter-help">
-                Adds keywords. Records are not classified by period.
-              </p>
-            </fieldset>
-            <fieldset class="filter-group">
-              <legend>Search context</legend>
-              <label class="check-label">
-                <input
-                  id="addEgyptContext"
-                  type="checkbox"
-                  checked
-                  aria-describedby="contextHelp"
-                />
-                Add ancient Egypt terms
-              </label>
-              <p id="contextHelp" class="filter-help">
-                Added when no period is selected and Egypt is absent from your query. Broadens the
-                search; does not restrict its subject.
-              </p>
-            </fieldset>
-            <fieldset class="filter-group">
-              <legend>Publication year</legend>
-              <div class="year-fields">
-                <label for="yearFrom"
-                  >From<input
-                    id="yearFrom"
-                    type="number"
-                    min="1000"
-                    max="2100"
-                    placeholder="Any" /></label
-                ><label for="yearTo"
-                  >To<input id="yearTo" type="number" min="1000" max="2100" placeholder="Any"
-                /></label>
-              </div>
-            </fieldset>
-            <fieldset class="filter-group">
-              <legend>Publication type</legend>
-              <label class="sr-only" for="typeFilter">Publication type</label
-              ><select id="typeFilter">
-                <option value="">All publications</option>
-                <option value="journal-article">Journal articles</option>
-                <option value="book">Books</option>
-                <option value="book-chapter">Book chapters</option>
-                <option value="proceedings-article">Conference papers</option>
-                <option value="dissertation">Dissertations</option>
-                <option value="report">Reports</option>
-              </select>
-            </fieldset>
-            <fieldset class="filter-group">
-              <legend>Metadata available</legend>
-              <div class="filter-options">
-                <label class="check-label"><input id="hasAbstract" type="checkbox" />Abstract</label
-                ><label class="check-label"
-                  ><input id="hasOrcid" type="checkbox" />Author ORCID</label
-                ><label class="check-label"
-                  ><input id="hasReferences" type="checkbox" />References</label
+          <summary>
+            <span>Filter your search</span><span id="filterCount" class="filter-count"></span>
+          </summary>
+          <div class="refinement-body">
+            <details class="filter-section current-filters" open>
+              <summary>Current filters</summary>
+              <div id="currentFilters" class="current-filter-list"></div>
+              <button id="clearFilters" class="text-button" type="button">Clear refinements</button>
+            </details>
+            <form id="filterForm" class="filter-form">
+              <details class="filter-section" open>
+                <summary>Historical period</summary>
+                <div class="filter-section-body">
+                  <label class="sr-only" for="periodSelect">Historical period</label>
+                  <select id="periodSelect" aria-describedby="periodHelp periodDates">
+                    <option value="">All periods</option>
+                  </select>
+                  <p id="periodDates" class="period-dates" hidden></p>
+                  <p id="periodHelp" class="filter-help">
+                    Adds keywords. Records are not classified by period.
+                  </p>
+                </div>
+              </details>
+              <details class="filter-section" open>
+                <summary>Publication type</summary>
+                <fieldset id="typeFilter" class="facet-options">
+                  <legend class="sr-only">Publication type</legend>
+                  <label class="facet-option"
+                    ><input type="radio" name="publicationType" value="" checked />All
+                    publications</label
+                  >
+                  <label class="facet-option"
+                    ><input type="radio" name="publicationType" value="journal-article" />Journal
+                    articles</label
+                  >
+                  <label class="facet-option"
+                    ><input type="radio" name="publicationType" value="book" />Books</label
+                  >
+                  <label class="facet-option"
+                    ><input type="radio" name="publicationType" value="book-chapter" />Book
+                    chapters</label
+                  >
+                  <label class="facet-option"
+                    ><input
+                      type="radio"
+                      name="publicationType"
+                      value="proceedings-article"
+                    />Conference papers</label
+                  >
+                  <div id="morePublicationTypes" hidden>
+                    <label class="facet-option"
+                      ><input
+                        type="radio"
+                        name="publicationType"
+                        value="dissertation"
+                      />Dissertations</label
+                    >
+                    <label class="facet-option"
+                      ><input type="radio" name="publicationType" value="report" />Reports</label
+                    >
+                    <label class="facet-option"
+                      ><input
+                        type="radio"
+                        name="publicationType"
+                        value="posted-content"
+                      />Preprints</label
+                    >
+                    <label class="facet-option"
+                      ><input
+                        type="radio"
+                        name="publicationType"
+                        value="reference-entry"
+                      />Reference entries</label
+                    >
+                    <label class="facet-option"
+                      ><input type="radio" name="publicationType" value="edited-book" />Edited
+                      books</label
+                    >
+                    <label class="facet-option"
+                      ><input
+                        type="radio"
+                        name="publicationType"
+                        value="monograph"
+                      />Monographs</label
+                    >
+                    <label class="facet-option"
+                      ><input type="radio" name="publicationType" value="dataset" />Datasets</label
+                    >
+                  </div>
+                </fieldset>
+                <button
+                  id="showPublicationTypes"
+                  class="text-button show-filters"
+                  type="button"
+                  aria-expanded="false"
+                  aria-controls="morePublicationTypes"
                 >
-              </div>
-            </fieldset>
-            <div class="filter-actions">
-              <button class="button" type="submit">Update search</button
-              ><button id="clearFilters" class="text-button" type="button">
-                Reset refinements
-              </button>
-              <p id="filterError" class="filter-error" role="alert" hidden></p>
-            </div>
-          </form>
+                  Show more types
+                </button>
+              </details>
+              <details id="yearRefinement" class="filter-section">
+                <summary>Publication year</summary>
+                <fieldset class="filter-section-body">
+                  <legend class="sr-only">Publication year range</legend>
+                  <div class="year-fields">
+                    <label for="yearFrom"
+                      >From<input
+                        id="yearFrom"
+                        type="number"
+                        min="1000"
+                        max="2100"
+                        placeholder="Any"
+                        aria-describedby="filterError"
+                    /></label>
+                    <label for="yearTo"
+                      >To<input
+                        id="yearTo"
+                        type="number"
+                        min="1000"
+                        max="2100"
+                        placeholder="Any"
+                        aria-describedby="filterError"
+                    /></label>
+                  </div>
+                  <button class="button apply-range" type="submit">Apply range</button>
+                  <p id="yearPending" class="filter-help" hidden>Year range not applied.</p>
+                  <p id="filterError" class="filter-error" role="alert" hidden></p>
+                </fieldset>
+              </details>
+              <details class="filter-section">
+                <summary>Metadata available</summary>
+                <fieldset class="facet-options">
+                  <legend class="sr-only">Metadata available</legend>
+                  <label class="facet-option"
+                    ><input id="hasAbstract" type="checkbox" />Abstract</label
+                  >
+                  <label class="facet-option"
+                    ><input id="hasOrcid" type="checkbox" />Author ORCID</label
+                  >
+                  <label class="facet-option"
+                    ><input id="hasReferences" type="checkbox" />References</label
+                  >
+                </fieldset>
+              </details>
+              <details class="filter-section">
+                <summary>Search context</summary>
+                <div class="filter-section-body">
+                  <label class="check-label"
+                    ><input
+                      id="addEgyptContext"
+                      type="checkbox"
+                      checked
+                      aria-describedby="contextHelp"
+                    />Add ancient Egypt terms</label
+                  >
+                  <p id="contextHelp" class="filter-help">
+                    Added when no period is selected and Egypt is absent from your query. Broadens
+                    the search; does not restrict its subject.
+                  </p>
+                </div>
+              </details>
+            </form>
+          </div>
         </details>
         <section class="results-column" aria-labelledby="resultsTitle">
           <div class="results-toolbar">
             <div>
-              <h2 id="resultsTitle" class="results-title">Publications</h2>
+              <h2 id="resultsTitle" class="results-title" tabindex="-1">Publications</h2>
               <p id="resultCount" class="result-count" role="status" aria-live="polite">
                 Searching Crossref…
               </p>
@@ -262,6 +333,17 @@
                 <option value="newest">Newest first</option>
                 <option value="oldest">Oldest first</option>
               </select>
+            </div>
+            <div class="result-actions">
+              <button id="backToChart" class="text-button" type="button" hidden>
+                <svg class="icon" aria-hidden="true">
+                  <use href="assets/icons.svg#arrow-left" />
+                </svg>
+                Back to chart
+              </button>
+              <button id="visualizeResults" class="text-button" type="button" hidden>
+                Visualize these results
+              </button>
             </div>
           </div>
           <p id="scopeNote" class="scope-note">
@@ -283,8 +365,7 @@
           <div id="activeQuery" class="active-query" aria-label="Current search"></div>
           <div id="requestNotice" role="alert" hidden></div>
           <div id="collectionTools" hidden></div>
-          <div id="changeReview" class="research-tools" hidden></div>
-          <div id="researchTools" class="research-tools" hidden></div>
+
           <div id="collectionUndo" class="collection-undo" role="status" hidden>
             <span id="removedTitle"></span>
             <button id="undoRemoval" class="text-button" type="button">Undo removal</button>

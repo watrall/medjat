@@ -91,23 +91,23 @@ test('sorting and navigation preserve unapplied search choices', async ({ page }
   await expect(page.locator('.result-row')).toHaveCount(25);
   await page.locator('#searchInput').fill('Abydos');
   await page.locator('#periodSelect').selectOption('new-kingdom');
-  await page.locator('#typeFilter').selectOption('book');
+  await page.getByRole('radio', { name: 'Books', exact: true }).check();
   await expect(page.locator('#pendingQuery')).toBeVisible();
   await page.locator('#sortSelect').selectOption('newest');
   await expect(page.locator('#scopeNote')).toContainText('newest first');
   await expect
     .poll(() => requests.at(-1).searchParams.get('query.bibliographic'))
-    .toBe('ancient egypt');
+    .toBe('ancient egypt New Kingdom Egypt');
   await expect(page.locator('#searchInput')).toHaveValue('Abydos');
   await expect(page.locator('#periodSelect')).toHaveValue('new-kingdom');
-  await expect(page.locator('#typeFilter')).toHaveValue('book');
+  await expect(page.getByRole('radio', { name: 'Books', exact: true })).toBeChecked();
   await expect(page.locator('#pendingQuery')).toBeVisible();
   await page.getByRole('button', { name: 'Load 25 more publications' }).click();
   await expect(page.locator('.result-row')).toHaveCount(28);
   await page.locator('#collectionNav').click();
   await page.locator('#exploreNav').click();
   await expect(page.locator('#searchInput')).toHaveValue('Abydos');
-  await page.locator('#filterForm').getByRole('button', { name: 'Update search' }).click();
+  await page.locator('#searchForm').getByRole('button', { name: 'Search', exact: true }).click();
   await expect(page.locator('#pendingQuery')).toBeHidden();
   await expect
     .poll(() => requests.at(-1).searchParams.get('query.bibliographic'))
@@ -185,6 +185,8 @@ for (const [scope, included] of Object.entries({ all: [0, 1, 2], matching: [0], 
     await expect(page.locator('#selectionSummary')).toHaveText(
       '1 selected (1 outside this search)',
     );
+    await page.getByText('Collection tools', { exact: true }).click();
+    await page.getByText(/^Export bibliography/).click();
     await page.locator('#exportScope').selectOption(scope);
     for (const format of ['json', 'csv', 'ris', 'bibtex']) {
       await page.locator('#exportFormat').selectOption(format);
@@ -224,6 +226,8 @@ test('failed and cancelled exports leave the saved list and selection intact', a
   await page.route('https://api.crossref.org/works/**/transform?**', (route) =>
     route.fulfill({ status: 400, body: '{}' }),
   );
+  await page.getByText('Collection tools', { exact: true }).click();
+  await page.getByText(/^Export bibliography/).click();
   await page.getByRole('button', { name: 'Export 1 publication', exact: true }).click();
   await expect(page.locator('#exportStatus')).toContainText('Export failed.');
   let release;
@@ -258,6 +262,8 @@ test('an export keeps its initial membership while the collection changes', asyn
     const doi = decodeURIComponent(url.pathname.slice('/works/'.length, -'/transform'.length));
     await route.fulfill({ body: `TY  - CHAP\nDO  - ${doi}\nER  -` });
   });
+  await page.getByText('Collection tools', { exact: true }).click();
+  await page.getByText(/^Export bibliography/).click();
   const downloaded = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export 2 publications', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Cancel export', exact: true })).toBeVisible();
@@ -302,6 +308,7 @@ test('cross-field year errors open collapsed refinements and receive keyboard fo
   await page.locator('#refinements').evaluate((element) => {
     element.open = true;
   });
+  await page.locator('#yearRefinement > summary').click();
   await page.locator('#yearFrom').fill('2025');
   await page.locator('#yearTo').fill('2000');
   await page.locator('#refinements').evaluate((element) => {
@@ -338,6 +345,8 @@ test('search, inspect, save, reload, cite, and export a collection', async ({ pa
     .first()
     .evaluate((el) => el.getBoundingClientRect().width);
   expect(rowWidth).toBeGreaterThan(450);
+  await page.getByText('Collection tools', { exact: true }).click();
+  await page.getByText(/^Export bibliography/).click();
   const downloaded = page.waitForEvent('download');
   await page.getByRole('button', { name: /^Export \d+ publications?$/ }).click();
   const download = await downloaded;
@@ -369,18 +378,22 @@ test('period queries, filters, pagination, and browser back preserve research co
   await page
     .getByRole('combobox', { name: 'Historical period', exact: true })
     .selectOption('new-kingdom');
-  expect(requests.filter((url) => url.pathname === '/works')).toHaveLength(1);
-  await page.getByRole('button', { name: 'Update search', exact: true }).click();
+  await expect.poll(() => requests.filter((url) => url.pathname === '/works').length).toBe(2);
   await expect(page).toHaveURL(/period=new-kingdom/);
   await expect(page.locator('.result-row')).toHaveCount(25);
   await expect
     .poll(() => requests.at(-1).searchParams.get('query.bibliographic'))
     .toContain('New Kingdom Egypt');
   await expect.poll(() => requests.at(-1).searchParams.has('filter')).toBe(false);
+  await page.locator('#yearRefinement > summary').click();
   await page.getByLabel('From', { exact: true }).fill('2000');
   await page.getByLabel('To', { exact: true }).fill('2025');
+  await page
+    .locator('.filter-section > summary')
+    .filter({ hasText: /^Metadata available$/ })
+    .click();
   await page.getByRole('checkbox', { name: 'Abstract', exact: true }).check();
-  await page.getByRole('button', { name: 'Update search', exact: true }).click();
+  await page.getByRole('button', { name: 'Apply range', exact: true }).click();
   await expect(page).toHaveURL(/from=2000/);
   await expect(page.locator('.result-row')).toHaveCount(25);
   await expect
@@ -393,7 +406,7 @@ test('period queries, filters, pagination, and browser back preserve research co
   await expect(page.getByLabel('From', { exact: true })).toHaveValue('');
 });
 
-test('period refinements apply with either search action and reset with the other refinements', async ({
+test('period refinements apply immediately and clear while retaining the query', async ({
   page,
 }) => {
   const requests = await fixtures(page);
@@ -404,8 +417,8 @@ test('period refinements apply with either search action and reset with the othe
   await expect(page.locator('#periodButtons')).toHaveCount(0);
   await period.selectOption('new-kingdom');
   await expect(page.locator('#periodDates')).toHaveText('c. 1550–1069 BCE');
-  expect(requests.filter((url) => url.pathname === '/works')).toHaveLength(1);
-  await expect(page).not.toHaveURL(/period=/);
+  await expect(page).toHaveURL(/period=new-kingdom/);
+  await expect.poll(() => requests.filter((url) => url.pathname === '/works').length).toBe(2);
 
   await page
     .getByRole('searchbox', { name: 'Search publications', exact: true })
@@ -419,13 +432,12 @@ test('period refinements apply with either search action and reset with the othe
   await expect(page.locator('#activeQuery')).toContainText('Period keywords: New Kingdom');
 
   await period.selectOption('old-kingdom');
-  await page.getByRole('combobox', { name: 'Publication type', exact: true }).selectOption('book');
-  await page.getByRole('button', { name: 'Update search', exact: true }).click();
+  await page.getByRole('radio', { name: 'Books', exact: true }).check();
   await expect(page).toHaveURL(/period=old-kingdom/);
   await expect(page.locator('.result-row')).toHaveCount(25);
   await expect.poll(() => requests.at(-1).searchParams.get('filter')).toContain('type:book');
 
-  await page.getByRole('button', { name: 'Reset refinements', exact: true }).click();
+  await page.getByRole('button', { name: 'Clear refinements', exact: true }).click();
   await expect(page).not.toHaveURL(/period=|type=/);
   await expect(period).toHaveValue('');
   await expect(page.locator('#periodDates')).toBeHidden();
@@ -735,4 +747,295 @@ test('added context is removable without applying drafts and survives refresh an
   await page.goBack();
   await expect(page.locator('#effectiveQuery')).toContainText('Hatshepsut ancient Egypt');
   await expect(page.locator('#addEgyptContext')).toBeChecked();
+});
+
+for (const width of [320, 390, 768, 1024, 1440]) {
+  test(`sticky search hands off without overflow or layout shifts at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await fixtures(page);
+    await page.goto('/');
+    await expect(page.locator('.result-row')).toHaveCount(25);
+    const nav = page.locator('#navSearchForm');
+    await expect(nav).toHaveAttribute('aria-hidden', 'true');
+    await page.locator('#searchInput').fill('Abydos draft');
+    await expect(page.locator('#navSearchInput')).toHaveValue('Abydos draft');
+    const height = await page
+      .locator('.masthead')
+      .evaluate((e) => e.getBoundingClientRect().height);
+    const tabs = await page
+      .locator('.main-nav')
+      .evaluate((e) => e.getBoundingClientRect().toJSON());
+    await page.evaluate(() => window.scrollTo(0, 650));
+    await expect(nav).toHaveAttribute('aria-hidden', 'false');
+    await expect(page.locator('.masthead')).toHaveCSS('position', 'sticky');
+    const bounds = await nav.boundingBox();
+    const headerBounds = await page.locator('.masthead').boundingBox();
+    expect(bounds.y).toBeGreaterThanOrEqual(headerBounds.y);
+    expect(bounds.y + bounds.height).toBeLessThanOrEqual(headerBounds.y + headerBounds.height);
+    if (width >= 1000) {
+      const navBounds = await page.locator('.main-nav').boundingBox();
+      const attribution = await page.locator('.header-attribution').boundingBox();
+      expect(bounds.x).toBeGreaterThan(navBounds.x + navBounds.width);
+      expect(bounds.x + bounds.width).toBeLessThanOrEqual(attribution.x);
+      await expect(page.locator('.main-nav')).toHaveCSS('gap', '24px');
+      expect(attribution.x + attribution.width).toBe(width - (width >= 1300 ? 40 : 24));
+    }
+    await expect(page.locator('#aboutToggle')).toHaveCount(0);
+    expect(await page.locator('.masthead').evaluate((e) => e.getBoundingClientRect().height)).toBe(
+      height,
+    );
+    const stickyTabs = await page
+      .locator('.main-nav')
+      .evaluate((e) => e.getBoundingClientRect().toJSON());
+    expect(stickyTabs).toEqual(tabs);
+    await expect(page.locator('.brand-name')).toHaveCSS(
+      'visibility',
+      width >= 1000 ? 'visible' : 'hidden',
+    );
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+    await page.locator('#navSearchInput').fill('Hierakonpolis draft');
+    await expect(page.locator('#searchInput')).toHaveValue('Hierakonpolis draft');
+    await page.evaluate(() => window.scrollTo(0, 0));
+    // A focused input stays usable until the user leaves it.
+    await expect(nav).toHaveAttribute('aria-hidden', 'false');
+    await page.locator('#searchInput').focus();
+    await expect(nav).toHaveAttribute('aria-hidden', 'true');
+    expect(await nav.evaluate((e) => e.inert)).toBe(true);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await expect(nav).toHaveCSS('transition-duration', '0s');
+  });
+}
+
+test('global navigation search opens Explore and preserves synchronized text', async ({ page }) => {
+  const requests = await fixtures(page);
+  await blockTiles(page);
+  await page.goto('/');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  for (const id of ['collectionNav', 'visualizeNav', 'placesNav']) {
+    await page.locator(`#${id}`).click();
+    if (id === 'visualizeNav')
+      await expect(
+        page.getByRole('button', { name: 'Refresh summaries', exact: true }),
+      ).toBeVisible();
+    await page.evaluate(() => window.scrollTo(0, 650));
+    await expect(page.locator('#navSearchForm')).toHaveAttribute('aria-hidden', 'false');
+    await page.locator('#navSearchInput').fill(`Search from ${id}`);
+    await page.locator('#navSearchForm').getByRole('button').click();
+    await expect(page.locator('#exploreNav')).toHaveAttribute('aria-pressed', 'true');
+    await expect
+      .poll(() => requests.at(-1).searchParams.get('query.bibliographic'))
+      .toContain(`Search from ${id}`);
+    await expect(page.locator('#searchInput')).toHaveValue(`Search from ${id}`);
+  }
+});
+
+test('immediate filters retain pending text and dates, and every filter can be removed', async ({
+  page,
+}) => {
+  const requests = await fixtures(page);
+  await page.goto('/?q=Abydos&context=0');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await page.locator('#searchInput').fill('Unsubmitted topic');
+  await page.locator('#yearRefinement > summary').click();
+  await page.locator('#yearFrom').fill('2000');
+  await page.getByRole('radio', { name: 'Books', exact: true }).check();
+  await expect.poll(() => requests.at(-1).searchParams.get('filter')).toBe('type:book');
+  await expect(page.locator('#searchInput')).toHaveValue('Unsubmitted topic');
+  await expect(page.locator('#yearFrom')).toHaveValue('2000');
+  await expect(page.locator('#yearPending')).toBeVisible();
+  await expect(page).not.toHaveURL(/from=2000/);
+  await page.getByRole('button', { name: 'Apply range', exact: true }).click();
+  await expect
+    .poll(() => requests.at(-1).searchParams.get('filter'))
+    .toContain('from-pub-date:2000');
+  expect(requests.at(-1).searchParams.get('query.bibliographic')).toBe('Abydos');
+  await page.getByRole('button', { name: 'Remove filter: Book', exact: true }).click();
+  await expect(page).not.toHaveURL(/type=book/);
+  await expect(page.getByRole('button', { name: 'Clear refinements', exact: true })).toBeFocused();
+  await page.getByRole('button', { name: 'Clear refinements', exact: true }).click();
+  await expect(page).not.toHaveURL(/from=|type=/);
+  await expect(page.locator('#searchInput')).toHaveValue('Unsubmitted topic');
+});
+
+test('search options use supported author search and validate exact DOI entry', async ({
+  page,
+}) => {
+  const requests = await fixtures(page);
+  await page.goto('/?context=0');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await page.locator('#searchField').selectOption('author');
+  await page.locator('#searchInput').fill('Ada Researcher');
+  await page.locator('#searchForm').getByRole('button', { name: 'Search', exact: true }).click();
+  await expect.poll(() => requests.at(-1).searchParams.get('query.author')).toBe('Ada Researcher');
+  expect(requests.at(-1).searchParams.has('query.bibliographic')).toBe(false);
+  await page.reload();
+  await expect(page.locator('#searchField')).toHaveValue('author');
+  await page.locator('#searchField').selectOption('doi');
+  await page.locator('#searchInput').fill('not a DOI');
+  await page.locator('#searchForm').getByRole('button', { name: 'Search', exact: true }).click();
+  await expect(page.locator('#searchError')).toContainText('Enter a complete DOI');
+  await page.locator('#searchInput').fill('10.1234/reference-record');
+  await page.locator('#searchForm').getByRole('button', { name: 'Search', exact: true }).click();
+  await expect(page.locator('#scopeNote')).toContainText('one exact Crossref record');
+});
+
+test('compact search switches at the primary search edge in both scroll directions', async ({
+  page,
+}) => {
+  await fixtures(page);
+  await page.goto('/');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  const edge = await page.evaluate(
+    () =>
+      document.getElementById('primarySearchRow').getBoundingClientRect().bottom -
+      document.querySelector('.masthead').getBoundingClientRect().height,
+  );
+  await page.evaluate((y) => window.scrollTo(0, y), edge + 1);
+  await expect(page.locator('#navSearchForm')).toHaveAttribute('aria-hidden', 'false');
+  await page.evaluate((y) => window.scrollTo(0, y), edge - 1);
+  await expect(page.locator('#navSearchForm')).toHaveAttribute('aria-hidden', 'true');
+});
+
+test('removing the final refinement and clearing all retain meaningful keyboard focus', async ({
+  page,
+}) => {
+  await fixtures(page);
+  await page.goto('/?q=Abydos&context=0&type=book');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  const summary = page.locator('.current-filters > summary');
+  await page.getByRole('button', { name: 'Remove filter: Book', exact: true }).click();
+  await expect(summary).toBeFocused();
+  await page.getByRole('radio', { name: 'Books', exact: true }).check();
+  await page.getByRole('button', { name: 'Clear refinements', exact: true }).click();
+  await expect(summary).toBeFocused();
+});
+
+test('search help from Visualize opens a visible explanation and preserves the draft', async ({
+  page,
+}) => {
+  await fixtures(page);
+  await page.goto('/');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await page.locator('#searchInput').fill('An unfinished topic');
+  await page.locator('#visualizeNav').click();
+  await page.getByRole('link', { name: 'Search help', exact: true }).click();
+  await expect(page.locator('#exploreNav')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#searchExplanation')).toBeVisible();
+  await expect(page.locator('#searchExplanation > summary')).toBeFocused();
+  await expect(page.locator('#searchInput')).toHaveValue('An unfinished topic');
+});
+
+test('the masthead reflows enlarged text and hands off at a fractional header height', async ({
+  page,
+}) => {
+  await fixtures(page);
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.goto('/');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await page.evaluate(() => (document.documentElement.style.fontSize = '200%'));
+  const geometry = await page.evaluate(() => ({
+    header: document.querySelector('.masthead').getBoundingClientRect().toJSON(),
+    nav: document.querySelector('.main-nav').getBoundingClientRect().toJSON(),
+    width: document.documentElement.scrollWidth,
+  }));
+  expect(geometry.width).toBe(320);
+  expect(geometry.nav.bottom).toBeLessThanOrEqual(geometry.header.bottom);
+  const before = geometry.header.height;
+  const enlargedEdge = await page.evaluate(
+    () =>
+      document.getElementById('primarySearchRow').getBoundingClientRect().bottom -
+      document.querySelector('.masthead').getBoundingClientRect().height,
+  );
+  await page.evaluate((y) => window.scrollTo(0, y), enlargedEdge + 2);
+  await expect(page.locator('#navSearchForm')).toHaveAttribute('aria-hidden', 'false');
+  expect(await page.locator('.masthead').evaluate((e) => e.getBoundingClientRect().height)).toBe(
+    before,
+  );
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = '17.1px';
+    window.scrollTo(0, 0);
+  });
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () =>
+          parseFloat(document.documentElement.style.getPropertyValue('--masthead-height')) ===
+          document.querySelector('.masthead').getBoundingClientRect().height,
+      ),
+    )
+    .toBe(true);
+  expect(
+    await page.locator('.masthead').evaluate((e) => e.getBoundingClientRect().height % 1),
+  ).not.toBe(0);
+  const edge = await page.evaluate(
+    () =>
+      document.getElementById('primarySearchRow').getBoundingClientRect().bottom -
+      document.querySelector('.masthead').getBoundingClientRect().height,
+  );
+  await page.evaluate((y) => window.scrollTo(0, y), edge + 1);
+  await expect(page.locator('#navSearchForm')).toHaveAttribute('aria-hidden', 'false');
+});
+
+test('workspace tabs restore each reading position and Collection can map its saved records', async ({
+  page,
+}) => {
+  await fixtures(page);
+  await blockTiles(page);
+  await page.goto('/');
+  await expect(page.locator('.result-open')).toHaveCount(25);
+  await page.locator('.save-button').nth(0).click();
+  await page.locator('.save-button').nth(1).click();
+  await page.locator('.result-open').nth(8).click();
+  await page
+    .locator('#inspector')
+    .getByRole('button', { name: 'Connections', exact: true })
+    .click();
+  const { x, y, width, height } = await page.locator('#collectionNav').boundingBox();
+  const exploreScroll = await page.evaluate(() => window.scrollY);
+  expect(exploreScroll).toBeGreaterThan(0);
+
+  // Click the sticky control in place so the driver does not scroll it into view first.
+  await page.mouse.click(x + width / 2, y + height / 2);
+  await expect(page.locator('.collection-actions-menu')).not.toHaveAttribute('open', '');
+  await expect(page.locator('.result-open').first()).toBeInViewport();
+  await page.locator('.result-open').nth(1).click();
+  const collectionTitle = await page.locator('.detail-title').innerText();
+  await page
+    .getByRole('checkbox', { name: /^Select publication:/ })
+    .nth(1)
+    .check();
+  await page.getByText('Collection tools', { exact: true }).click();
+  await expect(
+    page.getByRole('button', { name: 'Discover references from 1 selected publication' }),
+  ).toBeVisible();
+
+  await page.getByRole('button', { name: 'Map saved publications' }).click();
+  await expect(page.locator('#places h1')).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Your collection', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(page.locator('.place-collection-coverage')).toContainText('2 saved publications');
+  await page.getByRole('button', { name: 'Back to collection' }).click();
+  await expect(page.getByRole('button', { name: 'Map saved publications' })).toBeFocused();
+  await expect(page.locator('.detail-title')).toHaveText(collectionTitle);
+
+  await page.locator('#exploreNav').click();
+  await expect(page.locator('.detail-title')).toHaveText('Ancient Egyptian research 8');
+  await expect(
+    page.locator('#inspector').getByRole('button', { name: 'Connections', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(exploreScroll, -1);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator('.result-open').nth(5).click();
+  await expect(page.locator('.results-column')).toBeHidden();
+  await page.locator('#collectionNav').click();
+  await expect(page.locator('.results-column')).toBeVisible();
+  await page.locator('#exploreNav').click();
+  await expect(page.locator('.results-column')).toBeHidden();
+  await expect(page.locator('.detail-title')).toHaveText('Ancient Egyptian research 5');
 });
