@@ -199,6 +199,7 @@ legend {
   margin-left: auto;
 }
 .nav-button {
+  position: relative;
   min-height: 44px;
   padding: 8px 0;
   border-bottom: 2px solid transparent;
@@ -211,6 +212,26 @@ legend {
 .nav-button[aria-pressed='true'] {
   border-color: var(--color-accent);
   color: var(--color-accent);
+}
+@media (hover: hover) and (pointer: fine) {
+  .nav-button[aria-pressed='false']:enabled::after {
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: -2px;
+    block-size: 2px;
+    background: var(--color-muted);
+    content: '';
+    opacity: 0;
+    pointer-events: none;
+    transform: scaleX(0.8);
+    transition:
+      opacity var(--duration-fast) var(--ease-out),
+      transform var(--duration-fast) var(--ease-out);
+  }
+  .nav-button[aria-pressed='false']:enabled:hover::after {
+    opacity: 1;
+    transform: scaleX(1);
+  }
 }
 .nav-count {
   background: var(--color-subtle);
