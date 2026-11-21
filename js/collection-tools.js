@@ -1,6 +1,6 @@
 import { el, icon } from './dom.js';
 import { MAX_IMPORT_BYTES, parseCollection } from './collection.js';
-import { researchData } from './research-store.js';
+import { researchData, validateResearchBackup } from './research-store.js';
 import { EXPORT_FORMATS, exportCollection, downloadFile, scopedRecords } from './export.js';
 
 export function createCollectionTools(
@@ -57,6 +57,14 @@ export function createCollectionTools(
     'Cancel export',
   );
   const button = el('button', { class: 'button button-primary', onclick: runExport });
+  const importStatus = el('p', { class: 'import-status', role: 'status' });
+  const importPreview = el('div', { class: 'collection-import-preview', hidden: true });
+  const importButton = el(
+    'button',
+    { class: 'text-button', onclick: () => file.click() },
+    icon('library-big'),
+    'Import collection',
+  );
   const file = el('input', {
     type: 'file',
     id: 'importCollection',
@@ -64,22 +72,101 @@ export function createCollectionTools(
     accept: '.json,application/json',
     onchange: async () => {
       const selected = file.files?.[0];
-      if (!selected) return;
-      exportOptions.open = true;
+      if (!selected || importButton.disabled) return;
+      importPreview.hidden = true;
+      importPreview.replaceChildren();
+      importStatus.textContent = '';
+      importButton.disabled = true;
       try {
         if (selected.size > MAX_IMPORT_BYTES)
           throw new Error(
             `Choose a collection file smaller than ${MAX_IMPORT_BYTES / 1024 / 1024} MB.`,
           );
-        status.textContent = await onImport(parseCollection(await selected.text()));
-        sync();
+        const imported = parseCollection(await selected.text());
+        const current = getState().records;
+        const decisions = researchData();
+        const reviewed = new Map();
+        const reviewedResearch = new Map();
+        for (const id of imported.records.keys())
+          if (current.has(id)) reviewed.set(id, current.get(id));
+        for (const key of validateResearchBackup(imported.research).entries.keys())
+          if (Object.hasOwn(decisions, key)) reviewedResearch.set(key, decisions[key]);
+        if (reviewed.size || reviewedResearch.size) {
+          previewImport(imported, reviewed, reviewedResearch);
+        } else await finishImport(imported);
       } catch (error) {
-        status.textContent = error.message;
+        importStatus.textContent = error.message;
       } finally {
         file.value = '';
+        importButton.disabled = false;
       }
     },
   });
+  async function finishImport(imported, reviewed, reviewedResearch) {
+    // Close the preview before writing so a double click cannot repeat the import.
+    importPreview.hidden = true;
+    importPreview.replaceChildren();
+    importButton.disabled = true;
+    try {
+      importStatus.textContent = await onImport(imported, reviewed, reviewedResearch);
+    } catch (error) {
+      importStatus.textContent = error.message;
+    } finally {
+      importButton.disabled = false;
+      importButton.focus();
+    }
+  }
+  function previewImport(imported, reviewed, reviewedResearch) {
+    const matches = reviewed.size + reviewedResearch.size;
+    const summary = `This backup matches ${reviewed.size} saved ${noun(reviewed.size)} and ${reviewedResearch.size} research ${reviewedResearch.size === 1 ? 'decision' : 'decisions'}.`;
+    const keep = el(
+      'button',
+      { class: 'button button-primary', onclick: () => finishImport(imported) },
+      'Keep existing and import new',
+    );
+    const examples = [
+      ...[...reviewed].map(([id, entry]) => `${entry.work.title} · ${id}`),
+      ...reviewedResearch.keys(),
+    ];
+    importPreview.replaceChildren(
+      el('p', {}, summary),
+      el(
+        'details',
+        {},
+        el('summary', {}, `View matching entries (${matches})`),
+        el(
+          'ul',
+          {},
+          examples.slice(0, 10).map((label) => el('li', {}, label)),
+        ),
+        matches > 10 && el('p', {}, `Plus ${matches - 10} more matching entries.`),
+      ),
+      el(
+        'div',
+        { class: 'selection-controls' },
+        keep,
+        el(
+          'button',
+          { class: 'button', onclick: () => finishImport(imported, reviewed, reviewedResearch) },
+          'Replace matching entries and import new',
+        ),
+        el(
+          'button',
+          {
+            class: 'text-button',
+            onclick: () => {
+              importPreview.hidden = true;
+              importPreview.replaceChildren();
+              importButton.focus();
+            },
+          },
+          'Cancel import',
+        ),
+      ),
+    );
+    importPreview.hidden = false;
+    keep.focus();
+  }
   const exportSummary = el('summary', {}, 'Export bibliography');
   const exportOptions = el(
     'details',
@@ -140,19 +227,9 @@ export function createCollectionTools(
           'details',
           { class: 'collection-actions-menu' },
           el('summary', {}, 'Collection tools'),
-          el(
-            'div',
-            { class: 'selection-controls' },
-            matching,
-            clear,
-            el(
-              'button',
-              { class: 'text-button', onclick: () => file.click() },
-              icon('library-big'),
-              'Import collection',
-            ),
-            file,
-          ),
+          el('div', { class: 'selection-controls' }, matching, clear, importButton, file),
+          importStatus,
+          importPreview,
           exportOptions,
           el('div', { class: 'selection-controls' }, review, discover),
           changeReview,

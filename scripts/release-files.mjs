@@ -1,4 +1,5 @@
 export const siteFiles = [
+  '_headers',
   'LICENSE',
   'assets/LUCIDE-LICENSE',
   'assets/icons.svg',
@@ -71,6 +72,7 @@ export const repositoryFiles = [
   '.prettierrc.json',
   'eslint.config.js',
   'jsconfig.json',
+  '_headers',
   'LICENSE',
   'README.md',
   'assets/LUCIDE-LICENSE',

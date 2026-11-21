@@ -355,15 +355,36 @@ const collectionTools = createCollectionTools($('collectionTools'), {
   },
   onReview: () => changeReview.run(),
   onDiscover: () => researcher.run(),
-  async onImport(imported) {
-    const result = await collectionStore.change({ import: imported.records });
+  async onImport(imported, reviewedImport, reviewedResearch) {
+    const result = await collectionStore.change({ import: imported.records, reviewedImport });
     state.collection = result.records;
-    if (imported.research) importResearch(imported.research);
+    const research = importResearch(imported.research, reviewedResearch);
+    const kept = [...imported.records].filter(
+      ([id, entry]) => result.records.get(id) !== entry,
+    ).length;
     state.storageWarning = result.warning;
     reconcileCollection();
+    const selectedImport = imported.records.get(state.selected);
+    if (
+      state.view === 'collection' &&
+      selectedImport &&
+      result.records.get(state.selected) === selectedImport
+    )
+      renderInspector(selectedImport.work);
     renderList();
     renderStatus();
-    return `Imported collection. ${state.collection.size} publications saved. Records are matched by DOI.${result.warning ? ' Changes are kept for this visit only.' : ''}`;
+    return [
+      `Import complete. ${state.collection.size} publications in your collection.`,
+      kept || research.kept
+        ? `Kept ${kept} existing publication entries and ${research.kept} existing research decisions.`
+        : '',
+      research.skipped
+        ? `Skipped ${research.skipped} invalid research ${research.skipped === 1 ? 'decision' : 'decisions'}.`
+        : '',
+      result.warning || research.sessionOnly ? 'Some changes are kept for this visit only.' : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
   },
 });
 const changeReview = createChangeReview(collectionTools.changeReview, {

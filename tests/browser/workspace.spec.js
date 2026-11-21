@@ -1174,3 +1174,68 @@ test('a missing landing photograph leaves its tile visible and usable', async ({
   await tile.click();
   await expect(page.locator('.result-row')).toHaveCount(25);
 });
+
+test('the local server enforces the production policy for application assets', async ({ page }) => {
+  const response = await page.goto('/');
+  const headers = response.headers();
+  expect(headers['content-security-policy']).toContain("script-src 'self'");
+  expect(headers['content-security-policy']).toContain("frame-ancestors 'none'");
+  expect(headers['x-frame-options']).toBe('DENY');
+  await expect(page.locator('#collectionNav')).toBeEnabled();
+  await expect(page.locator('.research-tile img').first()).toHaveJSProperty('complete', true);
+});
+
+test('import previews conflicts before optionally replacing existing work', async ({ page }) => {
+  await fixtures(page);
+  await page.goto('/?q=ancient+egypt');
+  await page.locator('.save-button').nth(1).click();
+  await page.locator('#collectionNav').click();
+  await expect(page.locator('.result-open')).toHaveText('Ancient Egyptian research 1');
+
+  const decisionKey = 'egypt-research-review:place-scope:10.1234/test-record-1';
+  await page.evaluate(
+    (key) => localStorage.setItem(key, JSON.stringify({ decision: 'place-specific' })),
+    decisionKey,
+  );
+  const backup = {
+    version: 2,
+    records: [{ raw: { ...publication(1), title: ['Imported draft'] } }, { raw: publication(2) }],
+    research: {
+      'place-scope:10.1234/test-record-1': { decision: 'not-place-specific' },
+      'place-scope:10.1234/test-record-2': { decision: 'invalid' },
+    },
+  };
+  const preview = () =>
+    page.locator('#importCollection').setInputFiles({
+      name: 'collection.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(JSON.stringify(backup)),
+    });
+  await page.getByText('Collection tools', { exact: true }).click();
+  await preview();
+  await expect(
+    page.getByText('This backup matches 1 saved publication and 1 research decision.'),
+  ).toBeVisible();
+  await expect(page.locator('.result-open')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Keep existing and import new' }).click();
+  await expect(page.locator('.import-status')).toContainText(
+    'Skipped 1 invalid research decision.',
+  );
+  await expect(page.locator('.result-open')).toHaveText([
+    'Ancient Egyptian research 1',
+    'Ancient Egyptian research 2',
+  ]);
+  expect(
+    await page.evaluate((key) => JSON.parse(localStorage.getItem(key)).decision, decisionKey),
+  ).toBe('place-specific');
+
+  await preview();
+  await page.getByRole('button', { name: 'Replace matching entries and import new' }).click();
+  await expect(page.locator('.result-open')).toHaveText([
+    'Imported draft',
+    'Ancient Egyptian research 2',
+  ]);
+  expect(
+    await page.evaluate((key) => JSON.parse(localStorage.getItem(key)).decision, decisionKey),
+  ).toBe('not-place-specific');
+});

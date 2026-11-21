@@ -102,7 +102,9 @@ export function createCollectionStore({ storage, database = globalThis.indexedDB
         next.set(operation.update.work.id, operation.update);
       }
       if (operation.add) next.set(operation.add.work.id, operation.add);
-      const merged = operation.import ? mergeCollections(next, operation.import) : next;
+      const merged = operation.import
+        ? mergeCollections(next, operation.import, operation.reviewedImport)
+        : next;
       if (merged.size > MAX_SAVED)
         throw new Error(
           `Your collection supports ${MAX_SAVED} publications. Export a copy and remove some before adding more.`,
@@ -126,7 +128,9 @@ export function createCollectionStore({ storage, database = globalThis.indexedDB
               if (operation.remove) store.delete(operation.remove);
               if (operation.update) store.put(operation.update);
               if (operation.add) store.put(operation.add);
-              if (operation.import) for (const entry of operation.import.values()) store.put(entry);
+              if (operation.import)
+                for (const [id, entry] of operation.import)
+                  if (next.get(id) === entry) store.put(entry);
             } catch (error) {
               validationError = error;
               tx.abort();

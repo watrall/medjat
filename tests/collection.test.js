@@ -39,3 +39,28 @@ test('invalid imports are rejected before replacing the collection', () => {
   assert.throws(() => parseCollection('{"records":[]}'), /not a supported/);
   assert.equal(records.size, 1);
 });
+
+test('collection imports keep existing records and replace only unchanged, reviewed conflicts', () => {
+  const current = new Map([
+    ['a', { title: 'Original' }],
+    ['c', { title: 'Added in another tab' }],
+  ]);
+  const incoming = new Map([
+    ['a', { title: 'Imported' }],
+    ['b', { title: 'New' }],
+    ['c', { title: 'Other copy' }],
+  ]);
+  assert.deepEqual(
+    [...mergeCollections(current, incoming).values()].map(({ title }) => title),
+    ['Original', 'Added in another tab', 'New'],
+  );
+
+  const reviewed = new Map([
+    ['a', { title: 'Original' }],
+    ['c', { title: 'Previously reviewed' }],
+  ]);
+  assert.deepEqual(
+    [...mergeCollections(current, incoming, reviewed).values()].map(({ title }) => title),
+    ['Imported', 'Added in another tab', 'New'],
+  );
+});

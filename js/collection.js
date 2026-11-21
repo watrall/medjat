@@ -62,8 +62,15 @@ export function readCollection(storage) {
     };
   }
 }
-export function mergeCollections(current, incoming) {
-  const merged = new Map([...current, ...incoming]);
+export function mergeCollections(current, incoming, reviewed = new Map()) {
+  const merged = new Map(current);
+  for (const [id, entry] of incoming) {
+    if (
+      !current.has(id) ||
+      (reviewed.has(id) && JSON.stringify(current.get(id)) === JSON.stringify(reviewed.get(id)))
+    )
+      merged.set(id, entry);
+  }
   if (merged.size > MAX_SAVED)
     throw new Error(
       `This would exceed ${MAX_SAVED} saved publications. Export and remove some publications first.`,

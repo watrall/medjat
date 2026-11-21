@@ -61,3 +61,24 @@ test('unavailable storage keeps decisions in memory', () => {
   assert.equal(store.reviewDecision('demo', { decision: 'deferred' }), false);
   assert.equal(store.researchData().demo.decision, 'deferred');
 });
+
+test('backup imports validate decisions and keep any conflict that was not reviewed or has changed', () => {
+  const store = createResearchStore({ storage: storage() });
+  const key = 'citation:10.1234/source:Older book';
+  const incoming = {
+    [key]: { decision: 'confirmed', doi: '10.1234/book' },
+    'place-scope:10.1234/source': { decision: 'confirmed' },
+    'citation:10.1234/source:Another book': { decision: 'confirmed', doi: 'not a DOI' },
+  };
+  store.reviewDecision(key, { decision: 'deferred' });
+
+  assert.deepEqual(store.importResearch(incoming), { kept: 1, skipped: 2, sessionOnly: false });
+  const snapshot = new Map([[key, store.researchData()[key]]]);
+  store.reviewDecision(key, { decision: 'dismissed' });
+  assert.equal(store.importResearch(incoming, snapshot).kept, 1);
+  assert.equal(store.researchData()[key].decision, 'dismissed');
+  snapshot.set(key, store.researchData()[key]);
+  assert.equal(store.importResearch(incoming, snapshot).kept, 0);
+  assert.equal(store.researchData()[key].doi, '10.1234/book');
+  assert.deepEqual(Object.keys(store.researchData()), [key]);
+});
