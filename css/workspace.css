@@ -265,6 +265,14 @@ h1 {
   letter-spacing: -0.055em;
   font-weight: 600;
 }
+.intro-eyebrow {
+  margin-block-end: var(--space-sm);
+  color: var(--color-accent);
+  font-size: var(--text-caption);
+  font-weight: 650;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
 .intro-description {
   color: var(--color-secondary);
   font-size: var(--text-label);
@@ -481,6 +489,17 @@ h1 {
   min-height: 40px;
   max-width: 150px;
   font-size: var(--text-label);
+}
+.results-scope {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm) var(--space-base);
+  margin-block-start: var(--space-sm);
+}
+.results-scope .scope-note {
+  flex: 1 1 15rem;
+  margin: 0;
 }
 .scope-note {
   font-size: var(--text-caption);
@@ -2352,4 +2371,151 @@ html {
 }
 .chart-searching .inspector {
   visibility: hidden;
+}
+
+.research-start {
+  margin-block: clamp(var(--space-base), 2vw, var(--space-lg)) var(--space-2xl);
+}
+.research-start-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0 var(--space-base);
+  margin-block-end: var(--space-sm);
+}
+.research-start-heading h2 {
+  font-size: var(--text-section);
+}
+.research-start > .search-explanation:not([open]) {
+  display: none;
+}
+.research-start > .search-explanation[open] {
+  margin-block-end: var(--space-lg);
+}
+.research-tiles {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(var(--space-md), 1.3vw, var(--space-lg));
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 560px) {
+  .research-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1024px) {
+  .research-tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.research-tile {
+  --tile-shadow: oklch(15% 0.025 330);
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: end;
+  min-block-size: 11rem;
+  aspect-ratio: 8 / 5;
+  overflow: hidden;
+  padding: var(--space-base);
+  border-radius: var(--radius-base);
+  background: var(--tile-shadow);
+  color: var(--color-surface);
+  text-decoration: none;
+}
+.research-tile:is(:hover, :focus-visible, :active) {
+  color: var(--color-surface);
+}
+.tile-photo,
+.research-tile::before,
+.research-tile::after {
+  position: absolute;
+  inset: 0;
+}
+.tile-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
+  z-index: -3;
+}
+.research-tile::before,
+.research-tile::after {
+  content: '';
+  pointer-events: none;
+}
+.research-tile::before {
+  z-index: -2;
+  background: var(--tile-shadow);
+  opacity: 0.2;
+}
+.research-tile::after {
+  z-index: -1;
+  background: linear-gradient(
+    to top,
+    var(--tile-shadow),
+    oklch(from var(--tile-shadow) l c h / 0.9) 4.5rem,
+    transparent max(85%, 7rem)
+  );
+}
+.tile-title {
+  position: relative;
+  font-size: var(--text-lead);
+  font-weight: 750;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+.research-tile .tile-arrow {
+  position: absolute;
+  inset-block-start: var(--space-base);
+  inset-inline-end: var(--space-base);
+  padding: var(--space-xs);
+  inline-size: var(--space-xl);
+  block-size: var(--space-xl);
+  border-radius: var(--radius-round);
+  background: var(--tile-shadow);
+}
+.research-tile:focus-visible {
+  outline-offset: var(--space-xs);
+}
+@media (hover: hover) and (pointer: fine) {
+  .research-tile:is(:hover, :focus-visible)::before {
+    opacity: 0;
+  }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .tile-photo,
+  .research-tile::before,
+  .research-tile .tile-arrow {
+    transition:
+      transform 200ms var(--ease-out),
+      opacity 200ms var(--ease-out);
+  }
+  .research-tile:is(:hover, :focus-visible) .tile-arrow {
+    transform: translateX(var(--space-xs));
+  }
+  .research-tile:hover .tile-photo {
+    transform: scale(1.04);
+  }
+}
+.research-tile:active::before {
+  opacity: 0.36;
+}
+.research-image-credits {
+  margin-block-start: var(--space-md);
+  max-inline-size: 70ch;
+  color: var(--color-secondary);
+  font-size: var(--text-label);
+}
+.research-image-credits summary {
+  align-content: center;
+  min-block-size: 44px;
+  cursor: pointer;
+}
+.research-image-credits li + li {
+  margin-block-start: var(--space-sm);
 }

@@ -5,7 +5,7 @@ import { PERIODS, TYPES } from './data.js';
 
 export const FILTER_CONTROLS = Object.freeze([
   { key: 'period', id: 'periodSelect' },
-  { key: 'context', id: 'addEgyptContext', checked: true, default: true },
+  { key: 'context', id: 'addEgyptContext', checked: true },
   { key: 'from', id: 'yearFrom' },
   { key: 'to', id: 'yearTo' },
   { key: 'type', id: 'typeFilter', radio: true },
@@ -56,7 +56,7 @@ export function writeFilterControls(document, query) {
       continue;
     }
     if (filter.checked)
-      /** @type {HTMLInputElement} */ (element).checked = Boolean(value ?? filter.default);
+      /** @type {HTMLInputElement} */ (element).checked = Boolean(value);
     else element.value = String(value ?? '');
   }
 }

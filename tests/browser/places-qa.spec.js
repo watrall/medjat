@@ -64,7 +64,7 @@ for (const format of ['csv', 'json', 'ris', 'bibtex'])
         },
       });
     });
-    await page.goto('/');
+    await page.goto('/?q=ancient+egypt');
     for (const b of await page.locator('.save-button').all()) await b.click();
     await page.locator('#placesNav').click();
     await page.getByRole('button', { name: 'Your collection', exact: true }).click();
@@ -95,7 +95,7 @@ test('failed and cancelled place exports retain scope and recover with CSV', asy
     }
     return r.fulfill({ json: { message: { items: [work], 'total-results': 1 } } });
   });
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await page.locator('.save-button').click();
   await page.locator('#placesNav').click();
   await page.getByRole('button', { name: 'Your collection', exact: true }).click();

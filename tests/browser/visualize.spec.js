@@ -31,7 +31,7 @@ test('Visualize summarizes its ranked window rather than the loaded page', async
       },
     });
   });
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
   await page.locator('#visualizeNav').click();
   await expect(page.locator('#visualize')).toContainText('first 4 relevance-ranked matches');

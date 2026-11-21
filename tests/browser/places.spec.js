@@ -25,7 +25,7 @@ test('Places discovers Crossref works from a Pleiades place without a saved coll
       },
     });
   });
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(2);
   await page.locator('#placesNav').click();
   await expect(page.locator('#placeMap .leaflet-control-zoom-in')).toBeVisible();
@@ -65,7 +65,7 @@ test('place bibliographies export their exact saved scope and retain manual rese
   await page.route('https://api.crossref.org/**', (route) =>
     route.fulfill({ json: { message: { items: records, 'total-results': 3 } } }),
   );
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(3);
   for (let index = 0; index < 3; index++) await page.locator('.save-button').nth(index).click();
   await page.locator('#placesNav').click();
@@ -217,7 +217,7 @@ test('an export keeps its original place identity while another place is selecte
     }
     return r.fulfill({ json: { message: { items: [source], 'total-results': 1 } } });
   });
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await page.locator('.save-button').click();
   await page.locator('#placesNav').click();
   await page.getByRole('button', { name: 'Your collection', exact: true }).click();
@@ -254,7 +254,7 @@ test('assignment identifies duplicate titles, searches without changing selectio
   await page.route('https://api.crossref.org/**', (r) =>
     r.fulfill({ json: { message: { items: records, 'total-results': 2 } } }),
   );
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   for (const button of await page.locator('.save-button').all()) await button.click();
   await page.locator('#placesNav').click();
   await page.getByRole('button', { name: 'Your collection', exact: true }).click();
@@ -286,7 +286,7 @@ test('Places reverses classification and removal without losing association revi
   await page.route('https://api.crossref.org/**', (r) =>
     r.fulfill({ json: { message: { items: [source], 'total-results': 1 } } }),
   );
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await page.locator('.save-button').click();
   await page.locator('#placesNav').click();
   await page.getByRole('button', { name: 'Your collection', exact: true }).click();
@@ -317,7 +317,7 @@ test('Fit map changes only the camera while All places changes bibliography scop
       },
     }),
   );
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   for (const b of await page.locator('.save-button').all()) await b.click();
   await page.locator('#placesNav').click();
   await page.getByRole('button', { name: 'Your collection', exact: true }).click();

@@ -1,4 +1,4 @@
-import { DEFAULT_QUERY, PERIODS, normalizeDOI, normalizeWork } from './data.js';
+import { PERIODS, normalizeDOI, normalizeWork } from './data.js';
 import { queryFilters } from './filters.js';
 
 export const API = 'https://api.crossref.org';
@@ -59,21 +59,20 @@ function dispatch() {
 export function addedSearchTerms(query) {
   const period = PERIODS.find((p) => p.id === query.period);
   if (period) return period.query;
-  return query.context !== false && !/\begypt(?:ian)?\b/i.test(query.q || DEFAULT_QUERY)
-    ? 'ancient Egypt'
-    : '';
+  return query.context !== false && !/\begypt(?:ian)?\b/i.test(query.q) ? 'ancient Egypt' : '';
 }
 export function bibliographicTerms(query) {
-  return [query.q.trim() || DEFAULT_QUERY, addedSearchTerms(query)].filter(Boolean).join(' ');
+  return [query.q.trim(), addedSearchTerms(query)].filter(Boolean).join(' ');
 }
 export function buildSearchURL(query, cursor = '*') {
+  if (!query.q.trim()) throw new Error('Enter a publication search.');
   const params = new URLSearchParams({
     'query.bibliographic': bibliographicTerms(query),
     rows: String(PAGE_SIZE),
     mailto: CONTACT,
   });
   if (query.field === 'author') {
-    params.set('query.author', query.q.trim() || DEFAULT_QUERY);
+    params.set('query.author', query.q.trim());
     const context = addedSearchTerms(query);
     if (context) params.set('query.bibliographic', context);
     else params.delete('query.bibliographic');

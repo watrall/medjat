@@ -15,7 +15,7 @@ test('metadata changes require explicit acceptance', async ({ page }) => {
       },
     }),
   );
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(1);
   await page.locator('.save-button').click();
   await page.locator('#collectionNav').click();

@@ -87,7 +87,7 @@ async function fixtures(
 
 test('sorting and navigation preserve unapplied search choices', async ({ page }) => {
   const requests = await fixtures(page);
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
   await page.locator('#searchInput').fill('Abydos');
   await page.locator('#periodSelect').selectOption('new-kingdom');
@@ -119,7 +119,7 @@ test('refresh restores collection scope, selected record, and an unfinished sear
   page,
 }) => {
   await fixtures(page);
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
   await page.locator('.save-button').nth(0).click();
   await page.locator('.save-button').nth(1).click();
@@ -136,7 +136,7 @@ test('refresh restores collection scope, selected record, and an unfinished sear
 
 test('refresh preserves a reference trail and expanded source connections', async ({ page }) => {
   await fixtures(page, { referenceCount: 30 });
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
   await page.getByRole('button', { name: 'Connections', exact: true }).click();
   await page.getByRole('button', { name: 'Show 20 more references', exact: true }).click();
@@ -160,7 +160,7 @@ test('refresh preserves a reference trail and expanded source connections', asyn
 test('browser back returns from mobile publication detail to its results', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await fixtures(page);
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
   await page.locator('.result-open').nth(1).click();
   await expect(page.locator('.results-column')).toBeHidden();
@@ -171,7 +171,7 @@ test('browser back returns from mobile publication detail to its results', async
 for (const [scope, included] of Object.entries({ all: [0, 1, 2], matching: [0], selected: [1] })) {
   test(`export exact membership in every format: ${scope}`, async ({ page }) => {
     await fixtures(page);
-    await page.goto('/');
+    await page.goto('/?q=ancient+egypt');
     await expect(page.locator('.result-row')).toHaveCount(25);
     for (const index of [0, 1, 2]) await page.locator('.save-button').nth(index).click();
     await page.locator('#collectionNav').click();
@@ -218,7 +218,7 @@ for (const [scope, included] of Object.entries({ all: [0, 1, 2], matching: [0], 
 
 test('failed and cancelled exports leave the saved list and selection intact', async ({ page }) => {
   await fixtures(page);
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
   await page.locator('.save-button').first().click();
   await page.locator('#collectionNav').click();
@@ -248,7 +248,7 @@ test('failed and cancelled exports leave the saved list and selection intact', a
 
 test('an export keeps its initial membership while the collection changes', async ({ page }) => {
   await fixtures(page);
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
   for (const index of [0, 1]) await page.locator('.save-button').nth(index).click();
   await page.locator('#collectionNav').click();
@@ -290,7 +290,7 @@ test('a slow record restoration never overrides a later publication choice', asy
       })
       .catch(() => {});
   });
-  await page.goto('/?record=10.1234%2Fslow', { waitUntil: 'commit' });
+  await page.goto('/?q=ancient+egypt&record=10.1234%2Fslow', { waitUntil: 'commit' });
   await expect(page.locator('.result-row')).toHaveCount(25);
   await page.locator('.result-open').nth(1).click();
   release();
@@ -303,7 +303,7 @@ test('cross-field year errors open collapsed refinements and receive keyboard fo
 }) => {
   await fixtures(page);
   await page.setViewportSize({ width: 768, height: 1000 });
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
   await page.locator('#refinements').evaluate((element) => {
     element.open = true;
@@ -321,7 +321,7 @@ test('cross-field year errors open collapsed refinements and receive keyboard fo
 
 test('search, inspect, save, reload, cite, and export a collection', async ({ page }) => {
   const requests = await fixtures(page);
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
   expect(requests.filter((u) => u.pathname === '/works')).toHaveLength(1);
   const save = page.getByRole('button', { name: /^Save to collection: Settlement/ });
@@ -373,7 +373,7 @@ test('period queries, filters, pagination, and browser back preserve research co
   page,
 }) => {
   const requests = await fixtures(page);
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
   await page
     .getByRole('combobox', { name: 'Historical period', exact: true })
@@ -449,7 +449,7 @@ test('period refinements apply immediately and clear while retaining the query',
 test('mobile detail navigation and long metadata reflow without overflow', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await fixtures(page);
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await page.setViewportSize({ width: 320, height: 844 });
@@ -468,7 +468,7 @@ test('mobile detail navigation and long metadata reflow without overflow', async
 
 test('network errors remain visible and never become demonstration records', async ({ page }) => {
   await fixtures(page, { fail: true });
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(
     page.getByText('We could not reach Crossref. Check your connection and retry.'),
   ).toBeVisible();
@@ -478,7 +478,7 @@ test('network errors remain visible and never become demonstration records', asy
 
 test('reference navigation retains its source publication', async ({ page }) => {
   await fixtures(page, { referenceCount: 30 });
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
   await page.getByRole('button', { name: 'Connections', exact: true }).click();
   await page.getByRole('button', { name: 'Show 20 more references', exact: true }).click();
@@ -502,7 +502,7 @@ test('reference navigation retains its source publication', async ({ page }) => 
 });
 test('empty search responses provide a useful recovery state', async ({ page }) => {
   await fixtures(page, { empty: true });
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(
     page.getByRole('heading', { name: 'No publications found.', exact: true }),
   ).toBeVisible();
@@ -510,7 +510,7 @@ test('empty search responses provide a useful recovery state', async ({ page }) 
 });
 test('search and collection views have no detected WCAG AA violations', async ({ page }) => {
   await fixtures(page);
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
   const measurements = { widths: [], targets: [], scans: [] };
   const measureTarget = async (label, locator) =>
@@ -580,7 +580,7 @@ test('the main and Places inspectors keep citation controls uniquely identified'
 }) => {
   await fixtures(page);
   await blockTiles(page);
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
   await page.locator('#inspector').getByRole('button', { name: 'Cite', exact: true }).click();
   await page.locator('#placesNav').click();
@@ -601,7 +601,7 @@ test('the main and Places inspectors keep citation controls uniquely identified'
 
 test('untrusted metadata remains text instead of executable markup', async ({ page }) => {
   await fixtures(page, { hostile: true });
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
   await expect(page.locator('.result-open').first()).toHaveText('A "quoted" title');
   await expect(page.locator('.result-row img')).toHaveCount(0);
@@ -616,7 +616,7 @@ test('simultaneous saves and removals stay consistent across research tabs', asy
   const other = await context.newPage();
   await fixtures(page);
   await fixtures(other);
-  await Promise.all([page.goto('/'), other.goto('/')]);
+  await Promise.all([page.goto('/?q=ancient+egypt'), other.goto('/?q=ancient+egypt')]);
   await Promise.all([
     expect(page.locator('.result-row')).toHaveCount(25),
     expect(other.locator('.result-row')).toHaveCount(25),
@@ -663,7 +663,7 @@ test('legacy collection migrates once and cannot resurrect a removed publication
       ),
     publication(0),
   );
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('#collectionCount')).toHaveText('1');
   await page.locator('.save-button').first().click();
   await expect(page.locator('#collectionCount')).toHaveText('0');
@@ -674,7 +674,7 @@ test('legacy collection migrates once and cannot resurrect a removed publication
 test('unavailable persistent storage keeps an explicit session collection', async ({ page }) => {
   await page.addInitScript(() => Object.defineProperty(window, 'indexedDB', { value: undefined }));
   await fixtures(page);
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
   await page.locator('.save-button').first().click();
   await expect(page.locator('#collectionCount')).toHaveText('1');
@@ -684,7 +684,7 @@ test('unavailable persistent storage keeps an explicit session collection', asyn
 
 test('date sorts browse subsequent pages with supported pagination', async ({ page }) => {
   const requests = await fixtures(page);
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
   for (const sort of ['newest', 'oldest']) {
     await page.locator('#sortSelect').selectOption(sort);
@@ -701,7 +701,7 @@ test('a rejected changed search preserves clearly identified previous results', 
   page,
 }) => {
   await fixtures(page);
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
   await page.route('https://api.crossref.org/works?**', (route) =>
     route.fulfill({ status: 400, json: { message: 'invalid request' } }),
@@ -755,7 +755,7 @@ for (const width of [320, 390, 768, 1024, 1440]) {
   }) => {
     await page.setViewportSize({ width, height: 844 });
     await fixtures(page);
-    await page.goto('/');
+    await page.goto('/?q=ancient+egypt');
     await expect(page.locator('.result-row')).toHaveCount(25);
     const nav = page.locator('#navSearchForm');
     await expect(nav).toHaveAttribute('aria-hidden', 'true');
@@ -811,7 +811,7 @@ for (const width of [320, 390, 768, 1024, 1440]) {
 test('global navigation search opens Explore and preserves synchronized text', async ({ page }) => {
   const requests = await fixtures(page);
   await blockTiles(page);
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
   for (const id of ['collectionNav', 'visualizeNav', 'placesNav']) {
     await page.locator(`#${id}`).click();
@@ -863,7 +863,7 @@ test('search options use supported author search and validate exact DOI entry', 
   page,
 }) => {
   const requests = await fixtures(page);
-  await page.goto('/?context=0');
+  await page.goto('/?q=ancient+egypt&context=0');
   await expect(page.locator('.result-row')).toHaveCount(25);
   await page.locator('#searchField').selectOption('author');
   await page.locator('#searchInput').fill('Ada Researcher');
@@ -885,7 +885,7 @@ test('compact search switches at the primary search edge in both scroll directio
   page,
 }) => {
   await fixtures(page);
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
   const edge = await page.evaluate(
     () =>
@@ -916,7 +916,7 @@ test('search help from Visualize opens a visible explanation and preserves the d
   page,
 }) => {
   await fixtures(page);
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
   await page.locator('#searchInput').fill('An unfinished topic');
   await page.locator('#visualizeNav').click();
@@ -932,7 +932,7 @@ test('the masthead reflows enlarged text and hands off at a fractional header he
 }) => {
   await fixtures(page);
   await page.setViewportSize({ width: 320, height: 844 });
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
   await page.evaluate(() => (document.documentElement.style.fontSize = '200%'));
   const geometry = await page.evaluate(() => ({
@@ -984,7 +984,7 @@ test('workspace tabs restore each reading position and Collection can map its sa
 }) => {
   await fixtures(page);
   await blockTiles(page);
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-open')).toHaveCount(25);
   await page.locator('.save-button').nth(0).click();
   await page.locator('.save-button').nth(1).click();
@@ -1038,4 +1038,139 @@ test('workspace tabs restore each reading position and Collection can map its sa
   await page.locator('#exploreNav').click();
   await expect(page.locator('.results-column')).toBeHidden();
   await expect(page.locator('.detail-title')).toHaveText('Ancient Egyptian research 5');
+});
+
+test('the landing stays idle and thematic tiles submit their exact titles', async ({ page }) => {
+  const requests = await fixtures(page);
+  await page.goto('/');
+  const tiles = page.getByRole('link').and(page.locator('.research-tile'));
+  const search = page.locator('#searchInput');
+  const results = page.locator('#research');
+  await expect(tiles).toHaveCount(6);
+  await expect(search).toHaveValue('');
+  await expect(results).toBeHidden();
+  await expect(page.locator('.intro h1')).toHaveText('Follow the research.');
+  await page.locator('#primarySearchSubmit').click();
+  await expect(search).toBeFocused();
+  expect(requests).toHaveLength(0);
+
+  await page.locator('#visualizeNav').click();
+  await expect(page.getByText('Search Explore to visualize results.')).toBeVisible();
+  await page.getByRole('button', { name: 'Search Explore', exact: true }).click();
+  await expect(tiles.first()).toBeVisible();
+  expect(requests).toHaveLength(0);
+
+  await page.locator('.tile-photo').last().scrollIntoViewIfNeeded();
+  await expect
+    .poll(() =>
+      page
+        .locator('.tile-photo')
+        .evaluateAll((photos) => photos.every((photo) => photo.complete && photo.naturalWidth > 0)),
+    )
+    .toBe(true);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.screenshot({ path: test.info().outputPath('landing-desktop.png'), fullPage: true });
+  const tileColor = await tiles.nth(1).evaluate((tile) => getComputedStyle(tile).color);
+  await page.mouse.move(0, 0);
+  for (const arrow of await page.locator('.tile-arrow').all())
+    await expect(arrow).toHaveCSS('opacity', '1');
+  await tiles.first().hover();
+  await expect(tiles.first()).toHaveCSS('color', tileColor);
+  await expect(tiles.first().locator('.tile-photo')).toHaveCSS(
+    'transform',
+    'matrix(1.04, 0, 0, 1.04, 0, 0)',
+  );
+  await expect(tiles.first().locator('.tile-arrow')).toHaveCSS(
+    'transform',
+    'matrix(1, 0, 0, 1, 4, 0)',
+  );
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(tiles.first().locator('.tile-photo')).toHaveCSS('transform', 'none');
+  await expect(tiles.first().locator('.tile-arrow')).toHaveCSS('transform', 'none');
+
+  for (const [width, columns] of [
+    [1440, 3],
+    [768, 2],
+    [390, 1],
+    [320, 1],
+  ]) {
+    await page.setViewportSize({ width, height: 900 });
+    const layout = await page.locator('.research-tiles').evaluate((grid) => ({
+      columns: getComputedStyle(grid).gridTemplateColumns.split(' ').length,
+      pageWidth: document.documentElement.scrollWidth,
+    }));
+    expect(layout.columns).toBe(columns);
+    expect(layout.pageWidth).toBeLessThanOrEqual(width);
+  }
+  const links = await tiles.evaluateAll((anchors) =>
+    anchors.map((link) => ({
+      title: link.textContent.trim(),
+      q: new URL(link.href).searchParams.get('q'),
+    })),
+  );
+  expect(links.every(({ title, q }) => title === q)).toBe(true);
+
+  const first = tiles.first();
+  await search.fill('Petrie');
+  await page.locator('#searchField').selectOption('author');
+  expect(requests).toHaveLength(0);
+  await page.mouse.move(0, 0);
+  await page.locator('#landingPlaces').focus();
+  await page.keyboard.press('Tab');
+  await expect(first).toBeFocused();
+  await expect(first.locator('.tile-arrow')).toHaveCSS('opacity', '1');
+  await page.keyboard.press('Enter');
+  await expect(search).toHaveValue('Hierakonpolis: The City of the Hawk');
+  await expect(page.locator('#resultsTitle')).toBeFocused();
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  expect(requests).toHaveLength(1);
+  expect(requests[0].searchParams.get('query.bibliographic')).toBe(
+    'Hierakonpolis: The City of the Hawk',
+  );
+  const narrower = page.getByRole('button', { name: 'Search just Hierakonpolis' });
+  await expect(narrower).toBeInViewport();
+  expect((await narrower.boundingBox()).y).toBeLessThan(
+    (await page.locator('.result-row').first().boundingBox()).y,
+  );
+  await narrower.click();
+  await expect(page).toHaveURL(/q=Hierakonpolis&/);
+  await expect(page.locator('#scopeNote')).toContainText('Results for “Hierakonpolis”');
+  expect(requests.at(-1).searchParams.get('query.bibliographic')).toBe('Hierakonpolis');
+  await page.goBack();
+  await expect(page.locator('#scopeNote')).toContainText(
+    'Results for “Hierakonpolis: The City of the Hawk”',
+  );
+  await expect(narrower).toBeVisible();
+  const beforeLanding = requests.length;
+  await page.goBack();
+  await expect(first).toBeFocused();
+  await expect(results).toBeHidden();
+  await expect(search).toHaveValue('Petrie');
+  await expect(page.locator('#searchField')).toHaveValue('author');
+  expect(requests).toHaveLength(beforeLanding);
+});
+
+test('a direct record URL retrieves only the requested DOI', async ({ page }) => {
+  const calls = [];
+  await page.route('https://api.crossref.org/**', (route) => {
+    calls.push(new URL(route.request().url()).pathname);
+    return route.fulfill({ json: { message: publication(1) } });
+  });
+  await page.goto('/?record=10.1234%2Ftest-record-1');
+  await expect(page.locator('.result-open')).toHaveText('Ancient Egyptian research 1');
+  await expect(page.locator('#landing')).toBeHidden();
+  expect(calls).toEqual(['/works/10.1234%2Ftest-record-1']);
+});
+
+test('a missing landing photograph leaves its tile visible and usable', async ({ page }) => {
+  const requests = await fixtures(page);
+  await page.route('**/assets/landing/hierakonpolis*.webp', (route) => route.abort());
+  await page.goto('/');
+  const tile = page.getByRole('link', { name: 'Hierakonpolis: The City of the Hawk' });
+  await expect(tile).toBeVisible();
+  await expect(tile.locator('img')).toHaveJSProperty('naturalWidth', 0);
+  expect((await tile.boundingBox()).height).toBeGreaterThan(44);
+  expect(requests).toHaveLength(0);
+  await tile.click();
+  await expect(page.locator('.result-row')).toHaveCount(25);
 });

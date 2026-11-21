@@ -37,7 +37,7 @@ test('research views retain accessible controls and reflow across desktop and mo
       },
     });
   });
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(1);
   await page.locator('.save-button').click();
   await blockTiles(page);

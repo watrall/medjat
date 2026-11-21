@@ -21,7 +21,7 @@ test('reference discovery explains overlap, records decisions, and preserves the
       },
     });
   });
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(2);
   await page.locator('.save-button').nth(0).click();
   await page.locator('.save-button').nth(1).click();
@@ -65,7 +65,7 @@ test('unresolved citations require confirmation and can be undone after rebuildi
       },
     });
   });
-  await page.goto('/');
+  await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(1);
   await page.locator('.save-button').click();
   await page.locator('#collectionNav').click();

@@ -1,5 +1,4 @@
 // Approximate ranges follow the Egypt Exploration Society's Chronology of Egypt.
-export const DEFAULT_QUERY = 'ancient egypt';
 export const PERIODS = [
   { id: 'predynastic', name: 'Predynastic', dates: 'c. 4400–3000 BCE', query: 'Predynastic Egypt' },
   {
@@ -170,13 +169,14 @@ export function authorLine(work, max = 3) {
 
 export function readQuery(search = '') {
   const p = new URLSearchParams(search);
+  const q = (p.get('q') || '').slice(0, 500).trim();
   const year = (key) => (/^\d{4}$/.test(p.get(key) || '') ? p.get(key) : '');
   return {
-    q: (p.get('q') || DEFAULT_QUERY).slice(0, 500),
+    q,
     container: (p.get('container') || '').slice(0, 500),
     ...(['author', 'doi'].includes(p.get('field')) ? { field: p.get('field') } : {}),
     period: PERIODS.some((x) => x.id === p.get('period')) ? p.get('period') : '',
-    context: p.get('context') !== '0',
+    context: p.has('context') ? p.get('context') !== '0' : Boolean(q),
     type: TYPES.has(p.get('type')) ? p.get('type') : '',
     from: year('from'),
     to: year('to'),
@@ -192,6 +192,7 @@ export function queryString(query) {
   for (const [key, value] of Object.entries(query))
     if (key === 'context') {
       if (value === false) p.set(key, '0');
+      else if (!query.q && value === true) p.set(key, '1');
     } else if (value) p.set(key, typeof value === 'boolean' ? '1' : value);
   return p.toString();
 }

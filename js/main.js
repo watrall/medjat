@@ -5,7 +5,6 @@ import { createResearch } from './research.js';
 import { importResearch } from './research-store.js';
 import { createVisualize } from './visualize.js';
 import {
-  DEFAULT_QUERY,
   PERIODS,
   readQuery,
   queryString,
@@ -63,6 +62,7 @@ const state = {
   controller: null,
   doiLookup: false,
   resultQuery: null,
+  directRecord: null,
   errorRetryable: true,
   failedAppend: false,
   appending: false,
@@ -116,17 +116,19 @@ function saveSession() {
   });
 }
 function updateURL({ push = false } = {}) {
-  const params = new URLSearchParams(queryString(state.query));
+  const params = new URLSearchParams(state.query.q ? queryString(state.query) : '');
   if (state.view !== 'explore') params.set('view', state.view);
   if (state.view === 'places') {
     writePlaceState(params, places.location());
   }
   if (state.view === 'explore' || state.view === 'collection') {
     const work = inspector.getCurrentWork();
-    if (work) params.set('record', work.doi);
+    if (work && (state.query.q || state.view === 'collection')) params.set('record', work.doi);
+    else if (state.view === 'explore' && state.directRecord)
+      params.set('record', work?.doi || state.directRecord);
     if ($('research').classList.contains('mobile-detail-open')) params.set('detail', '1');
   }
-  const next = `${location.pathname}?${params}${location.hash}`;
+  const next = `${location.pathname}${params.size ? `?${params}` : ''}${location.hash}`;
   if (next !== `${location.pathname}${location.search}${location.hash}`)
     history[initialized && push && !restoringLocation ? 'pushState' : 'replaceState'](
       null,
@@ -155,7 +157,7 @@ function syncControls() {
 function readDraft() {
   const filters = readFilterControls(document);
   return {
-    q: $('searchInput').value.trim() || DEFAULT_QUERY,
+    q: $('searchInput').value.trim(),
     ...($('searchField').value ? { field: $('searchField').value } : {}),
     container: state.draft.container || '',
     period: filters.period,
@@ -172,8 +174,8 @@ function readDraft() {
 function renderDraftStatus() {
   const applied = (state.error && state.resultQuery) || state.query;
   const pending = state.draft.q !== applied.q || state.draft.field !== applied.field;
-  $('pendingQuery').hidden = !pending;
-  $('navSearchDraft').hidden = !pending;
+  $('pendingQuery').hidden = !pending || !state.query.q;
+  $('navSearchDraft').hidden = !pending || !state.query.q;
   const explore = state.view === 'explore';
   $('primarySearchSubmit').textContent = explore ? 'Search' : 'Search in Explore';
   $('navSearchForm')
@@ -474,7 +476,7 @@ function placeOrigin(context) {
       workspacePositions.set(context.view, context);
       setView(context.view, { load: false, syncURL: false });
       const navigation = navigationGeneration;
-      const needsSearch = state.view === 'explore' && !state.resultQuery;
+      const needsSearch = state.view === 'explore' && Boolean(state.query.q) && !state.resultQuery;
       if (needsSearch) await runSearch();
       if (navigation !== navigationGeneration || state.view !== context.view) return;
       if (mapCollection) {
@@ -491,6 +493,10 @@ function placeOrigin(context) {
   };
 }
 const visualizer = createVisualize($('visualize'), {
+  onExplore() {
+    setView('explore');
+    $('searchInput').focus();
+  },
   onRefine(query, filter, trigger) {
     chartReturn = { trigger, scrollY: window.scrollY };
     chartSearch = true;
@@ -526,11 +532,7 @@ function setView(
   if (switching && previousView === 'visualize')
     chartPosition = { title: $('visualize').querySelector('h2'), scrollY: window.scrollY };
   const position = navigate ? workspacePositions.get(view) : null;
-  const config = VIEW_CONFIG[view];
   searchHandoff.setView(view);
-  const skip = document.querySelector('.skip-link');
-  skip.href = `#${config.skipTarget}`;
-  skip.textContent = config.skipLabel;
   for (const [id, name] of [
     ['exploreNav', 'explore'],
     ['collectionNav', 'collection'],
@@ -541,8 +543,8 @@ function setView(
   document.body.classList.toggle('is-collection', view === 'collection' || view === 'places');
   $('places').hidden = view !== 'places';
   $('visualize').hidden = view !== 'visualize';
-  $('research').hidden = view === 'places' || view === 'visualize';
   state.view = view;
+  renderExploreSurface();
   renderDraftStatus();
   if (view !== 'collection') collectionTools.cancel();
   if (view !== 'visualize') visualizer.cancel();
@@ -568,7 +570,7 @@ function setView(
   }
   $('research').classList.toggle('collection-view', view === 'collection');
   $('research').classList.remove('mobile-detail-open');
-  $('refinements').hidden = view === 'collection';
+  $('refinements').hidden = view === 'collection' || !state.query.q;
   $('sortSelect').parentElement.hidden = view === 'collection';
   $('activeQuery').hidden = view === 'collection' || !$('activeQuery').childElementCount;
   const heading = view === 'collection' ? 'h1' : 'h2';
@@ -587,7 +589,6 @@ function setView(
   // References and inspected candidates may have no corresponding row.
   const restore = reading && (work?.id === selected || position.outsideList);
   state.selected = restore ? selected : work?.id || null;
-  renderList();
   if (restore) {
     if (position.mobileDetail && matchMedia(BREAKPOINTS.mobile).matches)
       $('research').classList.add('mobile-detail-open');
@@ -596,10 +597,31 @@ function setView(
     renderInspector(work);
     $('inspector').scrollTop = 0;
   }
+  renderList();
   renderStatus();
   if (navigate) window.scrollTo({ top: position?.scrollY || 0, behavior: 'instant' });
   if (syncURL) updateURL({ push: navigate });
-  if (view === 'explore' && !state.resultQuery && !state.loading && load) runSearch();
+  if (view === 'explore' && state.query.q && !state.resultQuery && !state.loading && load)
+    runSearch();
+}
+function renderExploreSurface() {
+  const explore = state.view === 'explore';
+  const idle = explore && !state.query.q && !state.directRecord;
+  $('landing').hidden = !idle;
+  $('research').hidden = state.view !== 'collection' && (!explore || idle);
+  document.querySelector('.skip-link').href = idle
+    ? '#searchInput'
+    : '#' + VIEW_CONFIG[state.view].skipTarget;
+  if (idle) document.querySelector('.skip-link').textContent = 'Skip to search';
+  else document.querySelector('.skip-link').textContent = VIEW_CONFIG[state.view].skipLabel;
+  $('searchRefinementsHelp').hidden = !idle;
+  if (idle) $('searchRefinementsHelp').open = false;
+  document.querySelector('.search-help-link').href = idle
+    ? '#searchRefinementsHelp'
+    : '#searchExplanation';
+  $('searchSiteOnly').hidden = !(
+    explore && state.query.q === $('hierakonpolisTile').textContent.trim()
+  );
 }
 function renderInspector(work) {
   inspector.show(work);
@@ -628,6 +650,20 @@ function selectWork(work) {
 function renderList() {
   const list = $('resultList');
   list.setAttribute('aria-busy', String(state.view === 'explore' && state.loading));
+  if (state.view === 'explore' && !state.query.q && state.directRecord) {
+    const work = inspector.getCurrentWork();
+    const entry =
+      work &&
+      createResultRow(work, {
+        view: 'explore',
+        selected: true,
+        saved: state.collection.has(work.id),
+        onOpen: selectWork,
+        onSave: toggleSave,
+      });
+    list.replaceChildren(...(entry ? [entry] : []));
+    return;
+  }
   if (state.view === 'explore' && state.loading && (!state.items.length || chartSearch)) {
     list.replaceChildren(...skeletons());
     return;
@@ -728,6 +764,15 @@ function renderStatus() {
     return;
   }
   if (state.view !== 'explore') return;
+  if (!state.query.q && state.directRecord) {
+    $('resultCount').textContent = 'Direct DOI link';
+    $('scopeNote').textContent = 'Publication metadata from Crossref.';
+    $('effectiveQuery').textContent = 'A direct DOI link retrieves one publication record.';
+    $('sortSelect').parentElement.hidden = true;
+    $('requestNotice').hidden = true;
+    $('resultsFooter').replaceChildren();
+    return;
+  }
   const previous =
     state.items.length &&
     state.resultQuery &&
@@ -763,11 +808,17 @@ function renderStatus() {
   $('sortSelect').disabled = state.loading;
 }
 async function runSearch(append = false) {
+  if (!state.query.q) return;
+  state.directRecord = null;
   if (state.view !== 'explore') setView('explore', { syncURL: false, load: false });
   state.controller?.abort();
   const controller = new AbortController();
   state.controller = controller;
   const requestId = ++state.requestId;
+  renderExploreSurface();
+  $('refinements').hidden = false;
+  $('searchExplanation').hidden = false;
+  $('sortSelect').parentElement.hidden = false;
   state.loading = true;
   state.error = '';
   state.appending = append;
@@ -873,6 +924,12 @@ function submitSearch(e) {
   e.preventDefault();
   captureDraft();
   $('searchError').hidden = true;
+  if (!state.draft.q) {
+    const input = $(e.currentTarget.id === 'navSearchForm' ? 'navSearchInput' : 'searchInput');
+    input.setCustomValidity('Enter a title, topic, author, or DOI.');
+    input.reportValidity();
+    return;
+  }
   if (state.draft.field === 'doi' && !normalizeDOI(state.draft.q)) {
     $('searchError').textContent =
       'Enter a complete DOI, such as 10.1234/example, or choose All metadata.';
@@ -883,7 +940,7 @@ function submitSearch(e) {
   }
   if (!validateYears()) return;
   cancelRestoration();
-  const fromWorkspace = state.view !== 'explore';
+  const fromWorkspace = state.view !== 'explore' || $('research').hidden;
   chartReturn = null;
   chartSearch = false;
   state.query = { ...state.draft };
@@ -891,6 +948,36 @@ function submitSearch(e) {
   if (fromWorkspace) focusHeading($('resultsTitle'));
 }
 for (const id of ['searchForm', 'navSearchForm']) $(id).addEventListener('submit', submitSearch);
+function startLandingSearch(query) {
+  cancelRestoration();
+  chartReturn = null;
+  chartSearch = false;
+  state.query = readQuery(new URLSearchParams({ q: query, context: '0' }).toString());
+  state.draft = { ...state.query };
+  syncControls();
+  runSearch();
+  focusHeading($('resultsTitle'));
+}
+$('landing').addEventListener('click', (event) => {
+  const tile = event.target.closest('.research-tile');
+  if (
+    !tile ||
+    event.defaultPrevented ||
+    event.button ||
+    event.metaKey ||
+    event.ctrlKey ||
+    event.altKey ||
+    event.shiftKey
+  )
+    return;
+  event.preventDefault();
+  history.replaceState({ ...history.state, landingTile: tile.id, landingDraft: state.draft }, '');
+  startLandingSearch(new URL(tile.href).searchParams.get('q'));
+});
+$('landingPlaces').addEventListener('click', () =>
+  setView('places', { placeOptions: { focus: true } }),
+);
+$('searchSiteOnly').addEventListener('click', () => startLandingSearch('Hierakonpolis'));
 $('filterForm').addEventListener('submit', (e) => {
   e.preventDefault();
   if (!validateYears()) return;
@@ -954,8 +1041,9 @@ $('clearFilters').addEventListener('click', () => {
 document.querySelector('.search-help-link').addEventListener('click', (event) => {
   event.preventDefault();
   if (state.view !== 'explore') setView('explore');
-  $('searchExplanation').open = true;
-  const summary = $('searchExplanation').querySelector('summary');
+  const help = $('research').hidden ? $('searchRefinementsHelp') : $('searchExplanation');
+  help.open = true;
+  const summary = help.querySelector('summary');
   summary.focus();
   summary.scrollIntoView({ block: 'nearest' });
 });
@@ -1017,9 +1105,27 @@ async function restoreLocation(resume = null) {
   const params = new URLSearchParams(location.search);
   const record = params.get('record');
   const detail = params.get('detail') === '1';
+  const landingTile = history.state?.landingTile;
   try {
     state.query = readQuery(location.search);
-    state.draft = resume?.draft ? readQuery(queryString(resume.draft)) : { ...state.query };
+    state.directRecord =
+      !state.query.q && !params.get('view') ? normalizeDOI(record) || null : null;
+    if (!state.query.q) {
+      state.controller?.abort();
+      state.requestId++;
+      state.loading = false;
+      state.resultQuery = null;
+      state.items = [];
+      state.nextCursor = null;
+      state.error = '';
+      state.doiLookup = false;
+      workspacePositions.delete('explore');
+      chartReturn = null;
+      chartSearch = false;
+    }
+    const idleLanding = !state.query.q && !state.directRecord && !params.has('view');
+    const draft = resume?.draft ?? (idleLanding ? history.state?.landingDraft : null);
+    state.draft = draft ? readQuery(queryString(draft)) : { ...state.query };
     state.collectionQuery =
       typeof resume?.collectionQuery === 'string' ? resume.collectionQuery : '';
     state.exportSelection = new Set(
@@ -1052,11 +1158,16 @@ async function restoreLocation(resume = null) {
     });
     if (
       view === 'explore' &&
+      state.query.q &&
       (!state.resultQuery || queryString(state.resultQuery) !== queryString(state.query))
     )
       await runSearch();
     if (navigation !== navigationGeneration) return;
     if (view === 'visualize' || view === 'places') return;
+    if (view === 'explore' && $('research').hidden) {
+      if (landingTile) $(landingTile)?.focus();
+      return;
+    }
     if (resume?.inspector) inspector.restore(resume.inspector);
     else if (record) {
       const work =
@@ -1071,6 +1182,7 @@ async function restoreLocation(resume = null) {
     if (detail && matchMedia(BREAKPOINTS.mobile).matches)
       $('research').classList.add('mobile-detail-open');
     else $('research').classList.remove('mobile-detail-open');
+    renderStatus();
   } catch {
     if (navigation === navigationGeneration)
       notify(

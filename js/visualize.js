@@ -5,7 +5,7 @@ import { el, icon } from './dom.js';
 import { downloadText } from './download.js';
 import { csvCell } from './export.js';
 import { filterDescription } from './filters.js';
-export function createVisualize(root, { onRefine }) {
+export function createVisualize(root, { onRefine, onExplore }) {
   let controller,
     generation = 0,
     renderedQuery;
@@ -172,6 +172,15 @@ export function createVisualize(root, { onRefine }) {
     );
   }
   async function show(query, fresh = false) {
+    if (!query.q) {
+      renderedQuery = null;
+      root.replaceChildren(
+        el('h2', { tabindex: '-1' }, 'Visualize Crossref results'),
+        el('p', { class: 'analysis-intro' }, 'Search Explore to visualize results.'),
+        el('button', { class: 'button', onclick: onExplore }, 'Search Explore'),
+      );
+      return;
+    }
     const key = queryString(query);
     if (!fresh && renderedQuery === key) return;
     renderedQuery = null;
