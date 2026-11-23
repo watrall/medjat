@@ -109,7 +109,7 @@ const array = (value) => (Array.isArray(value) ? value : []);
 const firstText = (value) => plainText(Array.isArray(value) ? value[0] : value);
 
 // Crossref lists the same notice once per source, so merge entries that share a type and DOI.
-function parseUpdates(list) {
+export function parseUpdates(list) {
   const merged = new Map();
   for (const entry of array(list)) {
     const doi = normalizeDOI(entry?.DOI);

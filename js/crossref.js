@@ -1,4 +1,4 @@
-import { PERIODS, normalizeDOI, normalizeWork } from './data.js';
+import { PERIODS, normalizeDOI, normalizeWork, parseUpdates } from './data.js';
 import { queryFilters } from './filters.js';
 
 export const API = 'https://api.crossref.org';
@@ -230,6 +230,31 @@ export async function findCitationMatches(label, options = {}) {
       return [];
     }
   });
+}
+
+export const UPDATE_BATCH = 40;
+
+// Looks up update notices for many DOIs at once. Only DOIs Crossref returns appear in each
+// batch's map, and an empty list means Crossref knows the work and lists no notices.
+export async function checkUpdates(dois, { signal, fetcher, onBatch } = {}) {
+  for (let start = 0; start < dois.length; start += UPDATE_BATCH) {
+    const batch = dois.slice(start, start + UPDATE_BATCH);
+    const params = new URLSearchParams({
+      filter: batch.map((doi) => `doi:${doi}`).join(','),
+      select: 'DOI,updated-by',
+      rows: String(batch.length),
+      mailto: CONTACT,
+    });
+    const response = await request(`${API}/works?${params}`, { signal, fetcher });
+    const items = response.body?.message?.items;
+    if (!Array.isArray(items)) throw new Error('Crossref returned an unexpected response.');
+    const found = new Map();
+    for (const item of items) {
+      const doi = normalizeDOI(item?.DOI);
+      if (doi) found.set(doi, parseUpdates(item['updated-by']));
+    }
+    onBatch?.(found);
+  }
 }
 
 export async function getWork(doi, options = {}) {

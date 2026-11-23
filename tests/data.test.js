@@ -313,6 +313,44 @@ test('update notices merge duplicate sources and sort the most serious first', a
   assert.deepEqual(normalizeWork({ DOI: '10.1234/plain' }).updates, []);
 });
 
+test('saved records are checked for update notices in batches of 40', async () => {
+  const { checkUpdates, UPDATE_BATCH } = await import('../js/crossref.js');
+  const dois = Array.from({ length: 85 }, (_, i) => `10.1234/saved-${i}`);
+  const requested = [];
+  const fetcher = async (url) => {
+    const params = new URL(url).searchParams;
+    const batch = params
+      .get('filter')
+      .split(',')
+      .map((part) => part.replace('doi:', ''));
+    requested.push(batch.length);
+    assert.equal(params.get('select'), 'DOI,updated-by');
+    assert.equal(params.get('rows'), String(batch.length));
+    const items = batch
+      .filter((doi) => doi !== 'unknown')
+      .map((DOI) => ({
+        DOI,
+        ...(DOI.endsWith('-3') && {
+          'updated-by': [{ DOI: '10.1234/notice', type: 'retraction', source: 'publisher' }],
+        }),
+      }));
+    return new Response(JSON.stringify({ message: { items } }));
+  };
+  const seen = new Map();
+  await checkUpdates(dois, {
+    fetcher,
+    onBatch: (found) => found.forEach((v, k) => seen.set(k, v)),
+  });
+  assert.deepEqual(requested, [UPDATE_BATCH, UPDATE_BATCH, 5]);
+  assert.equal(seen.size, 85);
+  assert.equal(seen.get('10.1234/saved-3')[0].type, 'retraction');
+  assert.deepEqual(seen.get('10.1234/saved-4'), []);
+  await assert.rejects(
+    checkUpdates(['10.1234/x'], { fetcher: async () => new Response('{"message":{}}') }),
+    /unexpected response/,
+  );
+});
+
 test('records imported without a save date share one timestamp', async () => {
   const { parseCollection } = await import('../js/collection.js');
   const record = (n) => ({ raw: { DOI: `10.1234/undated-${n}`, title: [`Undated ${n}`] } });

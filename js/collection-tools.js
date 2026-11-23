@@ -219,6 +219,7 @@ export function createCollectionTools(
     'Check saved publications for metadata changes',
   );
   const discover = el('button', { class: 'button', onclick: onDiscover });
+  const updateStatus = el('p', { class: 'scope-note', role: 'status' });
   const changeReview = el('div', { id: 'changeReview', class: 'research-tools', hidden: true });
   const research = el('div', { id: 'researchTools', class: 'research-tools', hidden: true });
   review.addEventListener('click', () => {
@@ -244,6 +245,7 @@ export function createCollectionTools(
         tagField,
       ),
       el('div', { class: 'selection-controls collection-research-actions' }, review, discover),
+      updateStatus,
       el(
         'div',
         { class: 'collection-actions' },
@@ -284,6 +286,8 @@ export function createCollectionTools(
       ...Object.entries(options).map(([value, label]) => el('option', { value }, label)),
     );
     scope.value = state.scope;
+    updateStatus.textContent = state.updateStatus;
+    updateStatus.hidden = !state.updateStatus;
     sort.value = state.sort;
     const { tags } = state;
     tagField.hidden = !tags.length;

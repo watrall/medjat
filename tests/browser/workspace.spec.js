@@ -62,6 +62,28 @@ async function fixtures(
           },
         },
       });
+    if (
+      url.searchParams.get('filter')?.includes('doi:') &&
+      url.searchParams.get('select') === 'DOI,updated-by'
+    )
+      return route.fulfill({
+        json: {
+          message: {
+            items: url.searchParams
+              .get('filter')
+              .split(',')
+              .map((part) => part.replace('doi:', ''))
+              .map((DOI) => ({
+                DOI,
+                ...(DOI === '10.1234/test-record-3' && {
+                  'updated-by': [
+                    { DOI: '10.1234/notice-record', type: 'retraction', source: 'publisher' },
+                  ],
+                }),
+              })),
+          },
+        },
+      });
     if (url.searchParams.get('rows') === '3')
       return route.fulfill({
         json: {
@@ -1465,4 +1487,42 @@ test('retractions and notices are flagged in results and the inspector', async (
   await expect(
     banner.getByRole('button', { name: 'Inspect the publication it concerns' }),
   ).toBeVisible();
+});
+
+test('opening Collection checks saved publications for update notices once', async ({ page }) => {
+  const requests = await fixtures(page);
+  await page.goto('/?q=ancient+egypt');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await page
+    .getByRole('button', { name: /^Save to collection: Ancient Egyptian research 3$/ })
+    .click();
+  await page
+    .getByRole('button', { name: /^Save to collection: Ancient Egyptian research 4$/ })
+    .click();
+  await expect(page.getByRole('button', { name: 'Collection 2', exact: true })).toBeVisible();
+
+  await page.locator('#collectionNav').click();
+  await expect(
+    page.getByText('1 saved publication has update notices listed by Crossref.'),
+  ).toBeVisible();
+  const checks = () =>
+    requests.filter((url) => url.searchParams.get('select') === 'DOI,updated-by');
+  expect(checks()).toHaveLength(1);
+  expect(checks()[0].searchParams.get('filter')).toBe(
+    'doi:10.1234/test-record-3,doi:10.1234/test-record-4',
+  );
+  const flagged = page.locator('.result-row', { hasText: 'Ancient Egyptian research 3' });
+  await expect(flagged.locator('.metadata-badge', { hasText: 'Retracted' })).toBeVisible();
+  await expect(
+    page
+      .locator('.result-row', { hasText: 'Ancient Egyptian research 4' })
+      .locator('.badge-serious'),
+  ).toHaveCount(0);
+  await flagged.locator('.result-open').click();
+  await expect(page.getByRole('region', { name: 'Update notices' })).toContainText('Retracted');
+
+  await page.locator('#exploreNav').click();
+  await page.locator('#collectionNav').click();
+  await page.waitForTimeout(300);
+  expect(checks()).toHaveLength(1);
 });

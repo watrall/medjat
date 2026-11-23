@@ -16,6 +16,7 @@ import { filterChips, filterEntries, readFilterControls, writeFilterControls } f
 import {
   searchWorks,
   getWork,
+  checkUpdates,
   addedSearchTerms,
   bibliographicTerms,
   DATE_BROWSE_LIMIT,
@@ -29,6 +30,7 @@ import { annotationEntry, annotationFor, tagCounts } from './annotations.js';
 import { notesKey } from './decision-keys.js';
 import { createSearchHistory } from './search-history.js';
 import { createHistoryList } from './history-list.js';
+import { reportableUpdates } from './updates.js';
 import { renderSearchFooter, renderSearchNotice } from './search-status.js';
 import { VIEW_CONFIG } from './view-config.js';
 import { createSearchHandoff } from './search-handoff.js';
@@ -49,6 +51,8 @@ const state = {
   collection: saved.records,
   storageWarning: saved.warning,
   collectionQuery: '',
+  updates: new Map(),
+  updateStatus: '',
   collectionSort: 'saved-new',
   collectionTag: '',
   exportSelection: new Set(),
@@ -316,6 +320,7 @@ const inspector = createInspector($('inspector'), {
     collectionTools.sync();
   },
   isSaved: (id) => state.collection.has(id),
+  getUpdates: (work) => updatesFor(work),
   savedLabel: 'Remove from collection',
   onChange: saveSession,
   onNavigate: () => {
@@ -329,6 +334,7 @@ const collectionTools = createCollectionTools($('collectionTools'), {
     visible: state.view === 'collection' ? visibleWorks() : [],
     selection: state.exportSelection,
     query: state.collectionQuery,
+    updateStatus: state.updateStatus,
     sort: state.collectionSort,
     tag: state.collectionTag,
     tags: tagCounts(state.collection, researchData()),
@@ -480,6 +486,50 @@ function visibleWorks() {
     .sort(compare)
     .map((entry) => entry.work);
 }
+const updatesFor = (work) => state.updates.get(work.id) ?? work.updates;
+const checkedForUpdates = new Set();
+let checkingUpdates = false;
+async function checkSavedForUpdates() {
+  const ids = [...state.collection.keys()].filter((id) => !checkedForUpdates.has(id));
+  if (!ids.length || checkingUpdates) return;
+  checkingUpdates = true;
+  state.updateStatus = 'Checking Crossref for retractions and corrections…';
+  collectionTools.sync();
+  let inspectedChanged = false;
+  try {
+    await checkUpdates(ids, {
+      onBatch(found) {
+        const current = inspector.getCurrentWork()?.id;
+        let changed = false;
+        for (const [id, updates] of found) {
+          const entry = state.collection.get(id);
+          const before = JSON.stringify(entry ? updatesFor(entry.work) : []);
+          state.updates.set(id, updates);
+          checkedForUpdates.add(id);
+          if (before !== JSON.stringify(updates)) {
+            changed = true;
+            if (id === current) inspectedChanged = true;
+          }
+        }
+        if (changed) renderList();
+      },
+    });
+    const flagged = [...state.collection.values()].filter(
+      ({ work }) => reportableUpdates(updatesFor(work)).length,
+    ).length;
+    state.updateStatus = flagged
+      ? `${flagged} saved ${flagged === 1 ? 'publication has' : 'publications have'} update notices listed by Crossref. Open one to read the notice.`
+      : `No update notices found for your saved publications. Crossref may not list every correction or retraction.`;
+  } catch {
+    state.updateStatus =
+      'Crossref could not be reached to check for retractions and corrections. It will try again the next time you open Collection.';
+  } finally {
+    checkingUpdates = false;
+    collectionTools.sync();
+    const current = inspector.getCurrentWork();
+    if (inspectedChanged && state.view === 'collection' && current) renderInspector(current);
+  }
+}
 const saving = new Set();
 async function toggleSave(work) {
   if (saving.has(work.id)) return;
@@ -609,6 +659,7 @@ function setView(
   renderExploreSurface();
   renderDraftStatus();
   if (view !== 'collection') collectionTools.cancel();
+  else checkSavedForUpdates();
   if (view !== 'visualize') visualizer.cancel();
   if (view === 'places') {
     renderStatus();
@@ -726,6 +777,7 @@ function renderList() {
         view: 'explore',
         selected: true,
         saved: state.collection.has(work.id),
+        updates: updatesFor(work),
         onOpen: selectWork,
         onSave: toggleSave,
       });
@@ -792,6 +844,7 @@ function renderList() {
         selected: state.selected === work.id,
         saved: state.collection.has(work.id),
         selectedForExport: state.exportSelection.has(work.id),
+        updates: updatesFor(work),
         annotation: state.view === 'collection' ? annotationFor(research, work.id) : null,
         onOpen: selectWork,
         onSave: toggleSave,
