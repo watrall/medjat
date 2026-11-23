@@ -641,7 +641,8 @@ function renderExploreSurface() {
     ? '#searchRefinementsHelp'
     : '#searchExplanation';
   $('searchSiteOnly').hidden = !(
-    explore && state.query.q === $('hierakonpolisTile').textContent.trim()
+    explore &&
+    state.query.q === $('hierakonpolisTile').querySelector('.tile-title').textContent.trim()
   );
 }
 function renderInspector(work) {

@@ -1104,7 +1104,7 @@ test('the landing stays idle and thematic tiles submit their exact titles', asyn
   }
   const links = await tiles.evaluateAll((anchors) =>
     anchors.map((link) => ({
-      title: link.textContent.trim(),
+      title: link.querySelector('.tile-title').textContent.trim(),
       q: new URL(link.href).searchParams.get('q'),
     })),
   );
