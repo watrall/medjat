@@ -257,3 +257,12 @@ test('open licenses are recognized only when deposited and already in force', as
   assert.equal(openLicenseURL({ licenses: [{ URL: 'javascript:alert(1)' }] }), '');
   assert.equal(openLicenseURL({ licenses: [] }), '');
 });
+
+test('every citation style maps to a distinct Crossref style name', async () => {
+  const { CITATION_STYLES } = await import('../js/crossref.js');
+  const keys = CITATION_STYLES.map(([key]) => key);
+  const names = CITATION_STYLES.map(([, , name]) => name);
+  assert.equal(new Set(keys).size, keys.length);
+  assert.equal(new Set(names).size, names.length);
+  assert.ok(names.includes('american-journal-of-archaeology'));
+});

@@ -242,9 +242,18 @@ export async function getWork(doi, options = {}) {
   return normalizeWork(response.body.message);
 }
 
+export const CITATION_STYLES = [
+  ['apa', 'APA', 'apa'],
+  ['mla', 'MLA', 'modern-language-association'],
+  ['chicago', 'Chicago author-date', 'chicago-author-date'],
+  ['harvard', 'Harvard (Cite Them Right)', 'harvard-cite-them-right'],
+  ['aja', 'American Journal of Archaeology', 'american-journal-of-archaeology'],
+  ['antiquity', 'Antiquity', 'antiquity'],
+];
+
 export async function getCitation(doi, style = 'apa', options = {}) {
   const normalized = normalizeDOI(doi);
-  const styles = { apa: 'apa', mla: 'modern-language-association', chicago: 'chicago-author-date' };
+  const styles = Object.fromEntries(CITATION_STYLES.map(([key, , name]) => [key, name]));
   if (!normalized || !styles[style]) throw new Error('Choose a supported citation style.');
   const url = `${API}/works/${encodeURIComponent(normalized)}/transform?mailto=${encodeURIComponent(CONTACT)}`;
   const result = await request(url, {

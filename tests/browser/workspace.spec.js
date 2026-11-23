@@ -154,15 +154,15 @@ test('refresh preserves a reference trail and expanded source connections', asyn
   await fixtures(page, { referenceCount: 30 });
   await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
-  await page.getByRole('button', { name: 'Connections', exact: true }).click();
+  await page.getByRole('tab', { name: 'Connections', exact: true }).click();
   await page.getByRole('button', { name: 'Show 20 more references', exact: true }).click();
   await page.getByRole('button', { name: 'Inspect reference', exact: true }).nth(24).click();
   await expect(page.locator('.detail-title')).toHaveText('A referenced publication');
   await page.reload();
   await expect(page.locator('.detail-title')).toHaveText('A referenced publication');
   await page.getByRole('button', { name: 'Back to previous publication', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Connections', exact: true })).toHaveAttribute(
-    'aria-pressed',
+  await expect(page.getByRole('tab', { name: 'Connections', exact: true })).toHaveAttribute(
+    'aria-selected',
     'true',
   );
   await expect(page.getByRole('button', { name: 'Inspect reference', exact: true })).toHaveCount(
@@ -349,11 +349,11 @@ test('search, inspect, save, reload, cite, and export a collection', async ({ pa
   await expect(page.getByRole('button', { name: 'Collection 1', exact: true })).toBeVisible();
   await page.reload();
   await expect(page.getByRole('button', { name: 'Collection 1', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Cite', exact: true }).click();
+  await page.getByRole('tab', { name: 'Cite', exact: true }).click();
   await expect(page.getByRole('textbox', { name: 'Formatted citation' })).toHaveValue(
     /A "quoted" publication/,
   );
-  await expect(page.getByRole('button', { name: 'Cite', exact: true })).toBeFocused();
+  await expect(page.getByRole('tab', { name: 'Cite', exact: true })).toBeFocused();
   await page.getByRole('button', { name: 'Collection 1', exact: true }).click();
   await expect(page.locator('.result-top h2')).toHaveCount(1);
   const rowWidth = await page
@@ -496,7 +496,7 @@ test('reference navigation retains its source publication', async ({ page }) => 
   await fixtures(page, { referenceCount: 30 });
   await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
-  await page.getByRole('button', { name: 'Connections', exact: true }).click();
+  await page.getByRole('tab', { name: 'Connections', exact: true }).click();
   await page.getByRole('button', { name: 'Show 20 more references', exact: true }).click();
   const reference = page.getByRole('button', { name: 'Inspect reference', exact: true }).nth(24);
   await reference.focus();
@@ -507,8 +507,8 @@ test('reference navigation retains its source publication', async ({ page }) => 
   await expect(page.locator('.detail-title')).toBeFocused();
   await page.getByRole('button', { name: 'Back to previous publication', exact: true }).click();
   await expect(page.locator('.detail-title')).toHaveText(/Settlement patterns/);
-  await expect(page.getByRole('button', { name: 'Connections', exact: true })).toHaveAttribute(
-    'aria-pressed',
+  await expect(page.getByRole('tab', { name: 'Connections', exact: true })).toHaveAttribute(
+    'aria-selected',
     'true',
   );
   await expect(page.getByRole('button', { name: 'Inspect reference', exact: true })).toHaveCount(
@@ -532,7 +532,7 @@ test('search and collection views have no detected WCAG AA violations', async ({
   const measureTarget = async (label, locator) =>
     measurements.targets.push({ label, box: await locator.boundingBox() });
   await measureTarget('Desktop result title', page.locator('.result-open').first());
-  await measureTarget('Desktop Cite', page.getByRole('button', { name: 'Cite', exact: true }));
+  await measureTarget('Desktop Cite', page.getByRole('tab', { name: 'Cite', exact: true }));
   const check = async () => {
     const result = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
@@ -540,10 +540,10 @@ test('search and collection views have no detected WCAG AA violations', async ({
     measurements.scans.push({ violations: result.violations });
   };
   await check();
-  await page.getByRole('button', { name: 'Connections', exact: true }).click();
+  await page.getByRole('tab', { name: 'Connections', exact: true }).click();
   await measureTarget('Reference DOI', page.locator('.reference-list small a').first());
   await check();
-  await page.getByRole('button', { name: 'Cite', exact: true }).click();
+  await page.getByRole('tab', { name: 'Cite', exact: true }).click();
   await expect(page.getByRole('textbox', { name: 'Formatted citation' })).toBeVisible();
   await check();
   await page.getByRole('button', { name: /^Save to collection: Settlement/ }).click();
@@ -568,7 +568,7 @@ test('search and collection views have no detected WCAG AA violations', async ({
     document.documentElement.style.fontSize = '';
   });
   await page.locator('.result-open').first().click();
-  await measureTarget('Mobile Cite', page.getByRole('button', { name: 'Cite', exact: true }));
+  await measureTarget('Mobile Cite', page.getByRole('tab', { name: 'Cite', exact: true }));
   await check();
   await page.evaluate(() => {
     document.documentElement.style.fontSize = '200%';
@@ -598,16 +598,13 @@ test('the main and Places inspectors keep citation controls uniquely identified'
   await blockTiles(page);
   await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
-  await page.locator('#inspector').getByRole('button', { name: 'Cite', exact: true }).click();
+  await page.locator('#inspector').getByRole('tab', { name: 'Cite', exact: true }).click();
   await page.locator('#placesNav').click();
   await page.locator('#placeSelect').selectOption('756512');
   await page.locator('.other-place-candidates > summary').click();
   await expect(page.locator('.place-publication-title').first()).toBeVisible();
   await page.locator('.place-publication-title').first().click();
-  await page
-    .locator('.places-inspector')
-    .getByRole('button', { name: 'Cite', exact: true })
-    .click();
+  await page.locator('.places-inspector').getByRole('tab', { name: 'Cite', exact: true }).click();
   const duplicates = await page.evaluate(() => {
     const ids = [...document.querySelectorAll('[id]')].map((node) => node.id);
     return ids.filter((id, index) => ids.indexOf(id) !== index);
@@ -1005,10 +1002,7 @@ test('workspace tabs restore each reading position and Collection can map its sa
   await page.locator('.save-button').nth(0).click();
   await page.locator('.save-button').nth(1).click();
   await page.locator('.result-open').nth(8).click();
-  await page
-    .locator('#inspector')
-    .getByRole('button', { name: 'Connections', exact: true })
-    .click();
+  await page.locator('#inspector').getByRole('tab', { name: 'Connections', exact: true }).click();
   const { x, y, width, height } = await page.locator('#collectionNav').boundingBox();
   const exploreScroll = await page.evaluate(() => window.scrollY);
   expect(exploreScroll).toBeGreaterThan(0);
@@ -1042,8 +1036,8 @@ test('workspace tabs restore each reading position and Collection can map its sa
   await page.locator('#exploreNav').click();
   await expect(page.locator('.detail-title')).toHaveText('Ancient Egyptian research 8');
   await expect(
-    page.locator('#inspector').getByRole('button', { name: 'Connections', exact: true }),
-  ).toHaveAttribute('aria-pressed', 'true');
+    page.locator('#inspector').getByRole('tab', { name: 'Connections', exact: true }),
+  ).toHaveAttribute('aria-selected', 'true');
   expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(exploreScroll, -1);
 
   await page.setViewportSize({ width: 390, height: 844 });
@@ -1369,6 +1363,27 @@ test('results offer searches beyond Crossref with the applied search words', asy
     'href',
     /scholar\.archive\.org\/search\?q=Hierakonpolis%20temple/,
   );
+});
+
+test('inspector views follow the tab pattern with arrow-key navigation', async ({ page }) => {
+  await fixtures(page);
+  await page.goto('/?q=ancient+egypt');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await expect(page.getByRole('tablist', { name: 'Publication detail views' })).toBeVisible();
+  const overview = page.getByRole('tab', { name: 'Overview', exact: true });
+  await expect(overview).toHaveAttribute('aria-selected', 'true');
+  await overview.focus();
+  await page.keyboard.press('ArrowRight');
+  const connections = page.getByRole('tab', { name: 'Connections', exact: true });
+  await expect(connections).toBeFocused();
+  await expect(connections).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('tabpanel')).toContainText('Follow deposited connections');
+  await page.keyboard.press('End');
+  await expect(page.getByRole('tab', { name: 'Cite', exact: true })).toBeFocused();
+  await page.keyboard.press('Home');
+  await expect(overview).toBeFocused();
+  await expect(overview).toHaveAttribute('tabindex', '0');
+  await expect(connections).toHaveAttribute('tabindex', '-1');
 });
 
 test('Most cited reorders loaded results without asking Crossref to sort by citations', async ({

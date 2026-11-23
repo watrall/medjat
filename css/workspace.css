@@ -704,7 +704,7 @@ h1 {
   font-size: var(--text-label);
   font-weight: 500;
 }
-.inspector-tab[aria-pressed='true'] {
+.inspector-tab[aria-selected='true'] {
   border-color: var(--color-accent);
   color: var(--color-accent);
 }

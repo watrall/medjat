@@ -8,13 +8,18 @@ import {
   plainText,
   safeURL,
 } from './data.js';
-import { findCitationMatches, getWork, getCitation } from './crossref.js';
+import { CITATION_STYLES, findCitationMatches, getWork, getCitation } from './crossref.js';
 import { el, icon, externalLink, emptyState, notify } from './dom.js';
 import { downloadText } from './download.js';
 import { createCover } from './covers.js';
 import { isSharedName, loadGazetteer, placesForWork } from './place-data.js';
 import { createNotesForm } from './notes-form.js';
 
+const TABS = [
+  ['overview', 'Overview'],
+  ['connections', 'Connections'],
+  ['cite', 'Cite'],
+];
 let inspectorInstances = 0;
 
 export function createInspector(
@@ -73,8 +78,8 @@ export function createInspector(
   ) {
     generation++;
     work = next;
-    tab = ['overview', 'connections', 'cite'].includes(reading?.tab) ? reading.tab : 'overview';
-    style = ['apa', 'mla', 'chicago'].includes(reading?.style) ? reading.style : style;
+    tab = TABS.some(([id]) => id === reading?.tab) ? reading.tab : 'overview';
+    style = CITATION_STYLES.some(([key]) => key === reading?.style) ? reading.style : style;
     referenceLimit = Math.max(
       20,
       Math.min(Number(reading?.referenceLimit) || 20, next?.references.length || 20),
@@ -157,23 +162,43 @@ export function createInspector(
           'Back to previous publication',
         ),
       );
-    const tabs = el('div', { class: 'inspector-tabs', 'aria-label': 'Publication detail views' });
-    for (const [id, label] of [
-      ['overview', 'Overview'],
-      ['connections', 'Connections'],
-      ['cite', 'Cite'],
-    ])
+    const tabs = el('div', {
+      class: 'inspector-tabs',
+      role: 'tablist',
+      'aria-label': 'Publication detail views',
+    });
+    const choose = (id, { focus = false } = {}) => {
+      tab = id;
+      render();
+      if (focus) root.querySelector(`[data-focus-key="tab-${id}"]`)?.focus({ preventScroll: true });
+      if (id === 'cite' && !citation) loadCitation();
+    };
+    const arrow = { ArrowRight: 1, ArrowLeft: -1 };
+    for (const [index, [id, label]] of TABS.entries())
       tabs.append(
         el(
           'button',
           {
             class: 'inspector-tab',
+            role: 'tab',
+            id: `${citationStyleId}-tab-${id}`,
+            'aria-controls': `${citationStyleId}-panel`,
             'data-focus-key': `tab-${id}`,
-            'aria-pressed': String(tab === id),
-            onclick: () => {
-              tab = id;
-              render();
-              if (id === 'cite' && !citation) loadCitation();
+            'aria-selected': String(tab === id),
+            tabindex: tab === id ? '0' : '-1',
+            onclick: () => choose(id),
+            onkeydown: (event) => {
+              const target =
+                event.key === 'Home'
+                  ? 0
+                  : event.key === 'End'
+                    ? TABS.length - 1
+                    : event.key in arrow
+                      ? (index + arrow[event.key] + TABS.length) % TABS.length
+                      : -1;
+              if (target < 0) return;
+              event.preventDefault();
+              choose(TABS[target][0], { focus: true });
             },
           },
           label,
@@ -221,7 +246,11 @@ export function createInspector(
           .join(' · '),
       ),
     );
-    const content = el('div', { 'aria-label': `${tab} details` });
+    const content = el('div', {
+      id: `${citationStyleId}-panel`,
+      role: 'tabpanel',
+      'aria-labelledby': `${citationStyleId}-tab-${tab}`,
+    });
     if (tab === 'overview') overview(content);
     else if (tab === 'connections') connections(content);
     else cite(content);
@@ -655,11 +684,7 @@ export function createInspector(
         loadCitation();
       },
     });
-    for (const [value, label] of [
-      ['apa', 'APA'],
-      ['mla', 'MLA'],
-      ['chicago', 'Chicago author-date'],
-    ])
+    for (const [value, label] of CITATION_STYLES)
       select.append(el('option', { value, selected: value === style }, label));
     const block = section(
       'Formatted citation',
