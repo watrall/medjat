@@ -9,7 +9,14 @@ import {
   plainText,
   safeURL,
 } from './data.js';
-import { CITATION_STYLES, findCitationMatches, getWork, getCitation } from './crossref.js';
+import {
+  BOOK_CHAPTER_LIMIT,
+  CITATION_STYLES,
+  findCitationMatches,
+  getBookChapters,
+  getWork,
+  getCitation,
+} from './crossref.js';
 import { el, icon, externalLink, emptyState, notify } from './dom.js';
 import { downloadText } from './download.js';
 import { createCover } from './covers.js';
@@ -54,6 +61,7 @@ export function createInspector(
     citationError = '',
     citationLoading = false;
   const matches = new Map();
+  let chapters = null;
   let trail = [],
     referenceLimit = 20,
     followError = '',
@@ -99,6 +107,7 @@ export function createInspector(
     followError = '';
     following = false;
     matches.clear();
+    chapters = null;
     if (!fromReference) trail = [];
     render();
     if (reading) {
@@ -301,6 +310,79 @@ export function createInspector(
           onclick: () => follow(work.partOf),
         },
         'Inspect the book',
+      ),
+      el(
+        'button',
+        {
+          class: 'text-button',
+          'data-focus-key': 'chapters',
+          disabled: chapters?.loading,
+          onclick: findChapters,
+        },
+        chapters?.works ? 'Refresh the chapter list' : 'Show other chapters in this book',
+      ),
+      chapters?.loading && el('p', { role: 'status', class: 'scope-note' }, 'Searching Crossref…'),
+      chapters?.error && el('p', { role: 'alert', class: 'scope-note' }, chapters.error),
+      chapters?.works && chapterList(),
+    );
+  }
+  async function findChapters() {
+    const id = generation;
+    chapters = { loading: true };
+    render();
+    try {
+      chapters = await getBookChapters(work.partOfID);
+    } catch (error) {
+      chapters = { error: error.message };
+    }
+    if (id === generation) render();
+  }
+  function chapterList() {
+    const others = chapters.works.filter((chapter) => chapter.id !== work.id);
+    if (!others.length)
+      return el(
+        'p',
+        { class: 'scope-note', role: 'status' },
+        'Crossref lists no other chapters of this book.',
+      );
+    return el(
+      'div',
+      {},
+      chapters.total > BOOK_CHAPTER_LIMIT &&
+        el(
+          'p',
+          { class: 'scope-note', role: 'status' },
+          `Showing the first ${BOOK_CHAPTER_LIMIT} of ${chapters.total.toLocaleString()} chapters Crossref lists.`,
+        ),
+      el(
+        'ul',
+        { class: 'reference-list' },
+        others.map((chapter, index) =>
+          el(
+            'li',
+            {},
+            el(
+              'p',
+              {},
+              [
+                displayTitle(chapter.title),
+                authorLine(chapter, 2),
+                chapter.pages && `pp. ${chapter.pages}`,
+              ]
+                .filter(Boolean)
+                .join(' · '),
+            ),
+            el(
+              'button',
+              {
+                'data-focus-key': `chapter-${index}`,
+                disabled: following,
+                onclick: () => follow(chapter.doi),
+              },
+              'Inspect chapter',
+            ),
+          ),
+        ),
       ),
     );
   }

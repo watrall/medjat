@@ -156,6 +156,11 @@ export function normalizeWork(raw) {
   const editors = array(raw.editor)
     .filter((a) => a && typeof a === 'object')
     .map(person);
+  const partOfRelation = array(raw.relation?.['is-part-of']).find((part) => normalizeDOI(part?.id));
+  const partOf = partOfRelation && {
+    doi: normalizeDOI(partOfRelation.id),
+    id: String(partOfRelation.id),
+  };
   const type = typeof raw.type === 'string' ? raw.type : '';
   const suppliedTypeLabel = plainText(type).replaceAll('-', ' ');
   return {
@@ -182,10 +187,8 @@ export function normalizeWork(raw) {
     pages: plainText(raw.page),
     references: array(raw.reference),
     relations: raw.relation && typeof raw.relation === 'object' ? raw.relation : {},
-    partOf:
-      array(raw.relation?.['is-part-of'])
-        .map((part) => normalizeDOI(part?.id))
-        .find(Boolean) || '',
+    partOf: partOf?.doi || '',
+    partOfID: partOf?.id || '',
     funders: array(raw.funder),
     licenses: array(raw.license),
     updates: parseUpdates(raw['updated-by']),

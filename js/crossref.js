@@ -257,6 +257,33 @@ export async function checkUpdates(dois, { signal, fetcher, onBatch } = {}) {
   }
 }
 
+export const BOOK_CHAPTER_LIMIT = 100;
+
+// Crossref matches relation.object against the identifier exactly as the member deposited it.
+export async function getBookChapters(bookID, options = {}) {
+  const params = new URLSearchParams({
+    filter: `relation.type:is-part-of,relation.object:${bookID}`,
+    select: 'DOI,title,author,issued,published,page,type,container-title',
+    rows: String(BOOK_CHAPTER_LIMIT),
+    mailto: CONTACT,
+  });
+  const response = await request(`${API}/works?${params}`, options);
+  const message = response.body?.message;
+  if (!Array.isArray(message?.items)) throw new Error('Crossref returned an unexpected response.');
+  const works = message.items.flatMap((raw) => {
+    try {
+      return [normalizeWork(raw)];
+    } catch {
+      return [];
+    }
+  });
+  const start = (work) => Number.parseInt(work.pages, 10);
+  works.sort(
+    (a, b) => (start(a) || Infinity) - (start(b) || Infinity) || a.title.localeCompare(b.title),
+  );
+  return { works, total: message['total-results'] };
+}
+
 export async function getWork(doi, options = {}) {
   const normalized = normalizeDOI(doi);
   if (!normalized) throw new Error('This reference does not have a valid DOI.');

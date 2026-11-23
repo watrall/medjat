@@ -86,6 +86,19 @@ async function fixtures(
           },
         },
       });
+    if (url.searchParams.get('filter')?.includes('relation.object:'))
+      return route.fulfill({
+        json: {
+          message: {
+            'total-results': 3,
+            items: [
+              { DOI: '10.1234/test-record-0', title: ['The chapter being read'] },
+              { DOI: '10.1234/sibling-a', title: ['Sibling chapter A'], page: '5-9' },
+              { DOI: '10.1234/sibling-b', title: ['Sibling chapter B'], page: '1-4' },
+            ],
+          },
+        },
+      });
     if (url.searchParams.get('rows') === '3')
       return route.fulfill({
         json: {
@@ -137,7 +150,9 @@ async function fixtures(
     }
     if (inBook)
       for (const item of items)
-        item.relation = { 'is-part-of': [{ id: '10.1234/test-book', 'id-type': 'doi' }] };
+        item.relation = {
+          'is-part-of': [{ id: 'https://doi.org/10.1234/test-book', 'id-type': 'doi' }],
+        };
     if (plainReference && items.length)
       items[0].reference = [{ unstructured: '1. Cited monograph about boundary stelae, 1998' }];
     if (hostile && items.length)
@@ -1570,4 +1585,26 @@ test('a chapter offers to open the book it is part of', async ({ page }) => {
   await expect(page.locator('.detail-title')).toHaveText('A referenced publication');
   await page.getByRole('button', { name: 'Back to previous publication', exact: true }).click();
   await expect(book).toBeVisible();
+});
+
+test('a chapter lists the other chapters of its book', async ({ page }) => {
+  const requests = await fixtures(page, { inBook: true });
+  await page.goto('/?q=ancient+egypt');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await page.getByRole('button', { name: 'Show other chapters in this book' }).click();
+  const items = page.locator('.detail-section', {
+    has: page.getByRole('heading', { name: 'Part of a book' }),
+  });
+  await expect(items.locator('li')).toHaveCount(2);
+  await expect(items.locator('li').nth(0)).toContainText('Sibling chapter B');
+  await expect(items.locator('li').nth(0)).toContainText('pp. 1-4');
+  await expect(items.getByText('The chapter being read')).toHaveCount(0);
+  const query = requests.find((url) =>
+    url.searchParams.get('filter')?.includes('relation.object:'),
+  );
+  expect(query.searchParams.get('filter')).toBe(
+    'relation.type:is-part-of,relation.object:https://doi.org/10.1234/test-book',
+  );
+  await items.getByRole('button', { name: 'Inspect chapter' }).first().click();
+  await expect(page.locator('.detail-title')).toHaveText('A referenced publication');
 });

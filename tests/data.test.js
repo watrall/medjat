@@ -379,9 +379,45 @@ test('a chapter keeps the DOI of the book Crossref says it is part of', async ()
     relation: { 'is-part-of': [{ id: 'https://doi.org/10.1234/Book', 'id-type': 'doi' }] },
   });
   assert.equal(chapter.partOf, '10.1234/book');
+  assert.equal(chapter.partOfID, 'https://doi.org/10.1234/Book');
   assert.equal(
     normalizeWork({ DOI: '10.1234/x', relation: { 'is-part-of': [{ id: 'nope' }] } }).partOf,
     '',
   );
   assert.equal(normalizeWork({ DOI: '10.1234/x' }).partOf, '');
+});
+
+test('other chapters of a book come back in page order from one relation query', async () => {
+  const { getBookChapters, BOOK_CHAPTER_LIMIT } = await import('../js/crossref.js');
+  let requested;
+  const fetcher = async (url) => {
+    requested = new URL(url).searchParams;
+    return new Response(
+      JSON.stringify({
+        message: {
+          'total-results': 3,
+          items: [
+            { DOI: '10.1234/c3', title: ['Third'], page: '40-50' },
+            { DOI: '10.1234/c1', title: ['First'], page: '2-10' },
+            { DOI: '10.1234/c0', title: ['No pages'] },
+          ],
+        },
+      }),
+    );
+  };
+  const { works, total } = await getBookChapters('https://doi.org/10.1234/book', { fetcher });
+  assert.equal(
+    requested.get('filter'),
+    'relation.type:is-part-of,relation.object:https://doi.org/10.1234/book',
+  );
+  assert.equal(requested.get('rows'), String(BOOK_CHAPTER_LIMIT));
+  assert.deepEqual(
+    works.map((work) => work.title),
+    ['First', 'Third', 'No pages'],
+  );
+  assert.equal(total, 3);
+  await assert.rejects(
+    getBookChapters('10.1234/broken', { fetcher: async () => new Response('{"message":{}}') }),
+    /unexpected response/,
+  );
 });

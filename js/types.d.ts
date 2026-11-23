@@ -31,6 +31,7 @@ export interface Work {
   references: Record<string, unknown>[];
   relations: Record<string, unknown[]>;
   partOf: string;
+  partOfID: string;
   funders: Record<string, unknown>[];
   licenses: Record<string, unknown>[];
   updates: WorkUpdate[];
