@@ -670,6 +670,7 @@ function renderExploreSurface() {
   const explore = state.view === 'explore';
   const idle = explore && !state.query.q && !state.directRecord;
   $('landing').hidden = !idle;
+  document.body.classList.toggle('is-compact', state.view === 'visualize' || (explore && !idle));
   $('research').hidden = state.view !== 'collection' && (!explore || idle);
   document.querySelector('.skip-link').href = idle
     ? '#searchInput'

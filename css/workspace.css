@@ -127,7 +127,9 @@ legend {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.sr-only {
+.sr-only,
+.is-compact .intro-top,
+.is-compact .search-label {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -286,13 +288,6 @@ h1 {
   letter-spacing: -0.055em;
   font-weight: 600;
 }
-.intro-eyebrow {
-  margin-block-end: var(--space-sm);
-  color: var(--color-accent);
-  font-size: var(--text-caption);
-  font-weight: 650;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
 }
 .intro-description {
   color: var(--color-secondary);
@@ -2663,6 +2658,9 @@ html {
   min-inline-size: 44px;
 }
 
+.is-compact .intro {
+  padding-block: var(--space-sm);
+}
 .collection-filters {
   display: flex;
   flex-wrap: wrap;
