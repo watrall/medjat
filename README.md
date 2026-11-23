@@ -9,10 +9,12 @@ The explorer covers ancient Egypt from the Predynastic to Roman Egypt. It is bui
 ## Research workflow
 
 1. **Discover.** Search a topic, site, author, or DOI. Use the left-hand refinements to add a historical period, publication year, type, or metadata requirement. Historical period adds keywords; the other controls use supported Crossref filters. Discrete refinements apply immediately while unfinished search text stays intact. Apply publication years with Apply range. The main search and the compact search in the sticky header share a draft; either Search action opens Explore.
-2. **Evaluate.** Open a publication beside the results. Read its deposited abstract, authors, identifiers, affiliations, funding, licenses, and source metadata where available.
-3. **Follow connections.** Inspect references and deposited relations without losing the original results. Return to the preceding publication in the inspector.
-4. **Collect.** Save publications from either the results or the inspector. The collection is matched by DOI and retained in the current browser.
+2. **Evaluate.** Results show how many records Crossref matched (capped at 10,000+, because Crossref counts records matching any query word), a deposited-citation count, and an open-license cue when Crossref supplies one; sort by relevance or date, or reorder the loaded results by citation count. Most cited does not ask Crossref to sort by citations, because that would rank every loosely matched record first. Open a publication beside the results. Read its deposited abstract, authors, identifiers, affiliations, funding, licenses, and source metadata where available.
+3. **Follow connections.** Inspect references and deposited relations without losing the original results. A reference without a DOI offers **Find in Crossref**, which lists up to three possible records to inspect; candidates are suggestions, not established links. Return to the preceding publication in the inspector.
+4. **Collect.** Save publications from either the results or the inspector. The collection is matched by DOI and retained in the current browser. Saved publications can carry a private note and tags; the collection can be sorted by save date, title, year, or citations and filtered by tag, and its search also reads notes and tags. Notes and tags travel in JSON backups, as keywords and notes in RIS and BibTeX, and as columns in CSV.
 5. **Reuse.** Copy APA, MLA, or Chicago author-date citations. In Collection, choose all saved, matching, or selected records and export RIS, BibTeX, CSV, or JSON. The controls show the exact scope and count; selection can include records outside the current search. Export takes a snapshot and leaves the list and selection intact. JSON backups can be imported and merged without duplicating DOIs.
+
+Recent searches appear on the landing page and can be kept. They are stored only in this browser and are not part of collection backups. Below the results, **Search beyond Crossref** opens the same words in Google Scholar, WorldCat, Internet Archive Scholar, or Open Library, because Crossref covers only works with registered DOIs. Citation styles include APA, MLA, Chicago, Harvard, the American Journal of Archaeology, and Antiquity; chapters and edited volumes without authors show their deposited editors.
 
 Books and chapters can display an ISBN-matched cover from Open Library. A chapter's cover represents the containing book. Missing covers leave a text-only record.
 
@@ -57,7 +59,7 @@ The source runs directly without compilation. For hosting, use `npm run build` t
 
 ## Coverage and interpretation
 
-Crossref exposes metadata deposited for DOI-bearing research outputs. It is **not a complete Egyptology bibliography**. Older scholarship, non-DOI publications, and some books and journals may be absent.
+Crossref exposes metadata deposited for DOI-bearing research outputs. It is **not a complete bibliography of scholarship on ancient Egypt**. Older scholarship, non-DOI publications, and some books and journals may be absent.
 
 - Queries are relevance ranked; they are not exact-phrase or controlled-vocabulary searches. Crossref keyword totals count records matching any word, so the charts sample the first 250 ranked matches instead of reporting those totals.
 - Periods are discoverability aids, not authoritative historical classifications attached to individual records. Publication dates refer to the modern publication, not the historical period it studies.
