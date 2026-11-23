@@ -65,6 +65,7 @@ export const siteFiles = [
   'js/search-history.js',
   'js/search-status.js',
   'js/session.js',
+  'js/updates.js',
   'js/view-config.js',
   'js/visualize.js',
 ];
@@ -146,6 +147,7 @@ export const repositoryFiles = [
   'js/search-status.js',
   'js/session.js',
   'js/types.d.ts',
+  'js/updates.js',
   'js/view-config.js',
   'js/visualize.js',
   'package-lock.json',

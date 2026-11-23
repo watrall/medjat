@@ -4,11 +4,20 @@ export interface Author {
   affiliations: string[];
 }
 
+export interface WorkUpdate {
+  doi: string;
+  type: string;
+  label: string;
+  sources: string[];
+  date: string;
+}
+
 export interface Work {
   id: string;
   doi: string;
   title: string;
   authors: Author[];
+  editors: Author[];
   year: number | null;
   container: string;
   type: string;
@@ -22,6 +31,8 @@ export interface Work {
   relations: Record<string, unknown[]>;
   funders: Record<string, unknown>[];
   licenses: Record<string, unknown>[];
+  updates: WorkUpdate[];
+  updateTo: WorkUpdate[];
   citedBy: number | null;
   deposited: string;
   raw: Record<string, unknown>;

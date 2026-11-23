@@ -266,3 +266,49 @@ test('every citation style maps to a distinct Crossref style name', async () => 
   assert.equal(new Set(names).size, names.length);
   assert.ok(names.includes('american-journal-of-archaeology'));
 });
+
+test('update notices merge duplicate sources and sort the most serious first', async () => {
+  const { normalizeWork } = await import('../js/data.js');
+  const { updateSeverity, updateLabel, noticeLabel, reportableUpdates } =
+    await import('../js/updates.js');
+  const work = normalizeWork({
+    DOI: '10.1234/target',
+    'updated-by': [
+      { DOI: '10.1234/fix', type: 'correction', label: 'Correction', source: 'publisher' },
+      { DOI: '10.1234/gone', type: 'retraction', label: 'Retraction', source: 'publisher' },
+      {
+        DOI: '10.1234/gone',
+        type: 'retraction',
+        label: 'Retraction',
+        source: 'retraction-watch',
+        updated: { 'date-time': '2021-12-15T00:00:00Z' },
+      },
+      { DOI: 'not a doi', type: 'retraction' },
+      { DOI: '10.1234/v2', type: 'new_version', source: 'publisher' },
+    ],
+  });
+  assert.deepEqual(
+    work.updates.map(({ type, sources }) => [type, sources]),
+    [
+      ['retraction', ['publisher', 'retraction-watch']],
+      ['correction', ['publisher']],
+      ['new_version', ['publisher']],
+    ],
+  );
+  assert.equal(work.updates[0].date, '2021-12-15T00:00:00Z');
+  assert.equal(updateSeverity('retraction'), 'serious');
+  assert.equal(updateSeverity('erratum'), 'minor');
+  assert.equal(updateSeverity('something_new'), 'neutral');
+  assert.equal(updateLabel(work.updates[0]), 'Retracted');
+  assert.equal(reportableUpdates(work.updates).length, 2);
+  assert.equal(noticeLabel({ type: 'expression_of_concern' }), 'Expression of concern notice');
+  const notice = normalizeWork({
+    DOI: '10.1234/gone',
+    'update-to': [{ DOI: '10.1234/target', type: 'retraction', source: 'publisher' }],
+  });
+  assert.deepEqual(
+    notice.updateTo.map((entry) => entry.doi),
+    ['10.1234/target'],
+  );
+  assert.deepEqual(normalizeWork({ DOI: '10.1234/plain' }).updates, []);
+});

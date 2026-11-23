@@ -1,3 +1,5 @@
+import { SEVERITY_RANK, updateSeverity } from './updates.js';
+
 // Approximate ranges follow the Egypt Exploration Society's Chronology of Egypt.
 export const PERIODS = [
   { id: 'predynastic', name: 'Predynastic', dates: 'c. 4400–3000 BCE', query: 'Predynastic Egypt' },
@@ -106,6 +108,30 @@ export function orcidURL(value) {
 const array = (value) => (Array.isArray(value) ? value : []);
 const firstText = (value) => plainText(Array.isArray(value) ? value[0] : value);
 
+// Crossref lists the same notice once per source, so merge entries that share a type and DOI.
+function parseUpdates(list) {
+  const merged = new Map();
+  for (const entry of array(list)) {
+    const doi = normalizeDOI(entry?.DOI);
+    if (!doi || typeof entry.type !== 'string') continue;
+    const key = `${entry.type}|${doi}`;
+    const existing = merged.get(key) ?? {
+      doi,
+      type: entry.type,
+      label: plainText(entry.label),
+      sources: [],
+      date: entry.updated?.['date-time'] || '',
+    };
+    if (typeof entry.source === 'string' && !existing.sources.includes(entry.source))
+      existing.sources.push(entry.source);
+    existing.date ||= entry.updated?.['date-time'] || '';
+    merged.set(key, existing);
+  }
+  return [...merged.values()].sort(
+    (a, b) => SEVERITY_RANK[updateSeverity(a.type)] - SEVERITY_RANK[updateSeverity(b.type)],
+  );
+}
+
 export function normalizeWork(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw))
     throw new Error('Publication metadata is not a record.');
@@ -157,6 +183,8 @@ export function normalizeWork(raw) {
     relations: raw.relation && typeof raw.relation === 'object' ? raw.relation : {},
     funders: array(raw.funder),
     licenses: array(raw.license),
+    updates: parseUpdates(raw['updated-by']),
+    updateTo: parseUpdates(raw['update-to']),
     citedBy: Number.isFinite(raw['is-referenced-by-count']) ? raw['is-referenced-by-count'] : null,
     deposited: raw.deposited?.['date-time'] || '',
     raw,
