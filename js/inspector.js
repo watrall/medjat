@@ -14,6 +14,13 @@ import { downloadText } from './download.js';
 import { createCover } from './covers.js';
 import { isSharedName, loadGazetteer, placesForWork } from './place-data.js';
 import { createNotesForm } from './notes-form.js';
+import {
+  noticeLabel,
+  reportableUpdates,
+  sourceLabel,
+  updateLabel,
+  updateSeverity,
+} from './updates.js';
 
 const TABS = [
   ['overview', 'Overview'],
@@ -33,6 +40,7 @@ export function createInspector(
     onChange = () => {},
     onNavigate = () => {},
     isSaved = () => false,
+    getUpdates = (record) => record.updates,
     savedLabel = 'Saved to collection',
   } = {},
 ) {
@@ -246,6 +254,8 @@ export function createInspector(
           .join(' · '),
       ),
     );
+    const banner = updateBanner();
+    if (banner) root.append(banner);
     const content = el('div', {
       id: `${citationStyleId}-panel`,
       role: 'tabpanel',
@@ -449,6 +459,59 @@ export function createInspector(
         .querySelector(`[data-focus-key="${CSS.escape(origin.focusKey || '')}"]`)
         ?.focus({ preventScroll: true });
     }
+  }
+  function updateBanner() {
+    const updates = reportableUpdates(getUpdates(work));
+    if (!updates.length && !work.updateTo.length) return null;
+    const serious = updates.some((update) => updateSeverity(update.type) === 'serious');
+    const when = (date) =>
+      Number.isNaN(Date.parse(date))
+        ? ''
+        : `, ${new Date(date).toLocaleDateString(undefined, { dateStyle: 'long', timeZone: 'UTC' })}`;
+    const inspectButton = (doi, label, key) =>
+      el(
+        'button',
+        {
+          class: 'text-button',
+          'data-focus-key': key,
+          disabled: following,
+          onclick: () => follow(doi),
+        },
+        label,
+      );
+    return el(
+      'section',
+      {
+        class: `update-banner ${serious ? 'is-serious' : 'is-minor'}`,
+        'aria-label': 'Update notices',
+      },
+      el(
+        'p',
+        { class: 'update-banner-title' },
+        icon(serious ? 'circle-alert' : 'info'),
+        updates.length ? updateLabel(updates[0]) : noticeLabel(work.updateTo[0]),
+      ),
+      el(
+        'ul',
+        {},
+        updates.map((update, index) =>
+          el(
+            'li',
+            {},
+            `${updateLabel(update)}. Recorded by ${update.sources.map(sourceLabel).join(' and ') || 'a source Crossref does not name'}${when(update.date)}. `,
+            inspectButton(update.doi, 'Inspect the notice', `update-${index}`),
+          ),
+        ),
+        work.updateTo.map((update, index) =>
+          el(
+            'li',
+            {},
+            `This record is a ${noticeLabel(update).toLowerCase()}. `,
+            inspectButton(update.doi, 'Inspect the publication it concerns', `notice-${index}`),
+          ),
+        ),
+      ),
+    );
   }
   function relationLabel(type) {
     const text = plainText(type.replaceAll('-', ' '));

@@ -23,7 +23,14 @@ const publication = (i) => ({
 });
 async function fixtures(
   page,
-  { fail = false, empty = false, hostile = false, referenceCount = 1, plainReference = false } = {},
+  {
+    fail = false,
+    empty = false,
+    hostile = false,
+    referenceCount = 1,
+    plainReference = false,
+    updated = false,
+  } = {},
 ) {
   const requests = [];
   await page.route('https://fonts.googleapis.com/**', (r) => r.abort());
@@ -79,6 +86,31 @@ async function fixtures(
         DOI: `10.1234/reference-${i}`,
         unstructured: `Deposited reference ${i + 1}`,
       }));
+    if (updated && items.length > 1) {
+      items[0]['updated-by'] = [
+        {
+          DOI: '10.1234/notice-record',
+          type: 'retraction',
+          label: 'Retraction',
+          source: 'publisher',
+        },
+        {
+          DOI: '10.1234/notice-record',
+          type: 'retraction',
+          label: 'Retraction',
+          source: 'retraction-watch',
+          updated: { 'date-time': '2021-12-15T00:00:00Z' },
+        },
+      ];
+      items[1]['update-to'] = [
+        {
+          DOI: '10.1234/test-record-0',
+          type: 'retraction',
+          label: 'Retraction',
+          source: 'publisher',
+        },
+      ];
+    }
     if (plainReference && items.length)
       items[0].reference = [{ unstructured: '1. Cited monograph about boundary stelae, 1998' }];
     if (hostile && items.length)
@@ -1398,4 +1430,36 @@ test('Most cited reorders loaded results without asking Crossref to sort by cita
   const last = requests.at(-1).searchParams;
   expect(last.get('sort')).toBe('score');
   expect(last.has('offset')).toBe(false);
+});
+
+test('retractions and notices are flagged in results and the inspector', async ({ page }) => {
+  await fixtures(page, { updated: true });
+  await page.goto('/?q=ancient+egypt');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  const rows = page.locator('.result-row');
+  await expect(rows.nth(0).locator('.metadata-badge', { hasText: 'Retracted' })).toBeVisible();
+  await expect(
+    rows.nth(1).locator('.metadata-badge', { hasText: 'Retraction notice' }),
+  ).toBeVisible();
+  await expect(rows.nth(2).locator('.metadata-badge', { hasText: /Retract/ })).toHaveCount(0);
+
+  const banner = page.getByRole('region', { name: 'Update notices' });
+  await expect(banner).toContainText('Retracted');
+  await expect(banner).toContainText(
+    'Recorded by the publisher and Retraction Watch, December 15, 2021',
+  );
+  const axe = await new AxeBuilder({ page })
+    .include('.update-banner')
+    .include('.result-row')
+    .analyze();
+  expect(axe.violations).toEqual([]);
+
+  await banner.getByRole('button', { name: 'Inspect the notice' }).click();
+  await expect(page.locator('.detail-title')).toHaveText('A referenced publication');
+  await page.getByRole('button', { name: 'Back to previous publication', exact: true }).click();
+  await rows.nth(1).locator('.result-open').click();
+  await expect(banner).toContainText('This record is a retraction notice.');
+  await expect(
+    banner.getByRole('button', { name: 'Inspect the publication it concerns' }),
+  ).toBeVisible();
 });

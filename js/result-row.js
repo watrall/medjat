@@ -1,9 +1,20 @@
 import { authorLine, displayTitle, openLicenseURL } from './data.js';
 import { el, icon } from './dom.js';
+import { noticeLabel, reportableUpdates, updateLabel, updateSeverity } from './updates.js';
 
 export function createResultRow(
   work,
-  { view, selected, saved, selectedForExport, annotation, onOpen, onSave, onSelectionChange },
+  {
+    view,
+    selected,
+    saved,
+    selectedForExport,
+    annotation,
+    updates = work.updates,
+    onOpen,
+    onSave,
+    onSelectionChange,
+  },
 ) {
   const heading = displayTitle(work.title);
   const title = el(
@@ -15,7 +26,14 @@ export function createResultRow(
     },
     heading,
   );
+  const [update] = reportableUpdates(updates);
   const badges = [
+    update && [
+      updateSeverity(update.type) === 'serious' ? 'circle-alert' : 'info',
+      updateLabel(update),
+      `badge-${updateSeverity(update.type)}`,
+    ],
+    work.updateTo[0] && ['file-text', noticeLabel(work.updateTo[0])],
     work.abstract && ['file-text', 'Abstract'],
     work.authors.some((author) => author.orcid) && ['user-round', 'ORCID'],
     openLicenseURL(work) && ['book-open', 'Open license'],
@@ -68,7 +86,9 @@ export function createResultRow(
       'div',
       { class: 'metadata-badges' },
       el('span', {}, work.typeLabel),
-      badges.map(([name, label]) => el('span', { class: 'metadata-badge' }, icon(name), label)),
+      badges.map(([name, label, tone]) =>
+        el('span', { class: `metadata-badge${tone ? ` ${tone}` : ''}` }, icon(name), label),
+      ),
       annotation?.tags.map((tag) => el('span', { class: 'metadata-badge tag-badge' }, `#${tag}`)),
     ),
   );
