@@ -27,6 +27,8 @@ import { createCollectionTools } from './collection-tools.js';
 import { createResultRow } from './result-row.js';
 import { annotationEntry, annotationFor, tagCounts } from './annotations.js';
 import { notesKey } from './decision-keys.js';
+import { createSearchHistory } from './search-history.js';
+import { createHistoryList } from './history-list.js';
 import { renderSearchFooter, renderSearchNotice } from './search-status.js';
 import { VIEW_CONFIG } from './view-config.js';
 import { createSearchHandoff } from './search-handoff.js';
@@ -39,6 +41,7 @@ try {
   storage = localStorage;
 } catch {}
 const collectionStore = createCollectionStore({ storage });
+const searchHistory = createSearchHistory({ storage });
 const saved = await collectionStore.ready;
 const resumedSession = readSession();
 const state = {
@@ -915,6 +918,10 @@ async function runSearch(append = false) {
     state.doiLookup = result.doiLookup;
     state.browseLimited = result.browseLimited;
     state.resultQuery = requestedQuery;
+    if (!append && !result.doiLookup) {
+      searchHistory.record(requestedQuery);
+      historyList.render();
+    }
     if (!append && state.view === 'explore') {
       const selected = state.items.find((work) => work.id === state.selected) || state.items[0];
       state.selected = selected?.id || null;
@@ -1017,16 +1024,22 @@ function submitSearch(e) {
   if (fromWorkspace) focusHeading($('resultsTitle'));
 }
 for (const id of ['searchForm', 'navSearchForm']) $(id).addEventListener('submit', submitSearch);
-function startLandingSearch(query) {
+function startSearch(query) {
   cancelRestoration();
   chartReturn = null;
   chartSearch = false;
-  state.query = readQuery(new URLSearchParams({ q: query, context: '0' }).toString());
-  state.draft = { ...state.query };
+  state.query = query;
+  state.draft = { ...query };
   syncControls();
   runSearch();
   focusHeading($('resultsTitle'));
 }
+const historyList = createHistoryList($('searchHistory'), $('historyList'), $('clearHistory'), {
+  history: searchHistory,
+  onOpen: (qs) => startSearch(readQuery(qs)),
+});
+const startLandingSearch = (q) =>
+  startSearch(readQuery(new URLSearchParams({ q, context: '0' }).toString()));
 $('landing').addEventListener('click', (event) => {
   const tile = event.target.closest('.research-tile');
   if (

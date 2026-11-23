@@ -203,6 +203,32 @@ test('Most cited keeps Crossref relevance paging and orders loaded results local
   assert.equal(params.has('offset'), false);
 });
 
+test('search history dedupes, keeps, and trims searches in storage', async () => {
+  const { createSearchHistory, describeSearch, MAX_RECENT } =
+    await import('../js/search-history.js');
+  const { readQuery } = await import('../js/data.js');
+  const data = new Map();
+  const storage = {
+    getItem: (key) => data.get(key) ?? null,
+    setItem: (key, value) => data.set(key, value),
+  };
+  const history = createSearchHistory({ storage });
+  history.record(readQuery('?q=amarna&period=new-kingdom&sort=cited'));
+  history.record(readQuery('?q=amarna&period=new-kingdom&sort=cited'));
+  assert.equal(history.recent().length, 1);
+  assert.equal(history.recent()[0].detail, 'New Kingdom · Most cited');
+  assert.equal(history.toggleKept(history.recent()[0].qs), true);
+  for (let i = 0; i < MAX_RECENT + 4; i++) history.record(readQuery(`?q=topic${i}`));
+  assert.equal(history.kept().length, 1);
+  assert.equal(history.recent().length, MAX_RECENT);
+  assert.equal(createSearchHistory({ storage }).kept().length, 1);
+  history.clearRecent();
+  assert.equal(history.recent().length, 0);
+  assert.equal(history.kept().length, 1);
+  assert.equal(describeSearch(readQuery('?q=x&field=author')), 'Author search');
+  assert.equal(createSearchHistory({ storage: { getItem: () => '{bad' } }).kept().length, 0);
+});
+
 test('notes and tags validate as research backup entries', async () => {
   const { validateResearchBackup } = await import('../js/research-store.js');
   const { entries, skipped } = validateResearchBackup({

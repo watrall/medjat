@@ -2617,6 +2617,51 @@ html {
   border: 0;
   border-inline-start: 1px solid var(--color-line);
 }
+.search-history {
+  margin-block-end: var(--space-xl);
+}
+.history-list {
+  display: grid;
+  max-inline-size: 52rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-block-start: 1px solid var(--color-line);
+}
+.history-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--space-base);
+  border-block-end: 1px solid var(--color-line);
+}
+.history-link {
+  display: flex;
+  flex: 1 1 16rem;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--space-md);
+  min-block-size: 44px;
+  align-content: center;
+  color: var(--color-ink);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.history-link:hover .history-query {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.history-query {
+  font-weight: 600;
+}
+.history-detail {
+  font-size: var(--text-label);
+  color: var(--color-muted);
+}
+.history-row .text-button {
+  min-block-size: 44px;
+  min-inline-size: 44px;
+}
 
 .collection-filters {
   display: flex;

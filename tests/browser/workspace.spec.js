@@ -1329,6 +1329,30 @@ test('saved publications take notes and tags that filter, sort, and export', asy
   expect(text).toContain('"chronology; Predynastic","Compare with the Naqada chronology."');
 });
 
+test('recent searches return to the landing page and can be kept or removed', async ({ page }) => {
+  await fixtures(page);
+  await page.goto('/');
+  await expect(page.locator('#searchHistory')).toBeHidden();
+  await page.locator('#searchInput').fill('Hatshepsut');
+  await page.locator('#primarySearchSubmit').click();
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await page.goto('/');
+  await expect(page.locator('#searchHistory')).toBeVisible();
+  await expect(page.locator('.history-query')).toHaveText('Hatshepsut');
+  await page.getByRole('button', { name: 'Keep search: Hatshepsut' }).click();
+  await expect(page.getByRole('button', { name: 'Stop keeping search: Hatshepsut' })).toHaveText(
+    'Kept',
+  );
+  await page.reload();
+  await expect(page.locator('.history-query')).toHaveText('Hatshepsut');
+  await page.locator('.history-link').click();
+  await expect(page.locator('#searchInput')).toHaveValue('Hatshepsut');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Remove search: Hatshepsut' }).click();
+  await expect(page.locator('#searchHistory')).toBeHidden();
+});
+
 test('Most cited reorders loaded results without asking Crossref to sort by citations', async ({
   page,
 }) => {
