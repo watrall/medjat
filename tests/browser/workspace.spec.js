@@ -1238,8 +1238,8 @@ test('import previews conflicts before optionally replacing existing work', asyn
     'Skipped 1 invalid research decision.',
   );
   await expect(page.locator('.result-open')).toHaveText([
-    'Ancient Egyptian research 1',
     'Ancient Egyptian research 2',
+    'Ancient Egyptian research 1',
   ]);
   expect(
     await page.evaluate((key) => JSON.parse(localStorage.getItem(key)).decision, decisionKey),
@@ -1273,6 +1273,60 @@ test('references without a DOI can be searched in Crossref from the inspector', 
   expect(requests.at(-1).searchParams.get('query.bibliographic')).toContain('Cited monograph');
   await page.getByRole('button', { name: 'Inspect candidate' }).first().click();
   await expect(page.locator('.detail-title')).toHaveText('A referenced publication');
+});
+
+test('saved publications take notes and tags that filter, sort, and export', async ({ page }) => {
+  await fixtures(page);
+  await page.goto('/?q=ancient+egypt');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await page.locator('.save-button').nth(0).click();
+  await page.locator('.save-button').nth(1).click();
+  await page.locator('#collectionNav').click();
+  await expect(page.locator('.result-row')).toHaveCount(2);
+  await expect(page.locator('#collectionTag')).toBeHidden();
+  await expect(
+    page.getByRole('button', { name: 'Check saved publications for metadata changes' }),
+  ).toBeVisible();
+
+  await page.locator('.result-open').first().click();
+  await page.getByLabel('Note', { exact: true }).fill('Compare with the Naqada chronology.');
+  await page.getByLabel(/^Tags/).fill('chronology, Predynastic, chronology');
+  await page.getByRole('button', { name: 'Save notes' }).click();
+  await expect(page.getByText('Notes saved in this browser.')).toBeVisible();
+  await expect(page.locator('.tag-badge')).toHaveText(['#chronology', '#Predynastic']);
+  await expect(page.locator('#collectionTag option')).toHaveText([
+    'All tags',
+    'chronology (1)',
+    'Predynastic (1)',
+  ]);
+
+  await page.locator('#collectionTag').selectOption('chronology');
+  await expect(page.locator('.result-row')).toHaveCount(1);
+  await page.locator('#collectionTag').selectOption('');
+  await page.locator('#collectionSearch').fill('naqada chronology');
+  await expect(page.locator('.result-row')).toHaveCount(1);
+  await page.locator('#collectionSearch').fill('');
+  await page.locator('#collectionSort').selectOption('title');
+  await expect(page.locator('.result-open').first()).toHaveText('Ancient Egyptian research 1');
+  await page.locator('#collectionSort').selectOption('saved-new');
+  const newest = await page.locator('.result-open').first().innerText();
+  await page.locator('#collectionSort').selectOption('saved-old');
+  expect(await page.locator('.result-open').first().innerText()).not.toBe(newest);
+
+  await page.reload();
+  await page.locator('#collectionNav').click();
+  await expect(page.locator('.tag-badge')).toHaveText(['#chronology', '#Predynastic']);
+  await page.getByText('Collection tools', { exact: true }).click();
+  await page.getByText(/^Export bibliography/).click();
+  await page.locator('#exportFormat').selectOption('csv');
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: /^Export 2 publications/ }).click();
+  const csv = await (await download).createReadStream();
+  const chunks = [];
+  for await (const chunk of csv) chunks.push(chunk);
+  const text = Buffer.concat(chunks).toString();
+  expect(text).toContain('"Tags","Notes"');
+  expect(text).toContain('"chronology; Predynastic","Compare with the Naqada chronology."');
 });
 
 test('Most cited reorders loaded results without asking Crossref to sort by citations', async ({

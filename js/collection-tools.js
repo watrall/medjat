@@ -3,6 +3,15 @@ import { MAX_IMPORT_BYTES, parseCollection } from './collection.js';
 import { researchData, validateResearchBackup } from './research-store.js';
 import { EXPORT_FORMATS, exportCollection, downloadFile, scopedRecords } from './export.js';
 
+const COLLECTION_SORTS = [
+  ['saved-new', 'Recently saved'],
+  ['saved-old', 'First saved'],
+  ['title', 'Title A to Z'],
+  ['year-new', 'Year, newest first'],
+  ['year-old', 'Year, oldest first'],
+  ['cited', 'Most cited'],
+];
+
 export function createCollectionTools(
   root,
   { getState, onQuery, onSelect, onPreferences, onImport, onMap, onReview, onDiscover },
@@ -13,12 +22,22 @@ export function createCollectionTools(
   const search = el('input', {
     id: 'collectionSearch',
     type: 'search',
-    placeholder: 'Title, author, or keyword',
+    placeholder: 'Title, author, keyword, note, or tag',
     oninput: (event) => {
       onQuery(event.target.value);
       sync();
     },
   });
+  const sort = el('select', {
+    id: 'collectionSort',
+    onchange: () => onPreferences({ sort: sort.value }),
+  });
+  for (const [value, label] of COLLECTION_SORTS) sort.append(el('option', { value }, label));
+  const tagFilter = el('select', {
+    id: 'collectionTag',
+    onchange: () => onPreferences({ tag: tagFilter.value }),
+  });
+  const tagField = el('label', { for: 'collectionTag', hidden: true }, 'Tag', tagFilter);
   const scope = el('select', {
     id: 'exportScope',
     onchange: () => {
@@ -215,9 +234,16 @@ export function createCollectionTools(
       el(
         'label',
         { for: 'collectionSearch', class: 'collection-search-label' },
-        'Search saved publications',
+        'Search saved publications, notes, and tags',
         search,
       ),
+      el(
+        'div',
+        { class: 'collection-filters' },
+        el('label', { for: 'collectionSort' }, 'Sort', sort),
+        tagField,
+      ),
+      el('div', { class: 'selection-controls collection-research-actions' }, review, discover),
       el(
         'div',
         { class: 'collection-actions' },
@@ -231,11 +257,10 @@ export function createCollectionTools(
           importStatus,
           importPreview,
           exportOptions,
-          el('div', { class: 'selection-controls' }, review, discover),
-          changeReview,
-          research,
         ),
       ),
+      changeReview,
+      research,
     ),
   );
   function counts() {
@@ -259,6 +284,14 @@ export function createCollectionTools(
       ...Object.entries(options).map(([value, label]) => el('option', { value }, label)),
     );
     scope.value = state.scope;
+    sort.value = state.sort;
+    const { tags } = state;
+    tagField.hidden = !tags.length;
+    tagFilter.replaceChildren(
+      el('option', { value: '' }, 'All tags'),
+      ...tags.map(({ tag, count }) => el('option', { value: tag }, `${tag} (${count})`)),
+    );
+    tagFilter.value = tags.some(({ tag }) => tag === state.tag) ? state.tag : '';
     format.value = state.format;
     scope.disabled = format.disabled = Boolean(controller);
     const count = totals[state.scope];

@@ -202,3 +202,19 @@ test('Most cited keeps Crossref relevance paging and orders loaded results local
   assert.equal(params.get('cursor'), '25');
   assert.equal(params.has('offset'), false);
 });
+
+test('notes and tags validate as research backup entries', async () => {
+  const { validateResearchBackup } = await import('../js/research-store.js');
+  const { entries, skipped } = validateResearchBackup({
+    'notes:10.1234/a': {
+      decision: 'noted',
+      note: 'Check plate 4',
+      tags: ['Naqada', 'naqada', ' '],
+    },
+    'notes:not-a-doi': { decision: 'noted', note: 'x', tags: [] },
+    'notes:10.1234/b': { decision: 'other', note: 'x', tags: [] },
+  });
+  assert.equal(skipped, 2);
+  assert.deepEqual(entries.get('notes:10.1234/a').tags, ['Naqada']);
+  assert.equal(entries.get('notes:10.1234/a').note, 'Check plate 4');
+});

@@ -12,6 +12,7 @@ import { el, icon, externalLink, emptyState, notify } from './dom.js';
 import { downloadText } from './download.js';
 import { createCover } from './covers.js';
 import { loadGazetteer, placesForWork } from './place-data.js';
+import { createNotesForm } from './notes-form.js';
 
 let inspectorInstances = 0;
 
@@ -20,6 +21,8 @@ export function createInspector(
   {
     onClose,
     onSave,
+    getAnnotation,
+    onAnnotate,
     onPlace,
     onChange = () => {},
     onNavigate = () => {},
@@ -290,6 +293,15 @@ export function createInspector(
         );
       container.append(block);
     }
+    if (getAnnotation && isSaved(work.id))
+      container.append(
+        section(
+          'Your notes',
+          createNotesForm(`${citationStyleId}-notes`, getAnnotation(work.id), (value) =>
+            onAnnotate(work.id, value),
+          ),
+        ),
+      );
     const cover = createCover(work);
     if (cover) container.append(cover);
     container.append(

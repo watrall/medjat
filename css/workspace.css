@@ -2617,3 +2617,36 @@ html {
   border: 0;
   border-inline-start: 1px solid var(--color-line);
 }
+
+.collection-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm) var(--space-base);
+}
+.collection-toolbar .collection-filters label {
+  flex: 0 1 14rem;
+}
+.collection-research-actions {
+  padding-block: var(--space-xs);
+}
+.tag-badge {
+  color: var(--color-secondary);
+}
+.notes-form {
+  display: grid;
+  gap: var(--space-md);
+  font-size: var(--text-label);
+}
+.notes-form label {
+  display: grid;
+  gap: var(--space-xs);
+  font-weight: 600;
+}
+.notes-form :is(textarea, input) {
+  width: 100%;
+  font: inherit;
+  font-weight: 400;
+}
+.notes-form .button {
+  justify-self: start;
+}

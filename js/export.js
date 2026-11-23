@@ -1,5 +1,6 @@
 import { API, CONTACT, request } from './crossref.js';
 import { authorLine, doiURL } from './data.js';
+import { annotationFor } from './annotations.js';
 import { serializeCollection } from './collection.js';
 import { downloadText } from './download.js';
 export const EXPORT_FORMATS = {
@@ -18,9 +19,22 @@ export function scopedRecords(records, scope, matching = [], selected = new Set(
   const included = scope === 'matching' ? new Set(matching) : selected;
   return new Map([...records].filter(([id]) => scope === 'all' || included.has(id)));
 }
-export function metadataCSV(records) {
-  const rows = [['Title', 'Authors', 'Publication year', 'Type', 'Container', 'DOI', 'DOI URL']];
-  for (const { work } of records.values())
+export function metadataCSV(records, research = {}) {
+  const rows = [
+    [
+      'Title',
+      'Authors',
+      'Publication year',
+      'Type',
+      'Container',
+      'DOI',
+      'DOI URL',
+      'Tags',
+      'Notes',
+    ],
+  ];
+  for (const { work } of records.values()) {
+    const { note, tags } = annotationFor(research, work.id);
     rows.push([
       work.title,
       authorLine(work, 1000),
@@ -29,8 +43,30 @@ export function metadataCSV(records) {
       work.container,
       work.doi,
       doiURL(work.doi),
+      tags.join('; '),
+      note,
     ]);
+  }
   return rows.map((row) => row.map(csvCell).join(',')).join('\r\n');
+}
+function withAnnotations(text, format, { note, tags }) {
+  if (!note && !tags.length) return text;
+  const oneLine = (value) => value.replace(/\s+/g, ' ');
+  if (format === 'ris') {
+    const lines = [
+      ...tags.map((tag) => `KW  - ${tag}`),
+      ...(note ? [`N1  - ${oneLine(note)}`] : []),
+    ];
+    return /^ER\s+-/m.test(text)
+      ? text.replace(/^ER\s+-/m, `${lines.join('\n')}\nER  -`)
+      : `${text}\n${lines.join('\n')}`;
+  }
+  const clean = (value) => oneLine(value).replace(/[{}]/g, '');
+  const fields = [
+    tags.length && `keywords = {${clean(tags.join(', '))}}`,
+    note && `annote = {${clean(note)}}`,
+  ].filter(Boolean);
+  return text.replace(/,?\s*\}\s*$/, `,\n  ${fields.join(',\n  ')}\n}`);
 }
 export async function exportCollection(
   records,
@@ -41,7 +77,7 @@ export async function exportCollection(
   if (!records.size) throw new Error('Save some publications before exporting.');
   signal?.throwIfAborted();
   if (format === 'json') return serializeCollection(records, research);
-  if (format === 'csv') return metadataCSV(records);
+  if (format === 'csv') return metadataCSV(records, research);
   const parts = [];
   let index = 0;
   for (const { work } of records.values()) {
@@ -80,6 +116,7 @@ export async function exportCollection(
       if (types[work.type])
         text = text.replace(/^TY\s+-\s*GENERIC\s*$/m, `TY  - ${types[work.type]}`);
     }
+    text = withAnnotations(text, format, annotationFor(research, work.id));
     parts.push(text);
     onProgress(++index, records.size);
   }

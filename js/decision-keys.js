@@ -14,3 +14,6 @@ export const changesKey = (doi) => `changes:${doi}`;
 
 /** @param {string} doi */
 export const doiKey = (doi) => `doi:${doi}`;
+
+/** @param {string} doi */
+export const notesKey = (doi) => `notes:${doi}`;

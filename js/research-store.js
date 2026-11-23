@@ -1,5 +1,6 @@
 import { normalizeDOI } from './data.js';
 import { citationKey, placeKey } from './decision-keys.js';
+import { NOTE_LIMIT, parseTags } from './annotations.js';
 
 const DECISIONS = new Map([
   ['place-scope', ['place-specific', 'not-place-specific']],
@@ -7,6 +8,7 @@ const DECISIONS = new Map([
   ['citation', ['confirmed', 'unmatched', 'deferred', 'dismissed']],
   ['doi', ['saved', 'deferred', 'dismissed']],
   ['changes', ['accepted', 'deferred']],
+  ['notes', ['noted']],
 ]);
 const isRecord = (value) => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
@@ -67,6 +69,8 @@ export function validateResearchBackup(data) {
       fields,
       previousRaw,
       sources,
+      note,
+      tags,
     } = value;
     entries.set(key, {
       decision,
@@ -78,6 +82,10 @@ export function validateResearchBackup(data) {
       ...(['metadata', 'researcher'].includes(method) && { method }),
       ...(typeof reviewedAt === 'string' && { reviewedAt }),
       ...(kind === 'place-scope' && valid.includes(previousDecision) && { previousDecision }),
+      ...(kind === 'notes' && {
+        note: typeof note === 'string' ? note.slice(0, NOTE_LIMIT) : '',
+        tags: Array.isArray(tags) ? parseTags(tags) : [],
+      }),
       ...(kind === 'changes' &&
         Array.isArray(fields) &&
         fields.every((field) => typeof field === 'string') && { fields }),

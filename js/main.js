@@ -2,7 +2,7 @@ import { readPlaceState, writePlaceState } from './place-state.js';
 import { createChangeReview } from './changes.js';
 import { createPlaces } from './places.js';
 import { createResearch } from './research.js';
-import { importResearch } from './research-store.js';
+import { importResearch, researchData, reviewDecision } from './research-store.js';
 import { createVisualize } from './visualize.js';
 import {
   PERIODS,
@@ -25,6 +25,8 @@ import { createInspector } from './inspector.js';
 import { createCollectionStore } from './collection-store.js';
 import { createCollectionTools } from './collection-tools.js';
 import { createResultRow } from './result-row.js';
+import { annotationEntry, annotationFor, tagCounts } from './annotations.js';
+import { notesKey } from './decision-keys.js';
 import { renderSearchFooter, renderSearchNotice } from './search-status.js';
 import { VIEW_CONFIG } from './view-config.js';
 import { createSearchHandoff } from './search-handoff.js';
@@ -44,6 +46,8 @@ const state = {
   collection: saved.records,
   storageWarning: saved.warning,
   collectionQuery: '',
+  collectionSort: 'saved-new',
+  collectionTag: '',
   exportSelection: new Set(),
   exportScope: 'all',
   exportFormat: 'ris',
@@ -302,6 +306,12 @@ const inspector = createInspector($('inspector'), {
       },
     });
   },
+  getAnnotation: (id) => annotationFor(researchData(), id),
+  onAnnotate(id, value) {
+    reviewDecision(notesKey(id), annotationEntry(value));
+    renderList();
+    collectionTools.sync();
+  },
   isSaved: (id) => state.collection.has(id),
   savedLabel: 'Remove from collection',
   onChange: saveSession,
@@ -316,6 +326,9 @@ const collectionTools = createCollectionTools($('collectionTools'), {
     visible: state.view === 'collection' ? visibleWorks() : [],
     selection: state.exportSelection,
     query: state.collectionQuery,
+    sort: state.collectionSort,
+    tag: state.collectionTag,
+    tags: tagCounts(state.collection, researchData()),
     scope: state.exportScope,
     format: state.exportFormat,
   }),
@@ -336,9 +349,16 @@ const collectionTools = createCollectionTools($('collectionTools'), {
     collectionTools.sync();
     saveSession();
   },
-  onPreferences({ scope, format }) {
+  onPreferences({ scope, format, sort, tag }) {
     if (scope) state.exportScope = scope;
     if (format) state.exportFormat = format;
+    if (sort !== undefined) state.collectionSort = sort;
+    if (tag !== undefined) state.collectionTag = tag;
+    if (sort !== undefined || tag !== undefined) {
+      reconcileCollection();
+      renderList();
+      renderStatus();
+    }
     saveSession();
   },
   onMap() {
@@ -431,16 +451,31 @@ function visibleWorks() {
       ? [...state.items].sort((a, b) => (b.citedBy ?? -1) - (a.citedBy ?? -1))
       : state.items;
   const query = state.collectionQuery.trim().toLowerCase();
+  const research = researchData();
+  const tag = state.collectionTag.toLocaleLowerCase();
+  const text = (a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' });
+  const compare = {
+    'saved-new': (a, b) => text(b.savedAt, a.savedAt),
+    'saved-old': (a, b) => text(a.savedAt, b.savedAt),
+    title: (a, b) => text(a.work.title, b.work.title),
+    'year-new': (a, b) => (b.work.year ?? -Infinity) - (a.work.year ?? -Infinity),
+    'year-old': (a, b) => (a.work.year ?? Infinity) - (b.work.year ?? Infinity),
+    cited: (a, b) => (b.work.citedBy ?? -1) - (a.work.citedBy ?? -1),
+  }[state.collectionSort];
   return [...state.collection.values()]
-    .map((x) => x.work)
-    .filter(
-      (work) =>
+    .filter(({ work }) => {
+      const { note, tags } = annotationFor(research, work.id);
+      if (tag && !tags.some((entry) => entry.toLocaleLowerCase() === tag)) return false;
+      return (
         !query ||
-        [work.title, authorLine(work, 100), work.abstract, work.container]
+        [work.title, authorLine(work, 100), work.abstract, work.container, note, tags.join(' ')]
           .join(' ')
           .toLowerCase()
-          .includes(query),
-    );
+          .includes(query)
+      );
+    })
+    .sort(compare)
+    .map((entry) => entry.work);
 }
 const saving = new Set();
 async function toggleSave(work) {
@@ -697,7 +732,8 @@ function renderList() {
     list.replaceChildren(...skeletons());
     return;
   }
-  if (!visibleWorks().length) {
+  const works = visibleWorks();
+  if (!works.length) {
     if (state.view === 'collection') {
       const empty = emptyState(
         state.collection.size
@@ -744,13 +780,15 @@ function renderList() {
     );
     return;
   }
+  const research = researchData();
   list.replaceChildren(
-    ...visibleWorks().map((work) =>
+    ...works.map((work) =>
       createResultRow(work, {
         view: state.view,
         selected: state.selected === work.id,
         saved: state.collection.has(work.id),
         selectedForExport: state.exportSelection.has(work.id),
+        annotation: state.view === 'collection' ? annotationFor(research, work.id) : null,
         onOpen: selectWork,
         onSave: toggleSave,
         onSelectionChange: toggleSelection,

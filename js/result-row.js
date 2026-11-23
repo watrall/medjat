@@ -3,7 +3,7 @@ import { el, icon } from './dom.js';
 
 export function createResultRow(
   work,
-  { view, selected, saved, selectedForExport, onOpen, onSave, onSelectionChange },
+  { view, selected, saved, selectedForExport, annotation, onOpen, onSave, onSelectionChange },
 ) {
   const heading = displayTitle(work.title);
   const title = el(
@@ -66,6 +66,7 @@ export function createResultRow(
       { class: 'metadata-badges' },
       el('span', {}, work.typeLabel),
       badges.map(([name, label]) => el('span', { class: 'metadata-badge' }, icon(name), label)),
+      annotation?.tags.map((tag) => el('span', { class: 'metadata-badge tag-badge' }, `#${tag}`)),
     ),
   );
 }
