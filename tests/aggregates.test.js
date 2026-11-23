@@ -16,6 +16,7 @@ const work = (overrides = {}) => ({
   title: ['A study'],
   type: 'journal-article',
   'container-title': ['Journal of Tests'],
+  publisher: 'Test Press',
   published: { 'date-parts': [[2020]] },
   abstract: 'Deposited abstract.',
   license: [{ URL: 'https://example.org/license' }],
@@ -60,6 +61,7 @@ test('the summary counts one population, deduplicated, without inventing values'
     work(),
     work({
       DOI: '10.1234/two',
+      publisher: 'Other Press',
       'container-title': [],
       reference: [{}],
       abstract: '',
@@ -92,6 +94,11 @@ test('the summary counts one population, deduplicated, without inventing values'
     ['Dataset', 1],
   ]);
   assert.deepEqual(summary.venues, [['Journal of Tests', 3]]);
+  assert.deepEqual(summary.publishers, [
+    ['Test Press', 3],
+    ['Other Press', 1],
+  ]);
+  assert.equal(summary.publisherTotal, 2);
   assert.deepEqual(summary.years, [
     ['2020', 2],
     ['2024', 1],
@@ -105,6 +112,8 @@ test('an empty window is a valid summary', () => {
     window: 0,
     types: [],
     venues: [],
+    publishers: [],
+    publisherTotal: 0,
     years: [],
     decades: [],
     availability: { abstract: 0, references: 0, orcid: 0, license: 0 },

@@ -39,6 +39,7 @@ export function createVisualize(root, { onRefine, onExplore }) {
     for (const [chart, rows] of [
       ['type', result.types],
       ['container-title', result.venues],
+      ['publisher', result.publishers],
       ['published', result.years],
     ])
       for (const [label, count] of rows) add(chart, label, count);
@@ -303,6 +304,12 @@ export function createVisualize(root, { onRefine, onExplore }) {
           query,
           note: 'Top ten venues in the ranked sample; records without a supplied container title are not counted. Venues containing commas cannot be refined through the API filter.',
           refine: (container) => (container.includes(',') ? null : { container }),
+        }),
+      );
+      grid.append(
+        panel('Leading publishers', result.publishers, {
+          query,
+          note: `Top ten registering publishers in the ranked sample, which draws on ${result.publisherTotal.toLocaleString()} distinct ${result.publisherTotal === 1 ? 'publisher' : 'publishers'} across ${result.window.toLocaleString()} records. Records without a supplied publisher name are not counted.`,
         }),
       );
       const names = {

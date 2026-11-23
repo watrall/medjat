@@ -1539,3 +1539,17 @@ test('the inspector links the registering publisher to its Participation Report'
   await expect(link).toHaveAttribute('href', 'https://www.crossref.org/members/prep/78/');
   await expect(link).toHaveAttribute('rel', /noopener/);
 });
+
+test('Visualize shows how widely the ranked results are spread across publishers', async ({
+  page,
+}) => {
+  await fixtures(page);
+  await page.goto('/?q=ancient+egypt');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await page.locator('#visualizeNav').click();
+  const panel = page.locator('.chart-panel', { hasText: 'Leading publishers' });
+  await expect(panel).toBeVisible();
+  await expect(panel).toContainText('1 distinct publisher across 25 records');
+  await expect(panel).toContainText('Test publisher');
+  await expect(panel).toContainText('25');
+});

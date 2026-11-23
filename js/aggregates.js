@@ -53,10 +53,12 @@ export function summarizeItems(items) {
   }
   const types = new Map(),
     venues = new Map(),
+    publishers = new Map(),
     years = new Map();
   const availability = { abstract: 0, references: 0, orcid: 0, license: 0 };
   for (const work of works) {
     types.set(work.typeLabel, (types.get(work.typeLabel) || 0) + 1);
+    if (work.publisher) publishers.set(work.publisher, (publishers.get(work.publisher) || 0) + 1);
     if (work.container) venues.set(work.container, (venues.get(work.container) || 0) + 1);
     if (Number.isInteger(work.year) && work.year >= 1000 && work.year <= 2100) {
       const year = String(work.year);
@@ -72,6 +74,8 @@ export function summarizeItems(items) {
     window: works.length,
     types: ranked(types),
     venues: ranked(venues, 10),
+    publishers: ranked(publishers, 10),
+    publisherTotal: publishers.size,
     years: yearRows,
     decades: decadeRows(yearRows),
     availability,
