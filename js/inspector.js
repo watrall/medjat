@@ -5,6 +5,7 @@ import {
   normalizeDOI,
   normalizeWork,
   openLicenseURL,
+  participationReportURL,
   plainText,
   safeURL,
 } from './data.js';
@@ -377,7 +378,18 @@ export function createInspector(
       ['DOI', externalLink(`https://doi.org/${work.doi}`, doiURL(work.doi))],
       ['Type', work.typeLabel],
       ['Published', work.year || 'Date not supplied'],
-      ['Publisher', work.publisher || 'Not supplied'],
+      [
+        'Publisher',
+        [
+          work.publisher || 'Not supplied',
+          participationReportURL(work) && [
+            ' · ',
+            externalLink('Participation Report', participationReportURL(work), {
+              'aria-label': `Crossref Participation Report for ${work.publisher || 'this member'}`,
+            }),
+          ],
+        ],
+      ],
     ];
     if (work.volume) fields.push(['Volume', work.volume]);
     if (work.issue) fields.push(['Issue', work.issue]);

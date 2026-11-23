@@ -17,6 +17,7 @@ const publication = (i) => ({
   'container-title': ['Research in ancient Egypt'],
   ISBN: ['9780198845461'],
   publisher: 'Test publisher',
+  member: '78',
   page: '23-39',
   abstract: '<jats:p>Evidence from archaeological research in ancient Egypt.</jats:p>',
   reference: [{ DOI: '10.1234/reference-record', unstructured: 'A deposited reference' }],
@@ -1525,4 +1526,16 @@ test('opening Collection checks saved publications for update notices once', asy
   await page.locator('#collectionNav').click();
   await page.waitForTimeout(300);
   expect(checks()).toHaveLength(1);
+});
+
+test('the inspector links the registering publisher to its Participation Report', async ({
+  page,
+}) => {
+  await fixtures(page);
+  await page.goto('/?q=ancient+egypt');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  const link = page.getByRole('link', { name: 'Crossref Participation Report for Test publisher' });
+  await expect(link).toHaveText('Participation Report');
+  await expect(link).toHaveAttribute('href', 'https://www.crossref.org/members/prep/78/');
+  await expect(link).toHaveAttribute('rel', /noopener/);
 });

@@ -24,6 +24,7 @@ export interface Work {
   typeLabel: string;
   abstract: string;
   publisher: string;
+  member: string;
   volume: string;
   issue: string;
   pages: string;

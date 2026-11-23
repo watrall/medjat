@@ -359,3 +359,15 @@ test('records imported without a save date share one timestamp', async () => {
   );
   assert.equal(new Set([...records.values()].map((entry) => entry.savedAt)).size, 1);
 });
+
+test('the registering member links to its Crossref Participation Report', async () => {
+  const { normalizeWork, participationReportURL } = await import('../js/data.js');
+  const work = normalizeWork({ DOI: '10.1234/prep', member: '78' });
+  assert.equal(work.member, '78');
+  assert.equal(participationReportURL(work), 'https://www.crossref.org/members/prep/78/');
+  for (const member of [undefined, '', 'abc', '78/../x', 78.5]) {
+    const other = normalizeWork({ DOI: '10.1234/prep', member });
+    assert.equal(other.member, '');
+    assert.equal(participationReportURL(other), '');
+  }
+});

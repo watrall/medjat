@@ -176,6 +176,7 @@ export function normalizeWork(raw) {
           : 'Publication type not supplied'),
     abstract: plainText(raw.abstract),
     publisher: plainText(raw.publisher),
+    member: /^\d+$/.test(String(raw.member)) ? String(raw.member) : '',
     volume: plainText(raw.volume),
     issue: plainText(raw.issue),
     pages: plainText(raw.page),
@@ -201,6 +202,9 @@ export function openLicenseURL(work) {
   }
   return '';
 }
+
+export const participationReportURL = (work) =>
+  work.member ? `https://www.crossref.org/members/prep/${work.member}/` : '';
 
 export function authorLine(work, max = 3) {
   const names = (people) =>
