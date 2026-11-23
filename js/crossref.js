@@ -64,6 +64,7 @@ export function addedSearchTerms(query) {
 export function bibliographicTerms(query) {
   return [query.q.trim(), addedSearchTerms(query)].filter(Boolean).join(' ');
 }
+const byDate = (query) => query.sort === 'newest' || query.sort === 'oldest';
 export function buildSearchURL(query, cursor = '*') {
   if (!query.q.trim()) throw new Error('Enter a publication search.');
   const params = new URLSearchParams({
@@ -77,7 +78,7 @@ export function buildSearchURL(query, cursor = '*') {
     if (context) params.set('query.bibliographic', context);
     else params.delete('query.bibliographic');
   }
-  if (query.sort === 'relevance') params.set('cursor', cursor);
+  if (!byDate(query)) params.set('cursor', cursor);
   else {
     const offset = cursor === '*' ? 0 : Number(cursor);
     if (!Number.isInteger(offset) || offset < 0 || offset >= DATE_BROWSE_LIMIT)
@@ -86,7 +87,7 @@ export function buildSearchURL(query, cursor = '*') {
   }
   const filters = queryFilters(query);
   if (filters.length) params.set('filter', filters.join(','));
-  params.set('sort', query.sort === 'relevance' ? 'score' : 'published');
+  params.set('sort', byDate(query) ? 'published' : 'score');
   params.set('order', query.sort === 'oldest' ? 'asc' : 'desc');
   return `${API}/works?${params}`;
 }
@@ -196,7 +197,7 @@ export async function searchWorks(query, { cursor = '*', signal, fetcher } = {})
     }
   });
   const next = message['next-cursor'];
-  const dateSorted = query.sort !== 'relevance';
+  const dateSorted = byDate(query);
   const nextOffset = (cursor === '*' ? 0 : Number(cursor)) + message.items.length;
   const moreByDate =
     dateSorted && message.items.length === PAGE_SIZE && nextOffset < message['total-results'];

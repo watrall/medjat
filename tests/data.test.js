@@ -174,3 +174,31 @@ test('explicit DOI mode rejects incomplete values before making a request', asyn
     (error) => error.retryable === false && /Enter a complete DOI/.test(error.message),
   );
 });
+
+test('all-capital deposited titles display in title case without altering the record', async () => {
+  const { displayTitle, normalizeWork, authorLine } = await import('../js/data.js');
+  assert.equal(
+    displayTitle('THE BOUNDARY STELAE AS OFFICIAL AND HISTORICAL DOCUMENTS'),
+    'The Boundary Stelae as Official and Historical Documents',
+  );
+  assert.equal(displayTitle('RAMESSES II AT KADESH'), 'Ramesses II at Kadesh');
+  assert.equal(displayTitle('Already Mixed Case'), 'Already Mixed Case');
+  assert.equal(displayTitle('ΑΙΓΥΠΤΟΣ'), 'Αιγυπτος');
+  assert.equal(displayTitle('1234 5678'), '1234 5678');
+  const work = normalizeWork({
+    DOI: '10.1234/caps',
+    title: ['SHOUTING TITLE'],
+    editor: [{ given: 'Ada', family: 'Lovelace' }],
+  });
+  assert.equal(work.title, 'SHOUTING TITLE');
+  assert.equal(authorLine(work), 'Ada Lovelace (ed.)');
+});
+
+test('Most cited keeps Crossref relevance paging and orders loaded results locally', async () => {
+  const { buildSearchURL } = await import('../js/crossref.js');
+  const { readQuery } = await import('../js/data.js');
+  const params = new URL(buildSearchURL(readQuery('?q=amarna&sort=cited'), '25')).searchParams;
+  assert.equal(params.get('sort'), 'score');
+  assert.equal(params.get('cursor'), '25');
+  assert.equal(params.has('offset'), false);
+});

@@ -114,18 +114,22 @@ export function normalizeWork(raw) {
   const date = ['published', 'published-print', 'published-online', 'issued']
     .map((key) => raw[key]?.['date-parts']?.[0])
     .find((parts) => Array.isArray(parts) && Number.isInteger(parts[0]));
+  const person = (a) => ({
+    name:
+      plainText(a.name) ||
+      [plainText(a.given), plainText(a.family)].filter(Boolean).join(' ') ||
+      'Unnamed author',
+    orcid: orcidURL(a.ORCID),
+    affiliations: array(a.affiliation)
+      .map((a) => plainText(a?.name))
+      .filter(Boolean),
+  });
   const authors = array(raw.author)
     .filter((a) => a && typeof a === 'object')
-    .map((a) => ({
-      name:
-        plainText(a.name) ||
-        [plainText(a.given), plainText(a.family)].filter(Boolean).join(' ') ||
-        'Unnamed author',
-      orcid: orcidURL(a.ORCID),
-      affiliations: array(a.affiliation)
-        .map((a) => plainText(a?.name))
-        .filter(Boolean),
-    }));
+    .map(person);
+  const editors = array(raw.editor)
+    .filter((a) => a && typeof a === 'object')
+    .map(person);
   const type = typeof raw.type === 'string' ? raw.type : '';
   const suppliedTypeLabel = plainText(type).replaceAll('-', ' ');
   return {
@@ -133,6 +137,7 @@ export function normalizeWork(raw) {
     doi,
     title: firstText(raw.title) || 'Untitled publication',
     authors,
+    editors,
     year: date?.[0] ?? null,
     container: firstText(raw['container-title']),
     type,
@@ -159,12 +164,38 @@ export function normalizeWork(raw) {
 }
 
 export function authorLine(work, max = 3) {
-  return work.authors.length
-    ? work.authors
-        .slice(0, max)
-        .map((a) => a.name)
-        .join(', ') + (work.authors.length > max ? ', et al.' : '')
-    : 'Authors not supplied';
+  const names = (people) =>
+    people
+      .slice(0, max)
+      .map((a) => a.name)
+      .join(', ') + (people.length > max ? ', et al.' : '');
+  if (work.authors.length) return names(work.authors);
+  if (work.editors?.length)
+    return `${names(work.editors)} (${work.editors.length > 1 ? 'eds' : 'ed'}.)`;
+  return 'Authors not supplied';
+}
+
+const LOWERCASE_WORDS = new Set(
+  'a an and as at but by de del der des di du el en for from in la le of on or the to und von with'.split(
+    ' ',
+  ),
+);
+export function displayTitle(title) {
+  const letters = title.replace(/[^\p{L}]/gu, '');
+  if (letters.length < 4 || letters === letters.toLowerCase() || letters !== letters.toUpperCase())
+    return title;
+  let first = true;
+  return title.replace(/[\p{L}][\p{L}'’]*/gu, (word) => {
+    const lower = word.toLowerCase();
+    const keep = /^[IVX]{1,5}$/.test(word) && word !== 'I';
+    const out = keep
+      ? word
+      : !first && LOWERCASE_WORDS.has(lower)
+        ? lower
+        : lower[0].toUpperCase() + lower.slice(1);
+    first = false;
+    return out;
+  });
 }
 
 export function readQuery(search = '') {
@@ -183,7 +214,7 @@ export function readQuery(search = '') {
     abstract: p.get('abstract') === '1',
     orcid: p.get('orcid') === '1',
     references: p.get('references') === '1',
-    sort: ['newest', 'oldest'].includes(p.get('sort')) ? p.get('sort') : 'relevance',
+    sort: ['newest', 'oldest', 'cited'].includes(p.get('sort')) ? p.get('sort') : 'relevance',
   };
 }
 

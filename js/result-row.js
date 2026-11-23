@@ -1,18 +1,19 @@
-import { authorLine } from './data.js';
+import { authorLine, displayTitle } from './data.js';
 import { el, icon } from './dom.js';
 
 export function createResultRow(
   work,
   { view, selected, saved, selectedForExport, onOpen, onSave, onSelectionChange },
 ) {
+  const heading = displayTitle(work.title);
   const title = el(
     'button',
     {
       class: 'result-open',
       onclick: () => onOpen(work),
-      'aria-label': `Inspect ${work.title}`,
+      'aria-label': `Inspect ${heading}`,
     },
-    work.title,
+    heading,
   );
   const badges = [
     work.abstract && ['file-text', 'Abstract'],
@@ -35,7 +36,7 @@ export function createResultRow(
           el('input', {
             type: 'checkbox',
             checked: selectedForExport,
-            'aria-label': `Select publication: ${work.title}`,
+            'aria-label': `Select publication: ${heading}`,
             onchange: (event) => onSelectionChange(work.id, event.target.checked),
           }),
         ),
@@ -45,7 +46,7 @@ export function createResultRow(
         {
           class: 'save-button',
           'aria-pressed': String(saved),
-          'aria-label': `${saved ? 'Remove from' : 'Save to'} collection: ${work.title}`,
+          'aria-label': `${saved ? 'Remove from' : 'Save to'} collection: ${heading}`,
           onclick: () => onSave(work),
         },
         icon(saved ? 'bookmark-check' : 'bookmark'),

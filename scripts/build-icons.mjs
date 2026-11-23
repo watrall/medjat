@@ -21,6 +21,7 @@ const names = [
   'circle-alert',
   'arrow-left',
   'arrow-right',
+  'quote',
 ];
 const symbols = await Promise.all(
   names.map(async (name) => {

@@ -221,7 +221,7 @@ function renderAppliedQuery() {
     ? `Exact DOI lookup: ${query.q}. Topic and publication refinements do not apply.`
     : query.field === 'author'
       ? `Author names: ${query.q}. Added bibliographic terms: ${addedSearchTerms(query) || 'none'}.`
-      : `Ranking context sent to Crossref: ${bibliographicTerms(query)}`;
+      : `Ranking context sent to Crossref: ${bibliographicTerms(query)}${state.total > DATE_BROWSE_LIMIT ? '. Crossref counts every record that matches any query word, so a large total includes loosely related records.' : ''}`;
   const current = state.query;
   const doi = Boolean(normalizeDOI(current.q)) || current.field === 'doi';
   const entries = doi ? [] : filterEntries(current);
@@ -426,7 +426,10 @@ function reconcileCollection() {
   }
 }
 function visibleWorks() {
-  if (state.view === 'explore') return state.items;
+  if (state.view === 'explore')
+    return state.query.sort === 'cited'
+      ? [...state.items].sort((a, b) => (b.citedBy ?? -1) - (a.citedBy ?? -1))
+      : state.items;
   const query = state.collectionQuery.trim().toLowerCase();
   return [...state.collection.values()]
     .map((x) => x.work)
@@ -645,6 +648,10 @@ function renderExploreSurface() {
     state.query.q === $('hierakonpolisTile').querySelector('.tile-title').textContent.trim()
   );
 }
+function resultTally(loaded, total, doiLookup) {
+  if (doiLookup || total <= loaded) return loaded.toLocaleString();
+  return `${loaded.toLocaleString()} of ${total > DATE_BROWSE_LIMIT ? `${DATE_BROWSE_LIMIT.toLocaleString()}+` : total.toLocaleString()}`;
+}
 function renderInspector(work) {
   inspector.show(work);
 }
@@ -803,17 +810,19 @@ function renderStatus() {
     ? state.appending
       ? 'Loading more publications…'
       : 'Searching Crossref…'
-    : `${previous ? 'Previous results: ' : ''}${state.items.length.toLocaleString()} results loaded`;
+    : `${previous ? 'Previous results: ' : ''}${resultTally(state.items.length, state.total, state.doiLookup)} results loaded`;
   const resultQuery = state.resultQuery || state.query;
   const ranking =
     resultQuery.sort === 'relevance'
       ? 'Ranked by Crossref'
-      : `Sorted by publication date, ${resultQuery.sort === 'oldest' ? 'oldest' : 'newest'} first`;
+      : resultQuery.sort === 'cited'
+        ? 'Ranked by Crossref, loaded results ordered by citation count'
+        : `Sorted by publication date, ${resultQuery.sort === 'oldest' ? 'oldest' : 'newest'} first`;
   $('scopeNote').textContent = state.doiLookup
     ? 'DOI lookup opens one exact Crossref record; topic and publication filters do not apply.'
     : chartSearch && state.loading
       ? `Applying chart filters in Crossref for “${state.query.q}”.`
-      : `${previous ? `Showing the last successful search for “${resultQuery.q}”. ` : `Results for “${resultQuery.q}”. `}${ranking}${state.retrievedAt ? ` · ${state.cached ? 'cached' : 'retrieved'} ${new Date(state.retrievedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}. Relevance and coverage vary.${resultQuery.sort !== 'relevance' ? ` Date-sorted browsing covers the first ${DATE_BROWSE_LIMIT.toLocaleString()} candidates; narrow your search for more focused results.` : ''}`;
+      : `${previous ? `Showing the last successful search for “${resultQuery.q}”. ` : `Results for “${resultQuery.q}”. `}${ranking}${state.retrievedAt ? ` · ${state.cached ? 'cached' : 'retrieved'} ${new Date(state.retrievedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}. Relevance and coverage vary.${resultQuery.sort === 'newest' || resultQuery.sort === 'oldest' ? ` Sorted browsing covers the first ${DATE_BROWSE_LIMIT.toLocaleString()} candidates and includes loosely matched records; narrow your search for more focused results.` : ''}`;
   renderSearchNotice($('requestNotice'), {
     error: state.error,
     retryable: state.errorRetryable,

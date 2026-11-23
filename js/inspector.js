@@ -1,5 +1,5 @@
-import { doiURL, normalizeDOI, normalizeWork, plainText, safeURL } from './data.js';
 import { getWork, getCitation } from './crossref.js';
+import { displayTitle, doiURL, normalizeDOI, normalizeWork, plainText, safeURL } from './data.js';
 import { el, icon, externalLink, emptyState, notify } from './dom.js';
 import { downloadText } from './download.js';
 import { createCover } from './covers.js';
@@ -165,7 +165,10 @@ export function createInspector(
           label,
         ),
       );
-    root.append(tabs, el('h2', { class: 'detail-title', tabindex: '-1' }, work.title));
+    root.append(
+      tabs,
+      el('h2', { class: 'detail-title', tabindex: '-1' }, displayTitle(work.title)),
+    );
     root.append(
       el(
         'div',
@@ -183,7 +186,16 @@ export function createInspector(
                   }),
               ),
             )
-          : 'Authors not supplied',
+          : work.editors.length
+            ? [
+                el(
+                  'span',
+                  { class: 'detail-role' },
+                  work.editors.length > 1 ? 'Editors: ' : 'Editor: ',
+                ),
+                ...work.editors.map((editor) => el('span', {}, editor.name)),
+              ]
+            : 'Authors not supplied',
       ),
     );
     root.append(

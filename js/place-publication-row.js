@@ -1,6 +1,6 @@
 import { placeEvidence } from './place-data.js';
 import { publicationMetadata } from './place-publication.js';
-import { doiURL } from './data.js';
+import { displayTitle, doiURL } from './data.js';
 import { el, externalLink, icon } from './dom.js';
 
 export function createPlacePublicationRow(work, { place, isSaved, onInspect, onSave, onSync }) {
@@ -30,7 +30,11 @@ export function createPlacePublicationRow(work, { place, isSaved, onInspect, onS
   return el(
     'li',
     { class: 'place-publication', 'data-place-work': work.id },
-    el('button', { class: 'place-publication-title', onclick: () => onInspect(work) }, work.title),
+    el(
+      'button',
+      { class: 'place-publication-title', onclick: () => onInspect(work) },
+      displayTitle(work.title),
+    ),
     publicationMetadata(work),
     evidence &&
       el(

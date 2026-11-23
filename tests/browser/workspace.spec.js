@@ -689,7 +689,7 @@ test('date sorts browse subsequent pages with supported pagination', async ({ pa
   for (const sort of ['newest', 'oldest']) {
     await page.locator('#sortSelect').selectOption(sort);
     await expect(page.locator('#scopeNote')).toContainText('Sorted by publication date');
-    await expect(page.locator('#resultCount')).toContainText('25 results loaded');
+    await expect(page.locator('#resultCount')).toContainText(/25( of [\d,+]+)? results loaded/);
     await expect.poll(() => requests.at(-1).searchParams.get('offset')).toBe('0');
     await expect.poll(() => requests.at(-1).searchParams.has('cursor')).toBe(false);
     await page.getByRole('button', { name: 'Load 25 more publications' }).click();
@@ -728,7 +728,7 @@ test('added context is removable without applying drafts and survives refresh an
   const requests = await fixtures(page);
   await page.goto('/?q=Hatshepsut');
   await expect(page.locator('.result-row')).toHaveCount(25);
-  await expect(page.locator('#resultCount')).toHaveText('25 results loaded');
+  await expect(page.locator('#resultCount')).toHaveText(/^25( of [\d,+]+)? results loaded$/);
   await expect(page.locator('#effectiveQuery')).toContainText('Hatshepsut ancient Egypt');
   await page.locator('#searchInput').fill('Unfinished topic');
   await page.getByRole('button', { name: 'Remove added ancient Egypt terms', exact: true }).click();
@@ -1238,4 +1238,18 @@ test('import previews conflicts before optionally replacing existing work', asyn
   expect(
     await page.evaluate((key) => JSON.parse(localStorage.getItem(key)).decision, decisionKey),
   ).toBe('not-place-specific');
+});
+
+test('Most cited reorders loaded results without asking Crossref to sort by citations', async ({
+  page,
+}) => {
+  const requests = await fixtures(page);
+  await page.goto('/?q=ancient+egypt');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await page.locator('#sortSelect').selectOption('cited');
+  await expect(page.locator('#scopeNote')).toContainText('ordered by citation count');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  const last = requests.at(-1).searchParams;
+  expect(last.get('sort')).toBe('score');
+  expect(last.has('offset')).toBe(false);
 });
