@@ -19,12 +19,13 @@ export function parseCollection(text) {
     throw new Error(
       `Collections support up to ${MAX_SAVED} publications. Import a smaller collection.`,
     );
+  const importedAt = new Date().toISOString();
   const records = new Map();
   for (const item of data.records) {
     const work = normalizeWork(item.raw);
     records.set(work.id, {
       work,
-      savedAt: typeof item.savedAt === 'string' ? item.savedAt : new Date().toISOString(),
+      savedAt: typeof item.savedAt === 'string' ? item.savedAt : importedAt,
     });
   }
   const research =

@@ -312,3 +312,12 @@ test('update notices merge duplicate sources and sort the most serious first', a
   );
   assert.deepEqual(normalizeWork({ DOI: '10.1234/plain' }).updates, []);
 });
+
+test('records imported without a save date share one timestamp', async () => {
+  const { parseCollection } = await import('../js/collection.js');
+  const record = (n) => ({ raw: { DOI: `10.1234/undated-${n}`, title: [`Undated ${n}`] } });
+  const { records } = parseCollection(
+    JSON.stringify({ version: 1, records: [record(1), record(2), record(3)] }),
+  );
+  assert.equal(new Set([...records.values()].map((entry) => entry.savedAt)).size, 1);
+});
