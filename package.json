@@ -13,6 +13,7 @@
     "format:check": "prettier --check index.html css scripts tests js package.json package-lock.json playwright.config.js eslint.config.js jsconfig.json",
     "test:e2e": "playwright test",
     "test:live": "node scripts/smoke-crossref.mjs",
+    "survey": "node scripts/metadata-survey.mjs",
     "build:icons": "node scripts/build-icons.mjs",
     "build": "node scripts/build-site.mjs",
     "check:repository": "node scripts/check-repository.mjs --history"

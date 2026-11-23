@@ -158,6 +158,7 @@ export const repositoryFiles = [
   'scripts/build-site.mjs',
   'scripts/check-repository.mjs',
   'scripts/check-syntax.mjs',
+  'scripts/metadata-survey.mjs',
   'scripts/release-files.mjs',
   'scripts/serve.py',
   'scripts/smoke-crossref.mjs',
