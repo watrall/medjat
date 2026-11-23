@@ -1,5 +1,4 @@
-import { API, CONTACT, getWork, request } from './crossref.js';
-import { normalizeWork } from './data.js';
+import { findCitationMatches, getWork } from './crossref.js';
 import { el, notify } from './dom.js';
 import { researchData, reviewDecision } from './research-store.js';
 import { serializeCollection } from './collection.js';
@@ -175,19 +174,9 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
             event.currentTarget.disabled = true;
             status.textContent = 'Looking for up to three possible matches…';
             try {
-              const url = new URL(`${API}/works`);
-              url.searchParams.set('query.bibliographic', ref.label);
-              url.searchParams.set('rows', '3');
-              url.searchParams.set('mailto', CONTACT);
-              const response = await request(url);
+              const found = await findCitationMatches(ref.label);
               matches.replaceChildren();
-              for (const raw of response.body.message.items || []) {
-                let work;
-                try {
-                  work = normalizeWork(raw);
-                } catch {
-                  continue;
-                }
+              for (const work of found) {
                 matches.append(
                   el('p', {}, `${work.title} · ${work.year || 'Date not supplied'} · ${work.doi}`),
                   el(

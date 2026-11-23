@@ -217,6 +217,21 @@ export async function searchWorks(query, { cursor = '*', signal, fetcher } = {})
   };
 }
 
+export async function findCitationMatches(label, options = {}) {
+  const url = new URL(`${API}/works`);
+  url.searchParams.set('query.bibliographic', label.slice(0, 500));
+  url.searchParams.set('rows', '3');
+  url.searchParams.set('mailto', CONTACT);
+  const response = await request(url.toString(), options);
+  return (response.body?.message?.items || []).flatMap((raw) => {
+    try {
+      return [normalizeWork(raw)];
+    } catch {
+      return [];
+    }
+  });
+}
+
 export async function getWork(doi, options = {}) {
   const normalized = normalizeDOI(doi);
   if (!normalized) throw new Error('This reference does not have a valid DOI.');

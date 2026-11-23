@@ -23,7 +23,7 @@ const publication = (i) => ({
 });
 async function fixtures(
   page,
-  { fail = false, empty = false, hostile = false, referenceCount = 1 } = {},
+  { fail = false, empty = false, hostile = false, referenceCount = 1, plainReference = false } = {},
 ) {
   const requests = [];
   await page.route('https://fonts.googleapis.com/**', (r) => r.abort());
@@ -55,6 +55,20 @@ async function fixtures(
           },
         },
       });
+    if (url.searchParams.get('rows') === '3')
+      return route.fulfill({
+        json: {
+          status: 'ok',
+          message: {
+            items: [0, 1].map((i) => ({
+              ...publication(40 + i),
+              DOI: `10.1234/candidate-${i}`,
+              title: [`Candidate monograph ${i}`],
+            })),
+            'total-results': 2,
+          },
+        },
+      });
     const next =
       url.searchParams.get('cursor') === 'next' || url.searchParams.get('offset') === '25';
     const items = empty
@@ -65,6 +79,8 @@ async function fixtures(
         DOI: `10.1234/reference-${i}`,
         unstructured: `Deposited reference ${i + 1}`,
       }));
+    if (plainReference && items.length)
+      items[0].reference = [{ unstructured: '1. Cited monograph about boundary stelae, 1998' }];
     if (hostile && items.length)
       Object.assign(items[0], {
         title: ['A "quoted" title <img src=x onerror="window.crossrefInjection=true">'],
@@ -1238,6 +1254,25 @@ test('import previews conflicts before optionally replacing existing work', asyn
   expect(
     await page.evaluate((key) => JSON.parse(localStorage.getItem(key)).decision, decisionKey),
   ).toBe('not-place-specific');
+});
+
+test('references without a DOI can be searched in Crossref from the inspector', async ({
+  page,
+}) => {
+  const requests = await fixtures(page, { plainReference: true });
+  await page.goto('/?q=ancient+egypt');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await page.getByRole('tab', { name: 'Connections', exact: true }).click();
+  await expect(page.getByText('Cited monograph about boundary stelae, 1998')).toBeVisible();
+  await expect(page.getByText('1. Cited monograph')).toHaveCount(0);
+  const before = requests.length;
+  await page.getByRole('button', { name: 'Find in Crossref', exact: true }).click();
+  await expect(page.getByText('Possible matches only.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Inspect candidate' })).toHaveCount(2);
+  expect(requests.length).toBe(before + 1);
+  expect(requests.at(-1).searchParams.get('query.bibliographic')).toContain('Cited monograph');
+  await page.getByRole('button', { name: 'Inspect candidate' }).first().click();
+  await expect(page.locator('.detail-title')).toHaveText('A referenced publication');
 });
 
 test('Most cited reorders loaded results without asking Crossref to sort by citations', async ({

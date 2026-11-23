@@ -1,5 +1,13 @@
-import { getWork, getCitation } from './crossref.js';
-import { displayTitle, doiURL, normalizeDOI, normalizeWork, plainText, safeURL } from './data.js';
+import {
+  authorLine,
+  displayTitle,
+  doiURL,
+  normalizeDOI,
+  normalizeWork,
+  plainText,
+  safeURL,
+} from './data.js';
+import { findCitationMatches, getWork, getCitation } from './crossref.js';
 import { el, icon, externalLink, emptyState, notify } from './dom.js';
 import { downloadText } from './download.js';
 import { createCover } from './covers.js';
@@ -27,6 +35,7 @@ export function createInspector(
     citation = '',
     citationError = '',
     citationLoading = false;
+  const matches = new Map();
   let trail = [],
     referenceLimit = 20,
     followError = '',
@@ -71,6 +80,7 @@ export function createInspector(
     citationLoading = false;
     followError = '';
     following = false;
+    matches.clear();
     if (!fromReference) trail = [];
     render();
     if (reading) {
@@ -374,6 +384,75 @@ export function createInspector(
         ?.focus({ preventScroll: true });
     }
   }
+  function relationLabel(type) {
+    const text = plainText(type.replaceAll('-', ' '));
+    return text ? text[0].toUpperCase() + text.slice(1) : 'Related record';
+  }
+  async function findMatches(index, label) {
+    const id = generation;
+    matches.set(index, { loading: true });
+    render();
+    try {
+      matches.set(index, { works: await findCitationMatches(label) });
+    } catch (error) {
+      matches.set(index, { error: error.message });
+    }
+    if (id === generation) render();
+  }
+  function matchBlock(index, label) {
+    const found = matches.get(index);
+    return el(
+      'div',
+      { class: 'reference-matches' },
+      el(
+        'button',
+        {
+          'data-focus-key': `reference-${index}`,
+          disabled: found?.loading || following,
+          onclick: () => findMatches(index, label),
+        },
+        found?.works ? 'Search Crossref again' : 'Find in Crossref',
+      ),
+      found?.loading && el('small', { role: 'status' }, 'Searching Crossref…'),
+      found?.error && el('small', { role: 'alert' }, found.error),
+      found?.works &&
+        (found.works.length
+          ? el(
+              'div',
+              {},
+              el(
+                'small',
+                { role: 'status' },
+                'Possible matches only. Check the title, authors and year before relying on one.',
+              ),
+              el(
+                'ul',
+                { class: 'reference-match-list' },
+                found.works.map((candidate, position) =>
+                  el(
+                    'li',
+                    {},
+                    el(
+                      'span',
+                      {},
+                      `${displayTitle(candidate.title)} · ${authorLine(candidate, 2)} · ${candidate.year || 'Date not supplied'}`,
+                    ),
+                    el(
+                      'button',
+                      {
+                        'data-focus-key': `match-${index}-${position}`,
+                        disabled: following,
+                        onclick: () => follow(candidate.doi),
+                      },
+                      'Inspect candidate',
+                    ),
+                  ),
+                ),
+              ),
+            )
+          : el('small', { role: 'status' }, 'Crossref returned no candidates for this citation.')),
+    );
+  }
   function connections(container) {
     container.append(
       section(
@@ -410,7 +489,7 @@ export function createInspector(
       const list = el('ol', { class: 'reference-list' });
       for (const [index, ref] of refs.slice(0, referenceLimit).entries()) {
         const doi = normalizeDOI(ref.DOI);
-        const label =
+        const deposited =
           plainText(ref.unstructured) ||
           [
             plainText(ref.author),
@@ -422,11 +501,15 @@ export function createInspector(
             .join('. ') ||
           doi ||
           'Reference details not supplied';
+        // Some publishers deposit their own list numbers inside the citation text.
+        const label = deposited.replace(new RegExp(`^\\s*\\[?${index + 1}[.)\\]]\\s+(?=\\S)`), '');
+        const searchable = !doi && label.length > 15 && label !== 'Reference details not supplied';
         list.append(
           el(
             'li',
             {},
             el('p', {}, label),
+            searchable && matchBlock(index, label),
             doi &&
               el(
                 'div',
@@ -476,7 +559,7 @@ export function createInspector(
             el(
               'li',
               {},
-              el('p', {}, plainText(type.replaceAll('-', ' '))),
+              el('p', {}, relationLabel(type)),
               el(
                 'button',
                 {
@@ -484,9 +567,9 @@ export function createInspector(
                   disabled: following,
                   onclick: () => follow(doi),
                 },
-                doi,
+                'Inspect record',
               ),
-              el('small', {}, externalLink('Open DOI', doiURL(doi))),
+              el('small', {}, externalLink(doi, doiURL(doi))),
             ),
           );
       }

@@ -2597,3 +2597,23 @@ html {
 .detail-role {
   color: var(--color-secondary);
 }
+.reference-matches {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-xs);
+}
+.reference-matches small {
+  color: var(--color-muted);
+}
+.reference-match-list {
+  display: grid;
+  gap: var(--space-sm);
+  margin: var(--space-xs) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.reference-match-list li {
+  padding: 0 0 0 var(--space-md);
+  border: 0;
+  border-inline-start: 1px solid var(--color-line);
+}
