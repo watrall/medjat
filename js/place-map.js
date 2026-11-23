@@ -96,7 +96,16 @@ export async function createPlaceMap(
             `${site.name}${getCount(site.id) === null ? '' : ` · ${getCount(site.id)} saved`}`,
         )
         .join(' / ');
-      marker.bindTooltip(label, { direction: 'top', offset: [0, -8] });
+      if (multiple) {
+        const [first, second] = group.sites;
+        label.textContent = `${first.name}, ${second.name}${group.sites.length > 2 ? ` +${group.sites.length - 2}` : ''}`;
+      }
+      marker.bindTooltip(label, {
+        direction: 'right',
+        offset: [multiple ? 18 : 14, 0],
+        permanent: true,
+        className: 'place-label',
+      });
       marker.on('click', () => {
         if (multiple) {
           map.fitBounds(

@@ -2684,6 +2684,21 @@ html {
   align-items: center;
   min-block-size: 44px;
 }
+.leaflet-tooltip.place-label {
+  padding: 1px var(--space-xs);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: oklch(from var(--color-surface) l c h / 0.92);
+  box-shadow: none;
+  color: var(--color-ink);
+  font-family: inherit;
+  font-size: var(--text-caption);
+  font-weight: 650;
+  pointer-events: none;
+}
+.leaflet-tooltip.place-label::before {
+  display: none;
+}
 .collection-filters {
   display: flex;
   flex-wrap: wrap;

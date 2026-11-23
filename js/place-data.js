@@ -15,6 +15,8 @@ export async function loadGazetteer() {
       });
   return gazetteer;
 }
+const SHARED_NAMES = new Set(['Abydos', 'Alexandria', 'Heliopolis', 'Memphis', 'Thebes']);
+export const isSharedName = (place) => SHARED_NAMES.has(place.name);
 export function placeEvidence(work, place) {
   let expressions = matchers.get(place);
   if (!expressions) {

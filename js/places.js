@@ -363,7 +363,11 @@ export function createPlaces(
           ),
           mapNotice,
           mapRoot,
-          el('p', { class: 'scope-note' }, 'Numbers group nearby places, not publications.'),
+          el(
+            'p',
+            { class: 'scope-note' },
+            'Numbers group nearby places, not publications. Pin names come from Pleiades; the base map labels places in each region\u2019s local language.',
+          ),
           el(
             'details',
             { class: 'places-source' },

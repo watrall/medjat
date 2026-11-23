@@ -12,7 +12,7 @@ import { findCitationMatches, getWork, getCitation } from './crossref.js';
 import { el, icon, externalLink, emptyState, notify } from './dom.js';
 import { downloadText } from './download.js';
 import { createCover } from './covers.js';
-import { loadGazetteer, placesForWork } from './place-data.js';
+import { isSharedName, loadGazetteer, placesForWork } from './place-data.js';
 import { createNotesForm } from './notes-form.js';
 
 let inspectorInstances = 0;
@@ -269,11 +269,23 @@ export function createInspector(
                 },
                 icon('map-pin'),
                 place.name,
-                el('span', { class: 'place-mention-field' }, evidence.field),
+                el(
+                  'span',
+                  {
+                    class: 'place-mention-field',
+                    title: `Matched “${evidence.alias}” in the ${evidence.field}`,
+                  },
+                  evidence.alias.toLowerCase() === place.name.toLowerCase()
+                    ? evidence.field
+                    : `${evidence.field}: “${evidence.alias}”`,
+                ),
               ),
             ),
           ),
         );
+      const shared = mentions
+        .filter(({ place }) => isSharedName(place))
+        .map(({ place }) => place.name);
       const block = section(
         'Places mentioned',
         links(mentions.slice(0, 5)),
@@ -282,6 +294,12 @@ export function createInspector(
           { class: 'scope-note' },
           'Name matches in the title or abstract. Open a place to inspect the context and explore related Crossref publications.',
         ),
+        shared.length > 0 &&
+          el(
+            'p',
+            { class: 'scope-note' },
+            `${shared.join(', ')}: this name is also used for places outside Egypt, so confirm that the publication concerns the Egyptian site.`,
+          ),
       );
       if (mentions.length > 5)
         block.append(
