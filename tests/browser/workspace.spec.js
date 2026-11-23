@@ -31,6 +31,7 @@ async function fixtures(
     referenceCount = 1,
     plainReference = false,
     updated = false,
+    inBook = false,
   } = {},
 ) {
   const requests = [];
@@ -134,6 +135,9 @@ async function fixtures(
         },
       ];
     }
+    if (inBook)
+      for (const item of items)
+        item.relation = { 'is-part-of': [{ id: '10.1234/test-book', 'id-type': 'doi' }] };
     if (plainReference && items.length)
       items[0].reference = [{ unstructured: '1. Cited monograph about boundary stelae, 1998' }];
     if (hostile && items.length)
@@ -1552,4 +1556,18 @@ test('Visualize shows how widely the ranked results are spread across publishers
   await expect(panel).toContainText('1 distinct publisher across 25 records');
   await expect(panel).toContainText('Test publisher');
   await expect(panel).toContainText('25');
+});
+
+test('a chapter offers to open the book it is part of', async ({ page }) => {
+  await fixtures(page, { inBook: true });
+  await page.goto('/?q=ancient+egypt');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  const book = page.locator('.detail-section', {
+    has: page.getByRole('heading', { name: 'Part of a book' }),
+  });
+  await expect(book).toContainText('Research in ancient Egypt');
+  await book.getByRole('button', { name: 'Inspect the book' }).click();
+  await expect(page.locator('.detail-title')).toHaveText('A referenced publication');
+  await page.getByRole('button', { name: 'Back to previous publication', exact: true }).click();
+  await expect(book).toBeVisible();
 });

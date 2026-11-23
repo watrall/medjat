@@ -288,6 +288,22 @@ export function createInspector(
   function section(title, ...children) {
     return el('section', { class: 'detail-section' }, el('h3', {}, title), ...children);
   }
+  function bookSection() {
+    return section(
+      'Part of a book',
+      el('p', {}, work.container || 'This chapter belongs to a containing book.'),
+      el(
+        'button',
+        {
+          class: 'button',
+          'data-focus-key': 'book',
+          disabled: following,
+          onclick: () => follow(work.partOf),
+        },
+        'Inspect the book',
+      ),
+    );
+  }
   function overview(container) {
     const mentions = onPlace ? placesForWork(work, sites) : [];
     if (mentions.length) {
@@ -352,6 +368,7 @@ export function createInspector(
         );
       container.append(block);
     }
+    if (work.type === 'book-chapter' && work.partOf) container.append(bookSection());
     if (getAnnotation && isSaved(work.id))
       container.append(
         section(

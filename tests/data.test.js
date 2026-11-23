@@ -371,3 +371,17 @@ test('the registering member links to its Crossref Participation Report', async 
     assert.equal(participationReportURL(other), '');
   }
 });
+
+test('a chapter keeps the DOI of the book Crossref says it is part of', async () => {
+  const { normalizeWork } = await import('../js/data.js');
+  const chapter = normalizeWork({
+    DOI: '10.1234/chapter',
+    relation: { 'is-part-of': [{ id: 'https://doi.org/10.1234/Book', 'id-type': 'doi' }] },
+  });
+  assert.equal(chapter.partOf, '10.1234/book');
+  assert.equal(
+    normalizeWork({ DOI: '10.1234/x', relation: { 'is-part-of': [{ id: 'nope' }] } }).partOf,
+    '',
+  );
+  assert.equal(normalizeWork({ DOI: '10.1234/x' }).partOf, '');
+});

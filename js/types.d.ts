@@ -30,6 +30,7 @@ export interface Work {
   pages: string;
   references: Record<string, unknown>[];
   relations: Record<string, unknown[]>;
+  partOf: string;
   funders: Record<string, unknown>[];
   licenses: Record<string, unknown>[];
   updates: WorkUpdate[];

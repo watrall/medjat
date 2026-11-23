@@ -182,6 +182,10 @@ export function normalizeWork(raw) {
     pages: plainText(raw.page),
     references: array(raw.reference),
     relations: raw.relation && typeof raw.relation === 'object' ? raw.relation : {},
+    partOf:
+      array(raw.relation?.['is-part-of'])
+        .map((part) => normalizeDOI(part?.id))
+        .find(Boolean) || '',
     funders: array(raw.funder),
     licenses: array(raw.license),
     updates: parseUpdates(raw['updated-by']),
