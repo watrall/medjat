@@ -1353,6 +1353,24 @@ test('recent searches return to the landing page and can be kept or removed', as
   await expect(page.locator('#searchHistory')).toBeHidden();
 });
 
+test('results offer searches beyond Crossref with the applied search words', async ({ page }) => {
+  await fixtures(page);
+  await page.goto('/?q=Hierakonpolis+temple');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  const summary = page.getByText('Search beyond Crossref', { exact: true });
+  await summary.click();
+  const scholar = page.getByRole('link', { name: 'Google Scholar' });
+  await expect(scholar).toHaveAttribute(
+    'href',
+    /scholar\.google\.com\/scholar\?q=Hierakonpolis%20temple/,
+  );
+  await expect(scholar).toHaveAttribute('rel', /noopener/);
+  await expect(page.getByRole('link', { name: /^Internet Archive Scholar/ })).toHaveAttribute(
+    'href',
+    /scholar\.archive\.org\/search\?q=Hierakonpolis%20temple/,
+  );
+});
+
 test('Most cited reorders loaded results without asking Crossref to sort by citations', async ({
   page,
 }) => {

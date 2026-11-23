@@ -244,3 +244,16 @@ test('notes and tags validate as research backup entries', async () => {
   assert.deepEqual(entries.get('notes:10.1234/a').tags, ['Naqada']);
   assert.equal(entries.get('notes:10.1234/a').note, 'Check plate 4');
 });
+
+test('open licenses are recognized only when deposited and already in force', async () => {
+  const { openLicenseURL } = await import('../js/data.js');
+  const cc = 'https://creativecommons.org/licenses/by/4.0/';
+  assert.equal(openLicenseURL({ licenses: [{ URL: cc }] }), cc);
+  assert.equal(
+    openLicenseURL({ licenses: [{ URL: cc, start: { 'date-time': '2999-01-01T00:00:00Z' } }] }),
+    '',
+  );
+  assert.equal(openLicenseURL({ licenses: [{ URL: 'https://publisher.example/terms' }] }), '');
+  assert.equal(openLicenseURL({ licenses: [{ URL: 'javascript:alert(1)' }] }), '');
+  assert.equal(openLicenseURL({ licenses: [] }), '');
+});

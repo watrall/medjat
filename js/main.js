@@ -877,6 +877,7 @@ function renderStatus() {
     previous,
     loading: state.loading,
     onLoadMore: () => runSearch(true),
+    beyondQuery: state.doiLookup || previous ? '' : (state.resultQuery || state.query).q,
   });
   $('sortSelect').disabled = state.loading;
 }

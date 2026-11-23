@@ -163,6 +163,17 @@ export function normalizeWork(raw) {
   };
 }
 
+export function openLicenseURL(work) {
+  const now = Date.now();
+  for (const license of work.licenses) {
+    const url = safeURL(license?.URL);
+    const start = Date.parse(license?.start?.['date-time'] || '');
+    const inForce = Number.isNaN(start) || start <= now;
+    if (url && inForce && /creativecommons\.org|publicdomain/i.test(url)) return url;
+  }
+  return '';
+}
+
 export function authorLine(work, max = 3) {
   const names = (people) =>
     people

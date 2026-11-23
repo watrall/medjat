@@ -2661,6 +2661,29 @@ html {
 .is-compact .intro {
   padding-block: var(--space-sm);
 }
+.beyond-crossref {
+  margin-block-start: var(--space-base);
+  font-size: var(--text-label);
+}
+.beyond-crossref summary {
+  align-content: center;
+  min-block-size: 44px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.beyond-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-lg);
+  margin: var(--space-xs) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.beyond-list a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+}
 .collection-filters {
   display: flex;
   flex-wrap: wrap;

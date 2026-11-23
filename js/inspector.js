@@ -4,6 +4,7 @@ import {
   doiURL,
   normalizeDOI,
   normalizeWork,
+  openLicenseURL,
   plainText,
   safeURL,
 } from './data.js';
@@ -354,6 +355,12 @@ export function createInspector(
         section(
           'Deposited licenses',
           ...licenses.map((url) => el('p', {}, externalLink(url, url))),
+          openLicenseURL(work) &&
+            el(
+              'p',
+              { class: 'scope-note' },
+              'An open license is deposited. This describes reuse rights; it does not confirm that a free full text is available, so check the publisher page.',
+            ),
         ),
       );
     container.append(

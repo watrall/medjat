@@ -1,5 +1,12 @@
 import { PAGE_SIZE } from './crossref.js';
-import { el, icon } from './dom.js';
+import { el, externalLink, icon } from './dom.js';
+
+const BEYOND_CROSSREF = [
+  ['Google Scholar', (q) => `https://scholar.google.com/scholar?q=${q}`],
+  ['WorldCat (books and libraries)', (q) => `https://search.worldcat.org/search?q=${q}`],
+  ['Internet Archive Scholar (open full text)', (q) => `https://scholar.archive.org/search?q=${q}`],
+  ['Open Library (books)', (q) => `https://openlibrary.org/search?q=${q}`],
+];
 
 export function renderSearchNotice(container, { error, retryable, onAction }) {
   container.hidden = !error;
@@ -25,7 +32,7 @@ export function renderSearchNotice(container, { error, retryable, onAction }) {
 
 export function renderSearchFooter(
   container,
-  { nextCursor, browseLimited, previous, loading, onLoadMore },
+  { nextCursor, browseLimited, previous, loading, onLoadMore, beyondQuery = '' },
 ) {
   container.replaceChildren();
   if (nextCursor && !previous)
@@ -47,6 +54,26 @@ export function renderSearchFooter(
         'p',
         { class: 'scope-note' },
         'You have reached the publication-date browsing limit. Narrow the publication years or topic, or switch to relevance.',
+      ),
+    );
+  if (beyondQuery && !loading)
+    container.append(
+      el(
+        'details',
+        { class: 'beyond-crossref' },
+        el('summary', {}, 'Search beyond Crossref'),
+        el(
+          'p',
+          { class: 'scope-note' },
+          'Crossref lists works with a registered DOI, so many books, older articles, and site reports are missing. These links open another site with your search words.',
+        ),
+        el(
+          'ul',
+          { class: 'beyond-list' },
+          BEYOND_CROSSREF.map(([label, url]) =>
+            el('li', {}, externalLink(label, url(encodeURIComponent(beyondQuery)))),
+          ),
+        ),
       ),
     );
 }

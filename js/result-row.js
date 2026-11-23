@@ -1,4 +1,4 @@
-import { authorLine, displayTitle } from './data.js';
+import { authorLine, displayTitle, openLicenseURL } from './data.js';
 import { el, icon } from './dom.js';
 
 export function createResultRow(
@@ -18,6 +18,9 @@ export function createResultRow(
   const badges = [
     work.abstract && ['file-text', 'Abstract'],
     work.authors.some((author) => author.orcid) && ['user-round', 'ORCID'],
+    openLicenseURL(work) && ['book-open', 'Open license'],
+    work.citedBy > 0 && ['quote', `Cited by ${work.citedBy.toLocaleString()}`],
+    annotation?.note && ['file-text', 'Has note'],
     work.references.length > 0 && ['network', `${work.references.length} references`],
   ].filter(Boolean);
   return el(
