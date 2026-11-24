@@ -109,6 +109,7 @@ test('the summary counts one population, deduplicated, without inventing values'
 
 test('an empty window is a valid summary', () => {
   assert.deepEqual(summarizeItems([]), {
+    works: [],
     window: 0,
     types: [],
     venues: [],

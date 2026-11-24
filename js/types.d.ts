@@ -19,6 +19,8 @@ export interface Work {
   authors: Author[];
   editors: Author[];
   year: number | null;
+  month: number | null;
+  registered: number | null;
   container: string;
   type: string;
   typeLabel: string;

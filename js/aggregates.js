@@ -71,6 +71,7 @@ export function summarizeItems(items) {
   }
   const yearRows = [...years].sort(([a], [b]) => Number(a) - Number(b));
   return {
+    works,
     window: works.length,
     types: ranked(types),
     venues: ranked(venues, 10),

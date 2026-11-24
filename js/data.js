@@ -215,6 +215,8 @@ export function normalizeWork(raw) {
     authors,
     editors,
     year: date?.[0] ?? null,
+    month: Number.isInteger(date?.[1]) && date[1] >= 1 && date[1] <= 12 ? date[1] : null,
+    registered: raw.created?.['date-parts']?.[0]?.[0] ?? null,
     container: firstText(raw['container-title']),
     type,
     typeLabel:

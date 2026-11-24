@@ -102,6 +102,7 @@ export const siteFiles = [
   'js/session.js',
   'js/updates.js',
   'js/view-config.js',
+  'js/viz-data.js',
   'js/visualize.js',
 ];
 
@@ -218,6 +219,7 @@ export const repositoryFiles = [
   'js/types.d.ts',
   'js/updates.js',
   'js/view-config.js',
+  'js/viz-data.js',
   'js/visualize.js',
   'package-lock.json',
   'package.json',
@@ -258,4 +260,5 @@ export const repositoryFiles = [
   'tests/references.test.js',
   'tests/research-backup.test.js',
   'tests/research-store.test.js',
+  'tests/viz-data.test.js',
 ];
