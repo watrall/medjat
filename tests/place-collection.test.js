@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { collectionPlaces } from '../js/place-collection.js';
 const sites = [
-  { id: 'abydos', name: 'Abydos', aliases: [] },
-  { id: 'thebes', name: 'Thebes', aliases: [] },
+  { id: 'abydos', name: 'Abydos', aliases: ['Abydos'] },
+  { id: 'thebes', name: 'Thebes', aliases: ['Thebes'] },
 ];
 const records = new Map(
   ['Abydos and Thebes', 'Religion', 'Grammar'].map((title, i) => [

@@ -1,5 +1,11 @@
 import { preservePlaceFocus } from './place-focus.js';
-import { loadGazetteer, placeEvidence, searchPlaceWorks } from './place-data.js';
+import {
+  loadGazetteer,
+  placeEvidence,
+  primaryName,
+  searchNames,
+  searchPlaceWorks,
+} from './place-data.js';
 import { createPlacePublicationRow } from './place-publication-row.js';
 import { PAGE_SIZE } from './crossref.js';
 import { createPlaceMap } from './place-map.js';
@@ -121,9 +127,9 @@ export function createPlaces(
         searchDraft = { term: '', topic: '' };
       }
       if (place()) {
-        const names = new Set([place().name, ...place().aliases]);
+        const names = new Set(searchNames(place()));
         if (term && !names.has(term)) {
-          term = place().name;
+          term = primaryName(place());
           works = [];
           total = null;
           next = null;
@@ -133,7 +139,7 @@ export function createPlaces(
           onLocation(location(), { push: false });
         }
         searchDraft = {
-          term: names.has(searchDraft.term) ? searchDraft.term : term || place().name,
+          term: names.has(searchDraft.term) ? searchDraft.term : term || primaryName(place()),
           topic: typeof searchDraft.topic === 'string' ? searchDraft.topic.slice(0, 300) : topic,
         };
       }
@@ -465,7 +471,7 @@ export function createPlaces(
     error = '';
     retrieved = '';
     topic = '';
-    term = place()?.name || '';
+    term = place() ? primaryName(place()) : '';
     searchDraft = { term, topic: '' };
     panels.selector.value = selected;
     syncMapPresentation();
@@ -487,7 +493,7 @@ export function createPlaces(
     renderPublications();
     try {
       const result = await searchPlaceWorks(place(), {
-        term: term || place().name,
+        term: term || primaryName(place()),
         topic,
         cursor: append ? next : '*',
         signal,
@@ -568,16 +574,15 @@ export function createPlaces(
         onSave,
         onSync: syncUndo,
       });
-    const aliases = [...new Set([current.name, ...current.aliases])].filter(
-      (name) => name.length >= 4 && name.length <= 60,
-    );
+    const aliases = searchNames(current);
+    const defaultName = primaryName(current);
     const refinementOpen =
       root.querySelector('.place-search-refinements')?.open ??
       !matchMedia(BREAKPOINTS.placesMobile).matches;
     const refinementSummary = el('summary');
     function draftStatus() {
       const pending =
-        (searchDraft.term || term || current.name) !== (term || current.name) ||
+        (searchDraft.term || term || defaultName) !== (term || defaultName) ||
         searchDraft.topic.trim() !== topic;
       refinementSummary.textContent = `Refine place search${pending ? ' · unapplied changes' : ''}`;
     }
@@ -595,7 +600,7 @@ export function createPlaces(
       aliases.map((alias) =>
         el(
           'option',
-          { value: alias, selected: alias === (searchDraft.term || term || current.name) },
+          { value: alias, selected: alias === (searchDraft.term || term || defaultName) },
           alias,
         ),
       ),
@@ -651,7 +656,7 @@ export function createPlaces(
       el(
         'p',
         { class: 'scope-note' },
-        `Applied search: ${term || current.name} · ${topic || 'Any topic'}`,
+        `Applied search: ${term || defaultName} · ${topic || 'Any topic'}`,
       ),
       el(
         'details',

@@ -68,14 +68,27 @@ export function createInspector(
     referenceLimit = 20,
     followError = '',
     following = false;
-  let sites = [];
-  if (onPlace)
+  let sites = [],
+    sitesRequested = false,
+    focusAfterSites = null;
+  function loadSites() {
+    if (!onPlace || sitesRequested) return;
+    sitesRequested = true;
     loadGazetteer()
       .then((data) => {
         sites = data.sites;
-        if (work) render();
+        if (!work) return;
+        render();
+        if (focusAfterSites)
+          root
+            .querySelector(`[data-focus-key="${CSS.escape(focusAfterSites)}"]`)
+            ?.focus({ preventScroll: true });
+        focusAfterSites = null;
       })
-      .catch(() => {});
+      .catch(() => {
+        sitesRequested = false;
+      });
+  }
 
   function readingPosition() {
     return {
@@ -114,6 +127,8 @@ export function createInspector(
     if (!fromReference) trail = [];
     render();
     if (book) loadBook();
+    focusAfterSites =
+      restorePage && reading?.focusKey?.startsWith('place-') ? reading.focusKey : null;
     if (reading) {
       const target =
         reading.focusKey &&
@@ -416,6 +431,7 @@ export function createInspector(
     );
   }
   function overview(container) {
+    loadSites();
     const mentions = onPlace ? placesForWork(work, sites) : [];
     if (mentions.length) {
       const links = (matches) =>

@@ -28,7 +28,7 @@ Crossref can return different records for two identical requests, so a refreshed
 
 For a citation without a DOI, request up to three possible Crossref matches, inspect a candidate, and explicitly confirm it. Rebuilding discovery incorporates confirmed links with separate researcher provenance. Matches can be undone. References and unresolved citations support deferred/dismissed review decisions; saving a reference adds its actual Crossref record to Collection.
 
-**Places** connects a real interactive map to Crossref research. Choose one of 25 curated Pleiades places to search Crossref by a place name and optional topic, inspect ranked candidates, and save useful publications. Explicit title/abstract mentions are shown with their evidence; other candidates stay available in a disclosure. Place mentions in publication details link directly to Places and retain the originating publication, unfinished search, and return path.
+**Places** connects a real interactive map to Crossref research. Find any of about 1,000 Egyptian places from the Pleiades gazetteer, by name, type or period, and search Crossref by a place name and optional topic, inspect ranked candidates, and save useful publications. Explicit title/abstract mentions are shown with their evidence; other candidates stay available in a disclosure. Place mentions in publication details link directly to Places and retain the originating publication, unfinished search, and return path.
 
 Switch to **Your collection** to inspect place associations in saved Crossref records. Confirm or reject suggestions, assign places using your reading, mark nonspatial scholarship as not place-specific, and export the exact place/evidence subset in RIS, BibTeX, CSV, or JSON. Applied search names, topics, and evidence scope survive refresh and history navigation. Assignment has local search, full publication identity, a preview, and a direct entry above the list. Removal has local Undo; marking a work not place-specific retains its reviews for reversal. On mobile the selected-place map is compact and expandable, with search refinements disclosed on demand. Publications may have multiple places. The interface accounts for unassigned and nonspatial records; it never claims to map the entire Crossref query.
 
@@ -113,6 +113,7 @@ Quicksand typography, Lucide icons, and the supplied papyrus mark define the int
 | `js/research-worker.js`       | Bounded local reference computation                                                |
 | `js/research-store.js`        | Per-item review persistence and portable decisions                                 |
 | `js/place-data.js`            | Pleiades index, metadata mention evidence, and Crossref place queries              |
+| `js/place-search.js`          | Name, type and period search over the bundled place index                          |
 | `js/place-state.js`           | Applied Places URL parsing and serialization                                       |
 | `js/place-publication.js`     | Shared bibliographic identity for place research                                   |
 | `js/place-publication-row.js` | Place publication row rendering and collection actions                             |
@@ -169,7 +170,7 @@ The Cloudflare Pages project uses `main` as the production branch, `npm run buil
 
 ## Maintaining place names
 
-`python3 scripts/build-gazetteer.py` rebuilds the 25-place index offline from the committed Pleiades name/coordinate snapshot and reviewed name policy. The output records its source hash and retrieval/review dates. Use `--refresh` to fetch canonical records, then review the policy against source changes before committing the refreshed bundle. Unknown approved names fail validation rather than silently disappearing.
+`python3 scripts/build-gazetteer.py` rebuilds `data/places.json` from the Pleiades bulk dumps (downloaded to `.cache/`, which is not committed). It keeps places inside Egypt's present borders that have a site-like feature type, and records the dump hash and date. A name is used to match publication text only if it is at least five letters, Latin script, used by no other Pleiades place, and not on the reviewed exclusion list in `data/place-name-policy.json`; the 25 featured places use their reviewed aliases. Every other name stays searchable but never matches. Use `--refresh` to download the dumps again and `--review` to list the names the rules accept.
 
 The policy retains selected attested and romanized variants with source and language information. It excludes ambiguous short names, fragments, and constituent-location names where treating them as equivalents would mislead. A name match remains candidate evidence. Gazetteer changes recompute suggestions without replacing the researcher’s confirmed, rejected, manual, or nonspatial decisions.
 
