@@ -124,7 +124,8 @@ test('type labels that map to a Crossref filter stay refinable', () => {
   assert.equal(typeID('Book chapter'), 'book-chapter');
   assert.equal(typeID('Journal article'), 'journal-article');
   assert.equal(typeID('Dataset'), 'dataset');
-  assert.equal(typeID('Other publication'), null);
+  assert.equal(typeID('Other publication'), 'other');
+  assert.equal(typeID('Reference'), 'reference-book');
 });
 
 test('aggregation reads one ranked window and reuses the cached summary', async () => {

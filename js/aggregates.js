@@ -1,6 +1,6 @@
 // @ts-check
 import { buildSearchURL, getWork, request } from './crossref.js';
-import { normalizeDOI, normalizeWork, TYPES } from './data.js';
+import { FACET_TYPE_IDS, normalizeDOI, normalizeWork, TYPES } from './data.js';
 
 export const WINDOW_SIZE = 250;
 const TTL = 15 * 60 * 1000;
@@ -131,13 +131,7 @@ export async function aggregateSearch(
 export function typeID(label) {
   return (
     [...TYPES].find(([, value]) => value.toLowerCase() === label.toLowerCase())?.[0] ||
-    {
-      'Journal Article': 'journal-article',
-      Chapter: 'book-chapter',
-      'Conference Paper': 'proceedings-article',
-      Entry: 'reference-entry',
-      'Posted Content': 'posted-content',
-    }[label] ||
+    FACET_TYPE_IDS.get(label) ||
     null
   );
 }

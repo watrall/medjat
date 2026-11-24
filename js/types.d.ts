@@ -59,6 +59,7 @@ export interface Query {
   abstract: boolean;
   orcid: boolean;
   references: boolean;
+  access: '' | 'open';
   sort: 'relevance' | 'newest' | 'oldest';
 }
 

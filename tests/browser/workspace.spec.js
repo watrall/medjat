@@ -33,6 +33,7 @@ async function fixtures(
     updated = false,
     openAccess = false,
     cited = false,
+    noFacets = false,
     related = false,
     inBook = false,
     bare = false,
@@ -71,6 +72,48 @@ async function fixtures(
             ...publication(0),
             DOI: '10.1234/reference-record',
             title: ['A referenced publication'],
+          },
+        },
+      });
+    if (url.searchParams.has('facet'))
+      return route.fulfill({
+        json: {
+          message: {
+            items: [],
+            'total-results': 209703,
+            ...(!noFacets && {
+              facets: {
+                'type-name': {
+                  'value-count': 12,
+                  values: {
+                    'Journal Article': 173538,
+                    Chapter: 25723,
+                    Other: 2032,
+                    'Conference Paper': 1961,
+                    Dataset: 1651,
+                    'Posted Content': 1445,
+                    Monograph: 805,
+                    Entry: 711,
+                    'Edited Book': 405,
+                    'Peer Review': 271,
+                    Book: 246,
+                    Dissertation: 238,
+                  },
+                },
+                published: {
+                  'value-count': 7,
+                  values: {
+                    2025: 16034,
+                    2024: 14214,
+                    2015: 7000,
+                    2009: 3000,
+                    1999: 1200,
+                    1905: 40,
+                    2100: 1,
+                  },
+                },
+              },
+            }),
           },
         },
       });
@@ -235,7 +278,7 @@ test('sorting and navigation preserve unapplied search choices', async ({ page }
   await expect(page.locator('.result-row')).toHaveCount(25);
   await page.locator('#searchInput').fill('Abydos');
   await page.locator('#periodSelect').selectOption('new-kingdom');
-  await page.getByRole('radio', { name: 'Books', exact: true }).check();
+  await page.getByRole('radio', { name: 'Book', exact: true }).check();
   await expect(page.locator('#pendingQuery')).toBeVisible();
   await page.locator('#sortSelect').selectOption('newest');
   await expect(page.locator('#scopeNote')).toContainText('newest first');
@@ -244,7 +287,7 @@ test('sorting and navigation preserve unapplied search choices', async ({ page }
     .toBe('ancient egypt New Kingdom Egypt');
   await expect(page.locator('#searchInput')).toHaveValue('Abydos');
   await expect(page.locator('#periodSelect')).toHaveValue('new-kingdom');
-  await expect(page.getByRole('radio', { name: 'Books', exact: true })).toBeChecked();
+  await expect(page.getByRole('radio', { name: 'Book', exact: true })).toBeChecked();
   await expect(page.locator('#pendingQuery')).toBeVisible();
   await page.getByRole('button', { name: 'Load 25 more publications' }).click();
   await expect(page.locator('.result-row')).toHaveCount(28);
@@ -256,7 +299,14 @@ test('sorting and navigation preserve unapplied search choices', async ({ page }
   await expect
     .poll(() => requests.at(-1).searchParams.get('query.bibliographic'))
     .toContain('Abydos');
-  await expect.poll(() => requests.at(-1).searchParams.get('filter')).toContain('type:book');
+  await expect
+    .poll(() =>
+      requests
+        .filter((url) => !url.searchParams.has('facet'))
+        .at(-1)
+        .searchParams.get('filter'),
+    )
+    .toContain('type:book');
 });
 
 test('refresh restores collection scope, selected record, and an unfinished search', async ({
@@ -577,10 +627,17 @@ test('period refinements apply immediately and clear while retaining the query',
   await expect(page.locator('#activeQuery')).toContainText('Period keywords: New Kingdom');
 
   await period.selectOption('old-kingdom');
-  await page.getByRole('radio', { name: 'Books', exact: true }).check();
+  await page.getByRole('radio', { name: 'Book', exact: true }).check();
   await expect(page).toHaveURL(/period=old-kingdom/);
   await expect(page.locator('.result-row')).toHaveCount(25);
-  await expect.poll(() => requests.at(-1).searchParams.get('filter')).toContain('type:book');
+  await expect
+    .poll(() =>
+      requests
+        .filter((url) => !url.searchParams.has('facet'))
+        .at(-1)
+        .searchParams.get('filter'),
+    )
+    .toContain('type:book');
 
   await page.getByRole('button', { name: 'Clear refinements', exact: true }).click();
   await expect(page).not.toHaveURL(/period=|type=/);
@@ -980,7 +1037,7 @@ test('immediate filters retain pending text and dates, and every filter can be r
   await page.locator('#searchInput').fill('Unsubmitted topic');
   await page.locator('#yearRefinement > summary').click();
   await page.locator('#yearFrom').fill('2000');
-  await page.getByRole('radio', { name: 'Books', exact: true }).check();
+  await page.getByRole('radio', { name: 'Book', exact: true }).check();
   await expect.poll(() => requests.at(-1).searchParams.get('filter')).toBe('type:book');
   await expect(page.locator('#searchInput')).toHaveValue('Unsubmitted topic');
   await expect(page.locator('#yearFrom')).toHaveValue('2000');
@@ -1047,7 +1104,7 @@ test('removing the final refinement and clearing all retain meaningful keyboard 
   const summary = page.locator('.current-filters > summary');
   await page.getByRole('button', { name: 'Remove filter: Book', exact: true }).click();
   await expect(summary).toBeFocused();
-  await page.getByRole('radio', { name: 'Books', exact: true }).check();
+  await page.getByRole('radio', { name: 'Book', exact: true }).check();
   await page.getByRole('button', { name: 'Clear refinements', exact: true }).click();
   await expect(summary).toBeFocused();
 });
@@ -1386,12 +1443,13 @@ test('references without a DOI can be searched in Crossref from the inspector', 
   await page.getByRole('tab', { name: 'Connections', exact: true }).click();
   await expect(page.getByText('Cited monograph about boundary stelae, 1998')).toBeVisible();
   await expect(page.getByText('1. Cited monograph')).toHaveCount(0);
-  const before = requests.length;
+  const searches = () => requests.filter((url) => !url.searchParams.has('facet'));
+  const before = searches().length;
   await page.getByRole('button', { name: 'Find in Crossref', exact: true }).click();
   await expect(page.getByText('Possible matches only.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'View possible match' })).toHaveCount(2);
-  expect(requests.length).toBe(before + 1);
-  expect(requests.at(-1).searchParams.get('query.bibliographic')).toContain('Cited monograph');
+  expect(searches().length).toBe(before + 1);
+  expect(searches().at(-1).searchParams.get('query.bibliographic')).toContain('Cited monograph');
   await page.getByRole('button', { name: 'View possible match' }).first().click();
   await expect(page.locator('.detail-title')).toHaveText('A referenced publication');
 });
@@ -1672,8 +1730,8 @@ test('the publication type list says edited volumes, not edited books', async ({
   await fixtures(page);
   await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
-  await page.getByRole('button', { name: /Show more types/ }).click();
-  await expect(page.getByRole('radio', { name: 'Edited volumes' })).toBeVisible();
+  await page.getByRole('button', { name: /^Show all \d+ Publication type filters$/ }).click();
+  await expect(page.getByRole('radio', { name: 'Edited volume', exact: true })).toBeVisible();
   await expect(page.getByRole('radio', { name: 'Edited books' })).toHaveCount(0);
 });
 
@@ -1996,4 +2054,79 @@ test('a record with no license and no citation count shows no stray text in its 
   expect(strays).toEqual([]);
   await expect(page.locator('.detail-open')).toHaveCount(0);
   await expect(page.locator('.detail-cited')).toHaveCount(0);
+});
+
+test('the type and date filters show Crossref counts, newest decade first, with the rest behind Show all', async ({
+  page,
+}) => {
+  await fixtures(page);
+  await page.goto('/?q=ancient+egypt');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  const types = page.locator('#publicationTypeRows .facet-option');
+  await expect(types).toHaveCount(9);
+  await expect(types.nth(0)).toContainText('All publications');
+  await expect(types.nth(0)).toContainText('209,026');
+  await expect(types.nth(1)).toContainText('Journal article');
+  await expect(types.nth(1)).toContainText('173,538');
+  await expect(types.nth(2)).toContainText('Book chapter');
+  await expect(page.getByRole('radio', { name: 'Book chapter' })).toHaveAccessibleDescription(
+    '25,723',
+  );
+  await expect(page.locator('#facetNote')).toContainText('matched on any of your words');
+  const showAll = page.getByRole('button', { name: 'Show all 12 Publication type filters' });
+  await showAll.click();
+  await expect(page.locator('#morePublicationTypes .facet-option')).toHaveCount(4);
+  await page.locator('#yearRefinement > summary').click();
+  const decades = page.locator('#decadeRows .facet-option');
+  await expect(decades).toHaveCount(5);
+  await expect(decades.nth(0)).toContainText('2020–2029');
+  await expect(decades.nth(0)).toContainText('30,248');
+  await expect(decades.nth(1)).toContainText('2010–2019');
+  await expect(page.locator('#decadeRows')).not.toContainText('2100');
+});
+
+test('choosing a type or a decade fills its row in dark ink and applies the filter', async ({
+  page,
+}) => {
+  const requests = await fixtures(page);
+  await page.goto('/?q=ancient+egypt');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await page.getByRole('radio', { name: 'Book chapter', exact: true }).check();
+  await expect(page).toHaveURL(/type=book-chapter/);
+  const row = page.locator('.facet-option', { hasText: 'Book chapter' }).first();
+  const fill = await row.evaluate((node) => getComputedStyle(node).backgroundColor);
+  expect(fill).not.toBe('rgba(0, 0, 0, 0)');
+  await expect(page.locator('#publicationTypeRows .facet-option').first()).toContainText('209,026');
+  await page.locator('#yearRefinement > summary').click();
+  await page
+    .locator('#decadeRows')
+    .getByRole('button', { name: /2010–2019/ })
+    .click();
+  await expect(page).toHaveURL(/from=2010/);
+  await expect(page).toHaveURL(/to=2019/);
+  await expect(
+    page.locator('#decadeRows').getByRole('button', { name: /2010–2019/ }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  await page
+    .locator('#decadeRows')
+    .getByRole('button', { name: /2010–2019/ })
+    .click();
+  await expect(page).not.toHaveURL(/from=2010/);
+  const counts = requests.filter((url) => url.searchParams.has('facet'));
+  expect(counts).toHaveLength(1);
+  expect(counts[0].searchParams.get('filter') || '').not.toMatch(/type:|pub-date/);
+  expect(counts[0].searchParams.get('rows')).toBe('0');
+});
+
+test('without counts from Crossref the filters still work and no count note is shown', async ({
+  page,
+}) => {
+  await fixtures(page, { noFacets: true });
+  await page.goto('/?q=ancient+egypt');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await expect(page.locator('#facetNote')).toBeHidden();
+  await expect(page.locator('.facet-count')).toHaveCount(0);
+  await expect(page.locator('#decadeFilter')).toBeHidden();
+  await page.getByRole('radio', { name: 'Journal article', exact: true }).check();
+  await expect(page).toHaveURL(/type=journal-article/);
 });

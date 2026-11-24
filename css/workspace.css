@@ -432,14 +432,6 @@ h1 {
 .refinements summary::-webkit-details-marker {
   display: none;
 }
-.refinements summary::after {
-  content: '+';
-  font-size: 1.25rem;
-  font-weight: 400;
-}
-.refinements[open] summary::after {
-  content: '−';
-}
 .filter-form {
   display: grid;
   gap: var(--space-lg);
@@ -2164,20 +2156,10 @@ html {
   font-size: var(--text-body);
   gap: var(--space-sm);
 }
-.refinements > summary::after {
-  margin-left: auto;
-}
 .refinements .filter-section > summary {
+  gap: var(--space-md);
   font-size: var(--text-label);
-  min-height: 48px;
-}
-.refinements .filter-section > summary::after {
-  content: '+';
-  font-size: var(--text-lead);
-  margin-left: var(--space-md);
-}
-.refinements .filter-section[open] > summary::after {
-  content: '−';
+  min-height: 52px;
 }
 .refinement-body {
   margin-top: var(--space-sm);
@@ -2185,12 +2167,40 @@ html {
 .filter-form {
   display: block;
   margin: 0;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-base);
+  background: var(--color-surface);
 }
 .filter-section {
-  border-bottom: 1px solid var(--color-line);
+  padding-inline: var(--space-base);
+}
+.filter-form > .filter-section + .filter-section {
+  border-block-start: 1px solid var(--color-line);
+}
+.refinements .chevron {
+  flex: none;
+  inline-size: 20px;
+  block-size: 20px;
+  margin-inline-start: auto;
+}
+.refinements:not([open]) > summary .chevron-up,
+.refinements[open] > summary .chevron-down,
+.refinements details:not([open]) > summary .chevron-up,
+.refinements details[open] > summary .chevron-down {
+  display: none;
+}
+.refinements summary:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
 }
 .filter-section-body {
   padding-bottom: var(--space-base);
+}
+.current-filters {
+  margin-block-end: var(--space-base);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-base);
+  background: var(--color-surface);
 }
 .facet-options {
   display: grid;
@@ -2198,33 +2208,71 @@ html {
   padding-bottom: var(--space-sm);
   min-width: 0;
 }
+.facet-rows {
+  display: grid;
+  margin-inline: calc(var(--space-base) * -1);
+}
 .facet-option {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-sm);
-  min-height: 44px;
-  font-size: var(--text-label);
+  justify-content: space-between;
+  gap: var(--space-md);
+  inline-size: 100%;
+  min-block-size: 44px;
+  padding: var(--space-sm) var(--space-base);
+  border: 0;
+  background: transparent;
   color: var(--color-secondary);
-  border-radius: var(--radius-sm);
+  font-size: var(--text-label);
+  text-align: start;
   cursor: pointer;
 }
-.facet-option:has(:checked) {
-  background: var(--color-current);
-  color: var(--color-accent);
-  font-weight: 600;
+.facet-option input[type='radio'] {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
 }
 .facet-option:hover {
   background: var(--color-subtle);
 }
-.facet-option:has(:checked):hover {
-  background: var(--color-current);
+.facet-option:has(:focus-visible),
+.facet-option:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: -2px;
 }
-.facet-option input {
-  flex-shrink: 0;
+.facet-option:has(input[type='radio']:checked),
+.facet-option[aria-pressed='true'] {
+  background: var(--color-ink);
+  color: var(--color-surface);
+  font-weight: 600;
+}
+.facet-option:has(input[type='checkbox']:checked) {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+.facet-name {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+.facet-count {
+  flex: none;
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+.facet-option:has(input[type='radio']:checked) .facet-count,
+.facet-option[aria-pressed='true'] .facet-count {
+  color: inherit;
+}
+.facet-note {
+  margin-block: 0 var(--space-base);
 }
 .show-filters {
-  margin-bottom: var(--space-sm);
+  margin-block: var(--space-sm) var(--space-base);
 }
 .current-search {
   overflow-wrap: anywhere;

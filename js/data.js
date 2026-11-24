@@ -53,6 +53,50 @@ export const TYPES = new Map([
   ['reference-book', 'Reference work'],
   ['monograph', 'Monograph'],
   ['dataset', 'Dataset'],
+  ['other', 'Other publication'],
+  ['peer-review', 'Peer review'],
+  ['book-section', 'Book section'],
+  ['book-part', 'Book part'],
+  ['component', 'Component'],
+  ['report-component', 'Report component'],
+  ['report-series', 'Report series'],
+  ['journal', 'Journal'],
+  ['journal-issue', 'Journal issue'],
+  ['journal-volume', 'Journal volume'],
+  ['proceedings', 'Proceedings'],
+  ['standard', 'Standard'],
+  ['grant', 'Grant'],
+  ['database', 'Database'],
+]);
+
+// Crossref's type facet names its values differently from the type ids its filter accepts.
+export const FACET_TYPE_IDS = new Map([
+  ['Journal Article', 'journal-article'],
+  ['Chapter', 'book-chapter'],
+  ['Other', 'other'],
+  ['Conference Paper', 'proceedings-article'],
+  ['Dataset', 'dataset'],
+  ['Posted Content', 'posted-content'],
+  ['Monograph', 'monograph'],
+  ['Entry', 'reference-entry'],
+  ['Edited Book', 'edited-book'],
+  ['Peer Review', 'peer-review'],
+  ['Book', 'book'],
+  ['Dissertation', 'dissertation'],
+  ['Report', 'report'],
+  ['Component', 'component'],
+  ['Report Component', 'report-component'],
+  ['Journal Issue', 'journal-issue'],
+  ['Grant', 'grant'],
+  ['Reference', 'reference-book'],
+  ['Section', 'book-section'],
+  ['Journal', 'journal'],
+  ['Part', 'book-part'],
+  ['Standard', 'standard'],
+  ['Proceedings', 'proceedings'],
+  ['Journal Volume', 'journal-volume'],
+  ['Database', 'database'],
+  ['Report Series', 'report-series'],
 ]);
 
 export function plainText(value) {
@@ -302,6 +346,7 @@ export function readQuery(search = '') {
     abstract: p.get('abstract') === '1',
     orcid: p.get('orcid') === '1',
     references: p.get('references') === '1',
+    access: p.get('access') === 'open' ? 'open' : '',
     sort: ['newest', 'oldest', 'cited'].includes(p.get('sort')) ? p.get('sort') : 'relevance',
   };
 }

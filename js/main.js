@@ -12,6 +12,8 @@ import {
   normalizeWork,
   normalizeDOI,
 } from './data.js';
+import { createFacetLists } from './facet-lists.js';
+import { facetURL, getFacets } from './facets.js';
 import { filterChips, filterEntries, readFilterControls, writeFilterControls } from './filters.js';
 import {
   searchWorks,
@@ -49,6 +51,8 @@ const searchHistory = createSearchHistory({ storage });
 const saved = await collectionStore.ready;
 const resumedSession = readSession();
 const state = {
+  facets: null,
+  facetsFor: '',
   view: 'explore',
   collection: saved.records,
   storageWarning: saved.warning,
@@ -151,16 +155,45 @@ function updateURL({ push = false } = {}) {
   initialized = true;
   saveSession();
 }
+const facetLists = createFacetLists({
+  onDecade: (decade, selected) =>
+    applyRefinement(selected ? { from: '', to: '' } : { from: decade.from, to: decade.to }),
+});
+function renderFacets() {
+  facetLists.render({
+    facets: state.facets,
+    type: state.draft.type || '',
+    from: state.query.from,
+    to: state.query.to,
+  });
+}
+async function loadFacets(query) {
+  if (state.doiLookup || normalizeDOI(query.q) || query.field === 'doi') {
+    state.facets = null;
+    state.facetsFor = '';
+    return renderFacets();
+  }
+  const key = facetURL(query);
+  if (key === state.facetsFor) return;
+  state.facets = null;
+  state.facetsFor = key;
+  renderFacets();
+  try {
+    const facets = await getFacets(query);
+    if (key !== state.facetsFor) return;
+    state.facets = facets;
+    renderFacets();
+  } catch {
+    // Counts are a convenience; the filters work without them.
+  }
+}
 function syncControls() {
   $('searchInput').setCustomValidity('');
   $('navSearchInput').setCustomValidity('');
   $('searchInput').value = state.draft.q;
   $('navSearchInput').value = state.draft.q;
   $('searchField').value = state.draft.field || '';
-  const extraType = document.querySelector(
-    '#morePublicationTypes input[value="' + CSS.escape(state.draft.type || '') + '"]',
-  );
-  if (extraType) setMoreTypes(true);
+  renderFacets();
   writeFilterControls(document, state.draft);
   $('sortSelect').value = state.query.sort;
   updatePeriodHint();
@@ -972,6 +1005,7 @@ async function runSearch(append = false) {
     state.doiLookup = result.doiLookup;
     state.browseLimited = result.browseLimited;
     state.resultQuery = requestedQuery;
+    if (!append) loadFacets(requestedQuery);
     if (!append && !result.doiLookup) {
       searchHistory.record(requestedQuery);
       historyList.render();
@@ -1013,14 +1047,6 @@ function updatePeriodHint() {
 for (const period of PERIODS) {
   $('periodSelect').append(el('option', { value: period.id }, period.name));
 }
-function setMoreTypes(open) {
-  $('morePublicationTypes').hidden = !open;
-  $('showPublicationTypes').setAttribute('aria-expanded', String(open));
-  $('showPublicationTypes').textContent = open ? 'Show fewer types' : 'Show more types';
-}
-$('showPublicationTypes').addEventListener('click', () =>
-  setMoreTypes($('morePublicationTypes').hidden),
-);
 $('sortSelect').addEventListener('change', (e) => {
   cancelRestoration();
   state.query.sort = e.target.value;
