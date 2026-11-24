@@ -1,5 +1,5 @@
 import { citationLine } from './citation-line.js';
-import { displayTitle, openLicenseURL } from './data.js';
+import { displayTitle, openAccess } from './data.js';
 import { el, icon } from './dom.js';
 import { noticeLabel, reportableUpdates, updateLabel, updateSeverity } from './updates.js';
 
@@ -34,10 +34,10 @@ export function createResultRow(
       updateLabel(update),
       `badge-${updateSeverity(update.type)}`,
     ],
+    openAccess(work) && ['book-open-text', 'Open access', 'badge-open'],
     work.updateTo[0] && ['file-text', noticeLabel(work.updateTo[0])],
     work.abstract && ['file-text', 'Abstract'],
     work.authors.some((author) => author.orcid) && ['user-round', 'ORCID'],
-    openLicenseURL(work) && ['book-open', 'Open license'],
     work.citedBy > 0 && ['quote', `Cited by ${work.citedBy.toLocaleString()}`],
     annotation?.note && ['file-text', 'Has note'],
     work.references.length > 0 && ['network', `${work.references.length} references`],

@@ -4,7 +4,7 @@ import {
   doiURL,
   normalizeDOI,
   normalizeWork,
-  openLicenseURL,
+  openAccess,
   participationReportURL,
   plainText,
   safeURL,
@@ -284,6 +284,13 @@ export function createInspector(
         { class: 'detail-kind' },
         [work.typeLabel, work.container && work.publisher].filter(Boolean).join(', '),
       ),
+      openAccess(work) &&
+        el(
+          'p',
+          { class: 'detail-open' },
+          el('span', { class: 'metadata-badge badge-open' }, icon('book-open-text'), 'Open access'),
+          externalLink(openAccess(work).label, openAccess(work).url),
+        ),
     );
     const banner = updateBanner();
     if (banner) root.append(banner);
@@ -564,13 +571,13 @@ export function createInspector(
     if (licenses.length)
       container.append(
         section(
-          'Licenses',
+          'License of this publication',
           ...licenses.map((url) => el('p', {}, externalLink(url, url))),
-          openLicenseURL(work) &&
+          openAccess(work) &&
             el(
               'p',
               { class: 'scope-note' },
-              'This record lists an open license. It describes reuse rights; it does not confirm that a free full text is available, so check the publisher page.',
+              `Open access under ${openAccess(work).label}. The status comes from the license the publisher declared to Crossref.`,
             ),
         ),
       );

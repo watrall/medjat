@@ -2948,3 +2948,19 @@ html {
     max-block-size: 9rem;
   }
 }
+
+.badge-open {
+  padding: 1px var(--space-sm);
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: var(--color-success);
+  font-weight: 650;
+}
+.detail-open {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm) var(--space-md);
+  margin-top: var(--space-sm);
+  font-size: var(--text-label);
+}

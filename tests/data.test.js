@@ -245,17 +245,25 @@ test('notes and tags validate as research backup entries', async () => {
   assert.equal(entries.get('notes:10.1234/a').note, 'Check plate 4');
 });
 
-test('open licenses are recognized only when deposited and already in force', async () => {
-  const { openLicenseURL } = await import('../js/data.js');
+test('open access means an in-force open license that covers the content, not only text mining', async () => {
+  const { openAccess, licenseLabel } = await import('../js/data.js');
   const cc = 'https://creativecommons.org/licenses/by/4.0/';
-  assert.equal(openLicenseURL({ licenses: [{ URL: cc }] }), cc);
+  assert.deepEqual(openAccess({ licenses: [{ URL: cc }] }), { url: cc, label: 'CC BY 4.0' });
   assert.equal(
-    openLicenseURL({ licenses: [{ URL: cc, start: { 'date-time': '2999-01-01T00:00:00Z' } }] }),
-    '',
+    openAccess({ licenses: [{ URL: cc, start: { 'date-time': '2999-01-01T00:00:00Z' } }] }),
+    null,
   );
-  assert.equal(openLicenseURL({ licenses: [{ URL: 'https://publisher.example/terms' }] }), '');
-  assert.equal(openLicenseURL({ licenses: [{ URL: 'javascript:alert(1)' }] }), '');
-  assert.equal(openLicenseURL({ licenses: [] }), '');
+  assert.equal(openAccess({ licenses: [{ URL: cc, 'content-version': 'tdm' }] }), null);
+  assert.ok(openAccess({ licenses: [{ URL: cc, 'content-version': 'vor' }] }));
+  assert.equal(openAccess({ licenses: [{ URL: 'https://publisher.example/terms' }] }), null);
+  assert.equal(openAccess({ licenses: [{ URL: 'javascript:alert(1)' }] }), null);
+  assert.equal(openAccess({ licenses: [] }), null);
+  assert.equal(
+    licenseLabel('http://creativecommons.org/licenses/by-nc-nd/3.0/'),
+    'CC BY-NC-ND 3.0',
+  );
+  assert.equal(licenseLabel('https://creativecommons.org/publicdomain/zero/1.0/'), 'CC0 1.0');
+  assert.equal(licenseLabel('https://creativecommons.org/publicdomain/mark/1.0/'), 'Public domain');
 });
 
 test('every citation style maps to a distinct Crossref style name', async () => {

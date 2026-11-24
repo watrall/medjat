@@ -200,15 +200,28 @@ export function normalizeWork(raw) {
   };
 }
 
-export function openLicenseURL(work) {
+const OPEN_LICENSE = /creativecommons\.org|publicdomain/i;
+
+// A publisher-declared Creative Commons or public-domain license that is already in force and
+// covers the content itself, not only text and data mining, makes a publication open access.
+export function openAccess(work) {
   const now = Date.now();
   for (const license of work.licenses) {
     const url = safeURL(license?.URL);
     const start = Date.parse(license?.start?.['date-time'] || '');
     const inForce = Number.isNaN(start) || start <= now;
-    if (url && inForce && /creativecommons\.org|publicdomain/i.test(url)) return url;
+    if (url && inForce && license['content-version'] !== 'tdm' && OPEN_LICENSE.test(url))
+      return { url, label: licenseLabel(url) };
   }
-  return '';
+  return null;
+}
+
+export function licenseLabel(url) {
+  const cc = /creativecommons\.org\/licenses\/([a-z-]+)\/(\d\.\d)/i.exec(url);
+  if (cc) return `CC ${cc[1].toUpperCase()} ${cc[2]}`;
+  if (/publicdomain\/zero/i.test(url)) return 'CC0 1.0';
+  if (/publicdomain/i.test(url)) return 'Public domain';
+  return 'Open license';
 }
 
 export const participationReportURL = (work) =>

@@ -31,6 +31,7 @@ async function fixtures(
     referenceCount = 1,
     plainReference = false,
     updated = false,
+    openAccess = false,
     inBook = false,
     bare = false,
   } = {},
@@ -130,6 +131,19 @@ async function fixtures(
         DOI: `10.1234/reference-${i}`,
         unstructured: `Deposited reference ${i + 1}`,
       }));
+    if (openAccess && items.length > 1) {
+      items[0].license = [
+        {
+          URL: 'http://creativecommons.org/licenses/by/4.0',
+          'content-version': 'vor',
+          start: { 'date-time': '2018-12-31T00:00:00Z' },
+        },
+      ];
+      items[1].license = [
+        { URL: 'https://publisher.example/tdm', 'content-version': 'tdm' },
+        { URL: 'https://creativecommons.org/licenses/by/4.0/', 'content-version': 'tdm' },
+      ];
+    }
     if (updated && items.length > 1) {
       items[0]['updated-by'] = [
         {
@@ -1719,4 +1733,22 @@ test('a result and its detail read as a citation, with commas and a distinct sty
     '2020, in Research in ancient Egypt, 23–39',
   );
   await expect(page.locator('.detail-kind')).toHaveText('Book chapter, Test publisher');
+});
+test('open access publications carry an Open access badge in the list and at the top of the detail pane', async ({
+  page,
+}) => {
+  await fixtures(page, { openAccess: true });
+  await page.goto('/?q=ancient+egypt');
+  const rows = page.locator('.result-row');
+  await expect(rows.first().locator('.badge-open')).toHaveText('Open access');
+  await expect(rows.nth(1).locator('.badge-open')).toHaveCount(0);
+  await expect(page.locator('.badge-open')).toHaveCount(2);
+  const open = page.locator('.detail-open');
+  await expect(open).toContainText('Open access');
+  await expect(open.getByRole('link', { name: 'CC BY 4.0' })).toHaveAttribute(
+    'href',
+    'http://creativecommons.org/licenses/by/4.0',
+  );
+  await rows.nth(1).locator('.result-open').click();
+  await expect(page.locator('.detail-open')).toHaveCount(0);
 });
