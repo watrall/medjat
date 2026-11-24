@@ -1878,3 +1878,67 @@ test('the license section says what each license covers and from when', async ({
   await expect(tdm.nth(0)).toContainText('text and data mining only');
   await expect(page.locator('.detail-section', { hasText: 'Open access under' })).toHaveCount(0);
 });
+
+const seedSearches = (page, count) =>
+  page.addInitScript((total) => {
+    const entries = Array.from({ length: total }, (_, i) => ({
+      qs: `q=topic+${i}&context=0`,
+      kept: i < 2,
+      at: new Date().toISOString(),
+    }));
+    localStorage.setItem('medjat-search-history-v1', JSON.stringify(entries));
+  }, count);
+
+test('your searches fill the width on the same three columns as the tiles below', async ({
+  page,
+}) => {
+  await seedSearches(page, 6);
+  await page.goto('/');
+  const rows = page.locator('.history-row');
+  await expect(rows).toHaveCount(6);
+  const tiles = page.locator('.research-tile');
+  const edges = async (locator, count) =>
+    Promise.all(
+      Array.from({ length: count }, async (_, i) => {
+        const box = await locator.nth(i).boundingBox();
+        return [Math.round(box.x), Math.round(box.x + box.width)];
+      }),
+    );
+  expect(await edges(rows, 3)).toEqual(await edges(tiles, 3));
+  await expect(
+    page
+      .locator('.history-row')
+      .first()
+      .getByRole('button', { name: /^Stop keeping search/ }),
+  ).toBeVisible();
+  await expect(
+    page
+      .locator('.history-row')
+      .nth(2)
+      .getByRole('button', { name: /^Keep search/ }),
+  ).toBeVisible();
+});
+
+test('your searches show six and fold the rest behind a count', async ({ page }) => {
+  await seedSearches(page, 9);
+  await page.goto('/');
+  await expect(page.locator('.history-row')).toHaveCount(6);
+  const more = page.getByRole('button', { name: 'Show all 9 searches' });
+  await expect(more).toHaveAttribute('aria-expanded', 'false');
+  await more.click();
+  await expect(page.locator('.history-row')).toHaveCount(9);
+  await page.getByRole('button', { name: 'Show fewer searches' }).click();
+  await expect(page.locator('.history-row')).toHaveCount(6);
+});
+
+test('keeping or removing a search leaves keyboard focus where the reader was', async ({
+  page,
+}) => {
+  await seedSearches(page, 4);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Keep search: topic 2' }).click();
+  await expect(page.getByRole('button', { name: 'Stop keeping search: topic 2' })).toBeFocused();
+  await page.getByRole('button', { name: 'Remove search: topic 1' }).click();
+  await expect(page.locator('.history-row')).toHaveCount(3);
+  await expect(page.locator('.history-link').nth(1)).toBeFocused();
+});

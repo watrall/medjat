@@ -2663,27 +2663,25 @@ html {
 }
 .history-list {
   display: grid;
-  max-inline-size: 52rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr));
+  column-gap: clamp(var(--space-md), 1.3vw, var(--space-lg));
   margin: 0;
   padding: 0;
   list-style: none;
-  border-block-start: 1px solid var(--color-line);
 }
 .history-row {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 0 var(--space-base);
-  border-block-end: 1px solid var(--color-line);
+  gap: 0 var(--space-md);
+  border-block-start: 1px solid var(--color-line);
 }
 .history-link {
-  display: flex;
-  flex: 1 1 16rem;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0 var(--space-md);
-  min-block-size: 44px;
+  display: grid;
+  gap: 2px;
   align-content: center;
+  min-block-size: 44px;
+  padding-block: var(--space-sm);
   color: var(--color-ink);
   text-decoration: none;
   overflow-wrap: anywhere;
@@ -2693,15 +2691,54 @@ html {
   text-underline-offset: 0.2em;
 }
 .history-query {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   font-weight: 600;
 }
 .history-detail {
-  font-size: var(--text-label);
+  font-size: var(--text-caption);
   color: var(--color-muted);
 }
-.history-row .text-button {
+.history-actions {
+  display: flex;
+  gap: var(--space-xs);
+}
+.history-actions .text-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
   min-block-size: 44px;
-  min-inline-size: 44px;
+  padding-inline: var(--space-sm);
+  font-size: var(--text-caption);
+  color: var(--color-muted);
+  text-decoration: none;
+}
+.history-actions .text-button:hover,
+.history-actions .text-button:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.history-actions .text-button:hover,
+.history-actions .text-button[aria-pressed='true'] {
+  color: var(--color-ink);
+}
+.history-actions .icon {
+  inline-size: 14px;
+  block-size: 14px;
+}
+.history-more {
+  min-block-size: 44px;
+  margin-block-start: var(--space-xs);
+}
+@media (max-width: 479px) {
+  .history-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .history-actions {
+    margin-inline-start: calc(var(--space-sm) * -1);
+  }
 }
 
 .is-compact .intro {
