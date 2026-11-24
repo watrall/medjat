@@ -9,6 +9,7 @@ export default [
       'test-results/**',
       'playwright-report/**',
       'assets/vendor/**',
+      '.cache/**',
     ],
   },
   js.configs.recommended,

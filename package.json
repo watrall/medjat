@@ -15,6 +15,7 @@
     "test:live": "node scripts/smoke-crossref.mjs",
     "survey": "node scripts/metadata-survey.mjs",
     "build:icons": "node scripts/build-icons.mjs",
+    "build:charts": "node scripts/build-charts.mjs",
     "build": "node scripts/build-site.mjs",
     "check:repository": "node scripts/check-repository.mjs --history"
   },
@@ -26,6 +27,8 @@
     "@axe-core/playwright": "^4.14.0",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.65.1",
+    "echarts": "6.1.0",
+    "esbuild": "^0.28.2",
     "eslint": "^10.15.0",
     "globals": "^17.14.0",
     "leaflet": "1.9.4",
