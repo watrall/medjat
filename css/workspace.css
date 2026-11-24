@@ -548,7 +548,7 @@ h1 {
   border-radius: var(--radius-sm);
 }
 .result-row.is-selected {
-  background: var(--color-selected);
+  background: var(--color-current);
   border-bottom-color: transparent;
 }
 .result-top {
@@ -1427,7 +1427,7 @@ button.chart-category:focus-visible {
   outline-offset: calc(-1 * var(--space-xs));
 }
 .chart-category[aria-expanded='true'] {
-  background: var(--color-selected);
+  background: var(--color-current);
 }
 .chart-label {
   overflow-wrap: anywhere;
@@ -2175,7 +2175,7 @@ html {
   cursor: pointer;
 }
 .facet-option:has(:checked) {
-  background: var(--color-selected);
+  background: var(--color-current);
   color: var(--color-accent);
   font-weight: 600;
 }
@@ -2183,7 +2183,7 @@ html {
   background: var(--color-subtle);
 }
 .facet-option:has(:checked):hover {
-  background: var(--color-selected);
+  background: var(--color-current);
 }
 .facet-option input {
   flex-shrink: 0;

@@ -20,6 +20,7 @@
   --color-accent: var(--red-700);
   --color-accent-hover: oklch(42% 0.17 29);
   --color-selected: var(--red-100);
+  --color-current: oklch(94% 0.006 330);
   --color-success: oklch(38% 0.085 158);
   --color-warning: oklch(42% 0.08 70);
   --color-warning-bg: oklch(97% 0.025 80);

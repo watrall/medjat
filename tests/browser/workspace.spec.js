@@ -1620,3 +1620,26 @@ test('the publication type list says edited volumes, not edited books', async ({
   await expect(page.getByRole('radio', { name: 'Edited volumes' })).toBeVisible();
   await expect(page.getByRole('radio', { name: 'Edited books' })).toHaveCount(0);
 });
+
+test('the selected result is marked neutrally, never in the error red', async ({ page }) => {
+  await fixtures(page);
+  await page.goto('/?q=ancient+egypt');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  const selected = page.locator('.result-row.is-selected');
+  await expect(selected).toHaveCount(1);
+  await expect(selected).toHaveAttribute('aria-current', 'true');
+  const [row, neutral, red] = await page.evaluate(() => {
+    const paint = (name) => {
+      const probe = document.createElement('div');
+      probe.style.background = `var(${name})`;
+      document.body.append(probe);
+      const color = getComputedStyle(probe).backgroundColor;
+      probe.remove();
+      return color;
+    };
+    const rowStyle = getComputedStyle(document.querySelector('.result-row.is-selected'));
+    return [rowStyle.backgroundColor, paint('--color-current'), paint('--color-selected')];
+  });
+  expect(row).toBe(neutral);
+  expect(row).not.toBe(red);
+});

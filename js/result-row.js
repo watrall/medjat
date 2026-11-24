@@ -46,6 +46,7 @@ export function createResultRow(
     {
       class: `result-row${selected ? ' is-selected' : ''}`,
       'data-record': work.id,
+      'aria-current': selected ? 'true' : undefined,
     },
     el(
       'div',
