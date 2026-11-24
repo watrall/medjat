@@ -27,6 +27,12 @@
   --color-warning-border: oklch(85% 0.065 80);
   --color-error: oklch(43% 0.17 24);
   --color-error-border: oklch(85% 0.06 29);
+  --viz-plum: oklch(48% 0.07 330);
+  --viz-red: oklch(52% 0.19 29);
+  --viz-ink: oklch(30% 0.025 330);
+  --viz-clay: oklch(68% 0.09 55);
+  --viz-teal: oklch(52% 0.07 205);
+  --viz-mist: oklch(82% 0.02 330);
   --shadow-raised: 0 4px 16px oklch(20% 0.025 330 / 0.12);
   --font-body: 'Quicksand', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --text-caption: 0.8125rem;

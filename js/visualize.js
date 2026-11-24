@@ -1,14 +1,17 @@
-import { aggregateSearch, typeID } from './aggregates.js';
+import { aggregateSearch } from './aggregates.js';
 import { addedSearchTerms, bibliographicTerms } from './crossref.js';
 import { queryString } from './data.js';
 import { el, icon } from './dom.js';
 import { downloadText } from './download.js';
 import { csvCell } from './export.js';
 import { filterDescription } from './filters.js';
-export function createVisualize(root, { onRefine, onExplore }) {
+import { palette } from './viz-palette.js';
+import { buildSections } from './viz-charts.js';
+export function createVisualize(root, { onRefine, onOpenRecord, onExplore }) {
   let controller,
     generation = 0,
-    renderedQuery;
+    renderedQuery,
+    unmount = () => {};
   const number = (value) => Number(value).toLocaleString();
   function download(result) {
     const rows = [
@@ -55,113 +58,221 @@ export function createVisualize(root, { onRefine, onExplore }) {
       filename: 'medjat-whole-search-summary.csv',
     });
   }
-  function panel(title, rows, { query, note, refine = () => null, denominator = null } = {}) {
-    const section = el(
-      'section',
-      { class: 'chart-panel' },
-      el('h3', {}, title),
-      el('p', { class: 'scope-note' }, note),
-    );
-    if (!rows.length) {
-      section.append(el('p', { class: 'scope-note' }, 'No data for this chart in the sample.'));
-      return section;
-    }
-    const max = Math.max(...rows.map(([, count]) => count), denominator || 1);
-    const list = el('ul', { class: 'chart-bars', 'aria-label': title });
-    for (const [label, count] of rows) {
-      const filter = refine(label);
-      const content = [
-        el('span', { class: 'chart-label' }, label),
-        el(
-          'span',
-          { class: 'chart-count' },
-          `${number(count)}${denominator > 0 ? ` (${((100 * count) / denominator).toFixed(1)}%)` : ''}`,
-        ),
-        el(
-          'span',
-          { class: 'chart-track', 'aria-hidden': 'true' },
-          el('span', { style: `width:${(count / max) * 100}%` }),
-        ),
-      ];
-      list.append(
-        el(
-          'li',
-          {},
-          filter
-            ? el(
-                'button',
-                {
-                  class: 'chart-category',
-                  'aria-expanded': 'false',
-                  onclick: (event) => {
-                    const category = event.currentTarget;
-                    const expanded = category.getAttribute('aria-expanded') === 'true';
-                    list
-                      .querySelector('[aria-expanded="true"]')
-                      ?.setAttribute('aria-expanded', 'false');
-                    list.querySelector('.chart-choice')?.remove();
-                    if (expanded) return;
-                    category.setAttribute('aria-expanded', 'true');
-                    category.after(
-                      el(
-                        'div',
-                        { class: 'chart-choice' },
-                        el(
-                          'p',
-                          { class: 'scope-note' },
-                          'Run a fresh Crossref search with this filter.',
-                        ),
-                        el(
-                          'button',
-                          {
-                            class: 'button',
-                            onclick: (event) => onRefine(query, filter, event.currentTarget),
-                          },
-                          filter.type && label === 'Book chapter'
-                            ? 'Search for book chapters'
-                            : `Search by ${filter.type ? 'type' : filter.container ? 'venue' : 'date'}: ${label}`,
-                        ),
-                      ),
-                    );
-                  },
-                },
-                content,
-              )
-            : el('div', { class: 'chart-category' }, content),
-        ),
-      );
-    }
-    section.append(list);
-    section.append(
+  const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let echartsLoad;
+  const loadCharts = () =>
+    (echartsLoad ??= import('../assets/vendor/echarts/echarts.js').then(
+      (module) => module.echarts,
+    ));
+
+  function table(spec, act) {
+    const actions = spec.table.rows.some((row) => row.refine);
+    return el(
+      'div',
+      { class: 'viz-table' },
       el(
-        'details',
+        'table',
         {},
-        el('summary', {}, 'View data table'),
+        el('caption', { class: 'sr-only' }, spec.title),
         el(
-          'table',
+          'thead',
           {},
-          el('caption', {}, title),
           el(
-            'thead',
+            'tr',
             {},
+            spec.table.head.map((name) => el('th', { scope: 'col' }, name)),
+            actions && el('th', { scope: 'col' }, 'Search'),
+          ),
+        ),
+        el(
+          'tbody',
+          {},
+          spec.table.rows.map((row) =>
             el(
               'tr',
               {},
-              el('th', { scope: 'col' }, 'Category'),
-              el('th', { scope: 'col' }, 'Approximate count'),
-            ),
-          ),
-          el(
-            'tbody',
-            {},
-            rows.map(([label, count]) =>
-              el('tr', {}, el('th', { scope: 'row' }, label), el('td', {}, number(count))),
+              row.cells.map((cell, index) =>
+                el(
+                  index === 0 && !row.refine ? 'th' : 'td',
+                  index === 0 && !row.refine ? { scope: 'row' } : {},
+                  index === 0 && row.open
+                    ? el(
+                        'button',
+                        {
+                          type: 'button',
+                          onclick: (event) => act.open(row.open, event.currentTarget),
+                        },
+                        cell,
+                      )
+                    : typeof cell === 'number'
+                      ? number(cell)
+                      : cell,
+                ),
+              ),
+              actions &&
+                el(
+                  'td',
+                  {},
+                  row.refine &&
+                    el(
+                      'button',
+                      {
+                        type: 'button',
+                        onclick: (event) => act.refine(row.refine, event.currentTarget),
+                      },
+                      row.refineLabel,
+                    ),
+                ),
             ),
           ),
         ),
       ),
     );
-    return section;
+  }
+
+  function chartBlock(spec, act, mounts) {
+    if (spec.empty)
+      return el(
+        'article',
+        { class: 'viz-chart' },
+        el('h4', {}, spec.title, el('span', { class: 'viz-coverage' }, spec.coverage)),
+        el('p', { class: 'viz-lead' }, spec.lead),
+      );
+    const canvas = el('div', {
+      class: 'viz-canvas',
+      role: 'img',
+      'aria-label': spec.label,
+      tabindex: '-1',
+      style: `height:${spec.height}px${spec.maxWidth ? `;max-inline-size:${spec.maxWidth}px` : ''}`,
+    });
+    mounts.push({ spec, canvas });
+    const legend =
+      spec.legend &&
+      el(
+        'ul',
+        { class: 'viz-legend', 'aria-label': 'Types' },
+        spec.legend.map((item) =>
+          el(
+            'li',
+            {},
+            el(
+              'button',
+              {
+                type: 'button',
+                disabled: !item.refine,
+                onclick: (event) => item.refine && act.refine(item.refine, event.currentTarget),
+              },
+              el('i', { style: `background:${item.color}` }),
+              item.name,
+              el('strong', {}, `${number(item.count)} (${item.share}%)`),
+            ),
+          ),
+        ),
+      );
+    return el(
+      'article',
+      { class: 'viz-chart' },
+      el('h4', {}, spec.title, el('span', { class: 'viz-coverage' }, spec.coverage)),
+      el(
+        'p',
+        { class: 'viz-lead' },
+        spec.lead.map((part) => (typeof part === 'string' ? part : el('strong', {}, part.strong))),
+      ),
+      legend ? el('div', { class: 'viz-split' }, canvas, legend) : canvas,
+      el('p', { class: 'viz-note' }, spec.note),
+      el('details', {}, el('summary', {}, 'View data table'), table(spec, act)),
+    );
+  }
+
+  async function sectionsFor(result, query) {
+    const act = {
+      open: (work, trigger) => onOpenRecord(work, trigger),
+      refine: (filter, trigger) => onRefine(query, filter, trigger),
+    };
+    const mounts = [];
+    const sections = buildSections(result.works, palette());
+    const nav = el('nav', { class: 'viz-nav', 'aria-label': 'Sections of this analysis' });
+    const elements = sections.map((section) =>
+      el(
+        'section',
+        {
+          class: 'viz-section',
+          id: `viz-${section.id}`,
+          'aria-labelledby': `viz-${section.id}-title`,
+        },
+        el('h3', { id: `viz-${section.id}-title` }, section.name),
+        section.charts.map((chart) => chartBlock(chart, act, mounts)),
+      ),
+    );
+    sections.forEach((section, index) =>
+      nav.append(
+        el(
+          'button',
+          {
+            type: 'button',
+            'aria-current': String(index === 0),
+            onclick: () =>
+              elements[index].scrollIntoView({
+                behavior: reduced() ? 'auto' : 'smooth',
+                block: 'start',
+              }),
+          },
+          section.name,
+        ),
+      ),
+    );
+    const wrapper = el('div', {}, nav, elements);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible)
+          [...nav.children].forEach((button, index) =>
+            button.setAttribute('aria-current', String(elements[index] === visible.target)),
+          );
+      },
+      { rootMargin: '-30% 0px -55% 0px' },
+    );
+    elements.forEach((element) => observer.observe(element));
+    const charts = [];
+    unmount = () => {
+      observer.disconnect();
+      for (const chart of charts) chart.dispose();
+      charts.length = 0;
+      unmount = () => {};
+    };
+    queueMicrotask(async () => {
+      try {
+        const echarts = await loadCharts();
+        for (const { spec, canvas } of mounts) {
+          const chart = echarts.init(canvas, null, { renderer: 'svg' });
+          charts.push(chart);
+          let width = canvas.clientWidth;
+          chart.setOption(spec.option(width, !reduced()));
+          chart.on('click', (params) => {
+            const action = spec.click?.(params.data);
+            if (action?.open) act.open(action.open, canvas);
+            else if (action?.refine) act.refine(action.refine, canvas);
+          });
+          new ResizeObserver(() => {
+            if (canvas.clientWidth === width || !canvas.isConnected) return;
+            width = canvas.clientWidth;
+            chart.resize();
+            chart.setOption(spec.option(width, false), true);
+          }).observe(canvas);
+        }
+      } catch {
+        wrapper.prepend(
+          el(
+            'p',
+            { class: 'notice notice-error', role: 'alert' },
+            'The charts could not be drawn. The data tables below still list everything.',
+          ),
+        );
+      }
+    });
+    return wrapper;
   }
   function heading(query) {
     return el(
@@ -185,6 +296,7 @@ export function createVisualize(root, { onRefine, onExplore }) {
     const key = queryString(query);
     if (!fresh && renderedQuery === key) return;
     renderedQuery = null;
+    unmount();
     controller?.abort();
     controller = new AbortController();
     const id = ++generation;
@@ -251,86 +363,7 @@ export function createVisualize(root, { onRefine, onExplore }) {
           ),
         ),
       );
-      const grid = el('div', { class: 'chart-grid' });
-      const years = result.years,
-        yearView = el('div');
-      let annual = years.length <= 40;
-      function renderYears() {
-        const chart = panel(
-          annual ? 'Publication years' : 'Publication decades',
-          annual
-            ? [...years].reverse()
-            : result.decades.map(([year, count]) => [`${year}s`, count]).reverse(),
-          {
-            query,
-            note: 'Modern publication dates in the ranked sample, newest first. Years absent from the sample are not asserted to be zero. CSV retains individual years.',
-            refine: (label) => {
-              const year = label.replace(/s$/, '');
-              return /^\d{4}$/.test(year)
-                ? { from: year, to: annual ? year : String(Number(year) + 9) }
-                : null;
-            },
-          },
-        );
-        if (years.length > 1)
-          chart.insertBefore(
-            el(
-              'button',
-              {
-                class: 'text-button',
-                onclick: () => {
-                  annual = !annual;
-                  renderYears();
-                  yearView.querySelector('button').focus();
-                },
-              },
-              annual ? 'Group by decade' : 'View individual years',
-            ),
-            chart.querySelector('.chart-bars'),
-          );
-        yearView.replaceChildren(chart);
-      }
-      renderYears();
-      grid.append(yearView);
-      grid.append(
-        panel('Publication types', result.types, {
-          query,
-          note: 'Types in the ranked sample. Select a supported category to refine Explore.',
-          refine: (label) => (typeID(label) ? { type: typeID(label) } : null),
-        }),
-      );
-      grid.append(
-        panel('Leading publication venues', result.venues, {
-          query,
-          note: 'Top ten venues in the ranked sample; records without a supplied container title are not counted. Venues containing commas cannot be refined through the API filter.',
-          refine: (container) => (container.includes(',') ? null : { container }),
-        }),
-      );
-      grid.append(
-        panel('Leading publishers', result.publishers, {
-          query,
-          note: `Top ten registering publishers in the ranked sample, which draws on ${result.publisherTotal.toLocaleString()} distinct ${result.publisherTotal === 1 ? 'publisher' : 'publishers'} across ${result.window.toLocaleString()} records. Records without a supplied publisher name are not counted.`,
-        }),
-      );
-      const names = {
-        abstract: 'Abstract supplied',
-        references: 'References supplied',
-        orcid: 'Author ORCID supplied',
-        license: 'License supplied',
-      };
-      grid.append(
-        panel(
-          'Metadata availability',
-          Object.keys(names)
-            .filter((name) => name in result.availability)
-            .map((name) => [names[name], result.availability[name]]),
-          {
-            note: 'Share of the ranked sample. Categories overlap and do not sum to the total. Missing metadata does not indicate poor research quality.',
-            denominator: result.window,
-          },
-        ),
-      );
-      root.append(grid);
+      root.append(await sectionsFor(result, query));
     } catch (error) {
       if (id !== generation || controller.signal.aborted) return;
       root.querySelector('[role="status"]')?.remove();
@@ -344,6 +377,7 @@ export function createVisualize(root, { onRefine, onExplore }) {
     show,
     cancel() {
       generation++;
+      unmount();
       controller?.abort();
     },
   };

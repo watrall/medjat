@@ -36,32 +36,31 @@ export function constellation(works, { width, height, radius = 5.4 }) {
   const pxPerUnit = height / (y.max - y.min);
   const placed = [];
   const nudges = [];
-  for (let across = -6; across <= 6; across++)
+  for (let across = -10; across <= 10; across++)
     for (let down = -12; down <= 12; down++)
       nudges.push([across * radius * 0.95, down * radius * 1.05]);
   nudges.sort((a, b) => Math.hypot(...a) - Math.hypot(...b));
+  const crowded = (px, y) =>
+    placed.some(
+      (other) => (other.px - px) ** 2 + ((other.y - y) * pxPerUnit) ** 2 < (2 * radius + 1) ** 2,
+    );
   const points = [...records]
     .sort((a, b) => when(a) - when(b))
     .map((work) => {
       const cited = work.citedBy ?? 0;
-      let px = (when(work) - x.min) * pxPerYear;
+      const origin = (when(work) - x.min) * pxPerYear;
       const base = cited > 0 ? Math.log10(cited) + 0.45 : -0.62;
+      let px = origin;
       let value = base;
-      if (cited === 0) {
-        const origin = px;
-        for (const [across, down] of nudges) {
-          const candidate = base + down / pxPerUnit;
-          if (candidate < -1.55 || candidate > -0.1) continue;
-          const clear = placed.every(
-            (other) =>
-              (other.px - (origin + across)) ** 2 + ((other.y - candidate) * pxPerUnit) ** 2 >=
-              (2 * radius + 1) ** 2,
-          );
-          if (clear) {
-            value = candidate;
-            px = origin + across;
-            break;
-          }
+      // Cited records move sideways only, so height stays true to the count. Uncited ones can also
+      // move up and down inside their band.
+      for (const [across, down] of nudges) {
+        const candidate = base + down / pxPerUnit;
+        if (cited > 0 ? down !== 0 : candidate < -1.55 || candidate > -0.1) continue;
+        if (!crowded(origin + across, candidate)) {
+          px = origin + across;
+          value = candidate;
+          break;
         }
       }
       placed.push({ px, y: value });
@@ -77,17 +76,12 @@ export function constellation(works, { width, height, radius = 5.4 }) {
     total: records.length,
     citedShare: pct(citedCount, records.length),
     top: top && { work: top, cited: top.citedBy ?? 0 },
-    labelled: new Set(
-      [...records]
-        .sort((a, b) => (b.citedBy ?? 0) - (a.citedBy ?? 0))
-        .filter((work) => (work.citedBy ?? 0) > 8)
-        .slice(0, 3),
-    ),
+    labelled: new Set(top && (top.citedBy ?? 0) > 8 ? [top] : []),
   };
 }
 
 // One dot per record, stacked in its publication year, grouped by type inside each stack.
-export function yearStack(works, order) {
+export function yearStack(works, groupOf, order) {
   const records = works.filter(dated);
   if (!records.length) return { rows: [], total: 0 };
   const years = records.map((work) => work.year).sort((a, b) => a - b);
@@ -97,7 +91,8 @@ export function yearStack(works, order) {
     .filter((work) => work.year >= start)
     .sort(
       (a, b) =>
-        order.indexOf(a.group) - order.indexOf(b.group) || (b.citedBy ?? 0) - (a.citedBy ?? 0),
+        order.indexOf(groupOf(a)) - order.indexOf(groupOf(b)) ||
+        (b.citedBy ?? 0) - (a.citedBy ?? 0),
     )
     .map((work) => {
       const stack = (counts.get(work.year) ?? 0) + 1;

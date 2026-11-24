@@ -59,10 +59,11 @@ test('the constellation separates cited from uncited records and never overlaps 
     ...Array.from({ length: 60 }, (_, i) => work({ year: 2015 + (i % 3), month: 1 + (i % 12) })),
     work({ year: 1990, cited: 120, title: 'The classic' }),
     work({ year: 2005, cited: 3 }),
+    work({ year: 2005, cited: 3 }),
   ];
   const layout = constellation(works, { width: 900, height: 400 });
-  assert.equal(layout.total, 62);
-  assert.equal(layout.citedShare, 3);
+  assert.equal(layout.total, 63);
+  assert.equal(layout.citedShare, 5);
   assert.equal(layout.top.work.title, 'The classic');
   const uncited = layout.points.filter((point) => point.cited === 0);
   assert.ok(uncited.every((point) => point.y < 0));
@@ -71,7 +72,17 @@ test('the constellation separates cited from uncited records and never overlaps 
   for (const [i, a] of uncited.entries())
     for (const b of uncited.slice(i + 1))
       assert.ok(Math.hypot(a.px - b.px, (a.y - b.y) * unit) >= 2 * layout.radius, 'dots overlap');
-  assert.ok([...layout.labelled].every((record) => record.citedBy > 8));
+  assert.deepEqual(
+    [...layout.labelled].map((record) => record.title),
+    ['The classic'],
+  );
+  const cited = layout.points.filter((point) => point.cited > 0);
+  for (const [i, a] of cited.entries())
+    for (const b of cited.slice(i + 1))
+      assert.ok(
+        Math.hypot(a.px - b.px, (a.y - b.y) * unit) >= 2 * layout.radius,
+        'cited dots overlap',
+      );
 });
 
 test('the year stack counts one dot per record, finds the busiest year and the book behind it', () => {
@@ -82,8 +93,7 @@ test('the year stack counts one dot per record, finds the busiest year and the b
     work({ year: 2010 }),
     work({ year: 1972 }),
   ];
-  works.forEach((entry) => (entry.group = 'x'));
-  const stack = yearStack(works, ['x']);
+  const stack = yearStack(works, () => 'x', ['x']);
   assert.equal(stack.peak.year, 2015);
   assert.equal(stack.peak.count, 12);
   assert.deepEqual(stack.peak.book, { name: 'The big book', count: 10 });
@@ -91,10 +101,11 @@ test('the year stack counts one dot per record, finds the busiest year and the b
   assert.equal(stack.sinceShare, Math.round((100 * 14) / 15));
   const quiet = yearStack(
     [work({ year: 2015, container: 'A' }), work({ year: 2015, container: 'B' })],
+    () => 'x',
     [],
   );
   assert.equal(quiet.peak.book, null);
-  assert.deepEqual(yearStack([], []).rows, []);
+  assert.deepEqual(yearStack([], () => 'x', []).rows, []);
 });
 
 test('the publisher tree keeps five publishers, merges small venues and counts the rest', () => {

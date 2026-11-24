@@ -673,6 +673,15 @@ const visualizer = createVisualize($('visualize'), {
     setView('explore');
     $('searchInput').focus();
   },
+  onOpenRecord(work, trigger) {
+    chartReturn = { trigger, scrollY: window.scrollY };
+    state.query = readQuery(new URLSearchParams({ q: work.doi, context: '0' }).toString());
+    state.draft = { ...state.query };
+    syncControls();
+    setView('explore', { load: false, syncURL: false });
+    runSearch();
+    focusHeading($('resultsTitle'));
+  },
   onRefine(query, filter, trigger) {
     chartReturn = { trigger, scrollY: window.scrollY };
     chartSearch = true;
