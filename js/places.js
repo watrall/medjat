@@ -10,6 +10,7 @@ import { createPlacePublicationRow } from './place-publication-row.js';
 import { PAGE_SIZE } from './crossref.js';
 import { createPlaceMap } from './place-map.js';
 import { createPlaceFinder } from './place-finder.js';
+import { createPlaceRecord } from './place-record.js';
 import { createInspector } from './inspector.js';
 import { createPlaceCollection } from './place-collection.js';
 import { BREAKPOINTS } from './breakpoints.js';
@@ -619,6 +620,11 @@ export function createPlaces(
         externalLink('Place identity and names', current.source),
         ` · ${current.latitude.toFixed(3)}°N, ${current.longitude.toFixed(3)}°E`,
       ),
+      createPlaceRecord(current, {
+        open:
+          root.querySelector('.place-record')?.open ??
+          !matchMedia(BREAKPOINTS.placesMobile).matches,
+      }),
       el(
         'details',
         { class: 'place-search-refinements', open: refinementOpen },

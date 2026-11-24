@@ -101,6 +101,46 @@ export function placesForWork(work, sites) {
         Number(Boolean(b.place.featured)) - Number(Boolean(a.place.featured)),
     );
 }
+const records = new Map();
+const text = (value) => (typeof value === 'string' ? value.trim() : '');
+const year = (value) => (Number.isFinite(value) ? value : null);
+export function summarizePleiades(raw) {
+  const spans = (Array.isArray(raw?.locations) ? raw.locations : []).flatMap((location) => {
+    const start = year(location?.start),
+      end = year(location?.end);
+    return start === null && end === null ? [] : [[start, end]];
+  });
+  const starts = spans.map(([start]) => start).filter((value) => value !== null);
+  const ends = spans.map(([, end]) => end).filter((value) => value !== null);
+  return {
+    description: text(raw?.description),
+    types: (Array.isArray(raw?.placeTypes) ? raw.placeTypes : []).map(text).filter(Boolean),
+    start: starts.length ? Math.min(...starts) : null,
+    end: ends.length ? Math.max(...ends) : null,
+    names: Array.isArray(raw?.names) ? raw.names.length : 0,
+    connections: Array.isArray(raw?.connections) ? raw.connections.length : 0,
+    creators: (Array.isArray(raw?.creators) ? raw.creators : [])
+      .map((creator) => text(creator?.name))
+      .filter(Boolean),
+  };
+}
+export function fetchPleiadesRecord(id, { signal } = {}) {
+  if (!records.has(id))
+    records.set(
+      id,
+      fetch(`${placeSource(id)}/json`, { signal, headers: { Accept: 'application/json' } })
+        .then((response) => {
+          if (!response.ok) throw new Error('Pleiades did not return this record.');
+          return response.json();
+        })
+        .then(summarizePleiades)
+        .catch((error) => {
+          records.delete(id);
+          throw error;
+        }),
+    );
+  return records.get(id);
+}
 export function placeSearchURL(
   place,
   { term = primaryName(place), topic = '', cursor = '*' } = {},

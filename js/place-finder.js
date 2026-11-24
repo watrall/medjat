@@ -33,7 +33,7 @@ export function createPlaceFinder({
     autocomplete: 'off',
     spellcheck: 'false',
     maxlength: 80,
-    placeholder: 'Abydos, Medinet Habu, Tell el-Dab‘a',
+    placeholder: 'Abydos or Medinet Habu',
     oninput: (event) => {
       state.query = event.target.value;
       state.limit = STEP;

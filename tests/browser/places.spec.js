@@ -405,7 +405,7 @@ test('mobile Places compacts geography, retains expansion choice and brings publ
     .locator('.place-publication')
     .first()
     .evaluate((el) => el.getBoundingClientRect().top + window.scrollY);
-  expect(firstY).toBeLessThan(1266);
+  expect(firstY).toBeLessThan(1330);
   await page.screenshot({ path: test.info().outputPath('places-mobile.png'), fullPage: true });
   await page.getByRole('button', { name: 'Expand map', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Compact map', exact: true })).toHaveAttribute(
@@ -488,4 +488,27 @@ test('Places says at the top, in both modes, that Crossref has no place metadata
   expect((await caveat.boundingBox()).y).toBeLessThan((await modes.boundingBox()).y);
   await page.getByRole('button', { name: 'Your collection', exact: true }).click();
   await expect(caveat).toBeVisible();
+});
+test('a chosen place shows its live Pleiades record, and says so when Pleiades cannot be reached', async ({
+  page,
+}) => {
+  await blockTiles(page);
+  await page.route('https://api.crossref.org/**', (route) =>
+    route.fulfill({ json: { message: { items: [source], 'total-results': 1 } } }),
+  );
+  await page.goto('/?view=places&place=756512');
+  const record = page.locator('.place-record');
+  await expect(record).toContainText('burial place of its first kings');
+  await expect(record).toContainText('4500 BCE to 1999 CE');
+  await expect(record).toContainText('Record by M. Drew Bear, R. Talbert, fetched from Pleiades');
+  await expect(record.getByRole('link', { name: 'Pleiades' })).toHaveAttribute(
+    'href',
+    'https://pleiades.stoa.org/places/756512',
+  );
+  await page.unroute('https://pleiades.stoa.org/**');
+  await page.route('https://pleiades.stoa.org/**', (route) => route.abort());
+  await page.locator('#placeSearch').fill('Thebes');
+  await page.locator('[data-place-id="786017"]').first().click();
+  await expect(page.locator('.place-record')).toContainText('could not be loaded');
+  await expect(page.getByRole('heading', { name: 'Thebes', exact: true })).toBeVisible();
 });

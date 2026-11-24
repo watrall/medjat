@@ -484,7 +484,7 @@ export function createPlaceCollection(
       id: 'assignPlaceQuery',
       type: 'search',
       autocomplete: 'off',
-      placeholder: 'Abydos, Medinet Habu, Tell el-Dab\u2018a',
+      placeholder: 'Abydos or Medinet Habu',
       oninput: () => fillTargets(),
     });
     function fillTargets() {

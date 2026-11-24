@@ -2908,3 +2908,17 @@ html {
 .place-finder-results[data-layout='rows'] > li {
   flex: none;
 }
+
+.place-facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-xs) var(--space-base);
+  margin: var(--space-sm) 0;
+  font-size: var(--text-label);
+}
+.place-facts dt {
+  color: var(--color-muted);
+}
+.place-facts dd {
+  margin: 0;
+}

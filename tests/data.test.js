@@ -509,3 +509,33 @@ test('every landing tile has both photo sizes on disk and a license link when it
   const images = LANDING_TILES.map((tile) => tile.image);
   assert.equal(new Set(images).size, images.length, 'each tile has its own photo');
 });
+
+test('a Pleiades record is reduced to plain text facts and tolerates missing fields', async () => {
+  const { summarizePleiades } = await import('../js/place-data.js');
+  const { dateRange } = await import('../js/place-record.js');
+  const record = summarizePleiades({
+    description: ' A city. ',
+    placeTypes: ['settlement'],
+    locations: [
+      { start: -750, end: 640 },
+      { start: -3000, end: null },
+      { start: null, end: null },
+    ],
+    names: [{}, {}],
+    connections: [{}],
+    creators: [{ name: 'T. Wilfong' }, { name: null }],
+  });
+  assert.deepEqual(record, {
+    description: 'A city.',
+    types: ['settlement'],
+    start: -3000,
+    end: 640,
+    names: 2,
+    connections: 1,
+    creators: ['T. Wilfong'],
+  });
+  assert.equal(dateRange(record), '3000 BCE to 640 CE');
+  assert.equal(dateRange({ start: null, end: 640 }), 'until 640 CE');
+  assert.equal(dateRange({ start: null, end: null }), '');
+  assert.deepEqual(summarizePleiades(null).types, []);
+});
