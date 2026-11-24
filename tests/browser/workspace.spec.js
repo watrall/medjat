@@ -39,12 +39,12 @@ async function fixtures(
   } = {},
 ) {
   const requests = [];
-  await page.addInitScript(() =>
-    sessionStorage.setItem(
-      'medjat-landing-tiles',
-      JSON.stringify(['hierakonpolis', 'ostraca', 'amarna', 'coffins', 'blue', 'dating']),
-    ),
-  );
+  // A fixed sequence of random numbers makes the landing draw the same every time, with
+  // Hierakonpolis first.
+  await page.addInitScript(() => {
+    let seed = 18;
+    Math.random = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296;
+  });
   await page.route('https://fonts.googleapis.com/**', (r) => r.abort());
   await page.route('https://assets.crossref.org/**', (r) => r.abort());
   await page.route('https://covers.openlibrary.org/**', (r) =>
@@ -1730,23 +1730,20 @@ test('missing abstracts and references say not available, without the word depos
   await expect(panel).not.toContainText(/deposit/i);
 });
 
-test('a visit picks its landing tiles once, keeps them on reload, and credits only those', async ({
-  page,
-}) => {
+test('every page load draws its own six landing tiles and credits only those', async ({ page }) => {
   await page.goto('/');
-  const tiles = page.locator('.research-tile');
-  await expect(tiles).toHaveCount(6);
-  const titles = await page.locator('.tile-title').allTextContents();
-  expect(new Set(titles).size).toBe(6);
+  await expect(page.locator('.research-tile')).toHaveCount(6);
+  const draws = new Set();
+  for (let load = 0; load < 6; load++) {
+    const titles = await page.locator('.tile-title').allTextContents();
+    expect(new Set(titles).size).toBe(6);
+    draws.add(titles.join('|'));
+    await page.reload();
+  }
+  expect(draws.size).toBeGreaterThan(1);
   await page.getByText('About the images', { exact: true }).click();
   await expect(page.locator('#landingCredits li')).toHaveCount(6);
   await expect(page.locator('#landingCredits li').first()).toContainText('Cropped and resized.');
-  await page.reload();
-  expect(await page.locator('.tile-title').allTextContents()).toEqual(titles);
-  const stored = await page.evaluate(() =>
-    JSON.parse(sessionStorage.getItem('medjat-landing-tiles')),
-  );
-  expect(stored).toHaveLength(6);
 });
 test('a result and its detail read as a citation, with commas and a distinct style for each part', async ({
   page,

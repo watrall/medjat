@@ -30,7 +30,7 @@ import { annotationEntry, annotationFor, tagCounts } from './annotations.js';
 import { notesKey } from './decision-keys.js';
 import { createSearchHistory } from './search-history.js';
 import { createHistoryList } from './history-list.js';
-import { chooseTiles, renderLandingTiles, tileById } from './landing-tiles.js';
+import { LANDING_TILES, pickTiles, renderLandingTiles, tileById } from './landing-tiles.js';
 import { reportableUpdates } from './updates.js';
 import { renderSearchFooter, renderSearchNotice } from './search-status.js';
 import { VIEW_CONFIG } from './view-config.js';
@@ -43,18 +43,7 @@ let storage;
 try {
   storage = localStorage;
 } catch {}
-function sessionStorageSafe() {
-  try {
-    return sessionStorage;
-  } catch {
-    return undefined;
-  }
-}
-renderLandingTiles(
-  $('landingTiles'),
-  $('landingCredits'),
-  chooseTiles({ storage: sessionStorageSafe() }),
-);
+renderLandingTiles($('landingTiles'), $('landingCredits'), pickTiles(LANDING_TILES));
 const collectionStore = createCollectionStore({ storage });
 const searchHistory = createSearchHistory({ storage });
 const saved = await collectionStore.ready;

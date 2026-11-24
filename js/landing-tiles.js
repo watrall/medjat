@@ -2,7 +2,6 @@ import { PERIODS } from './data.js';
 import { el, icon } from './dom.js';
 
 export const TILES_PER_VISIT = 6;
-const STORAGE_KEY = 'medjat-landing-tiles';
 const SIZES = '(min-width: 1600px) 520px, (min-width: 1024px) 33vw, (min-width: 560px) 50vw, 100vw';
 
 const CC = {
@@ -247,25 +246,6 @@ export function pickTiles(pool, { random = Math.random, count = TILES_PER_VISIT 
     random,
   );
   return shuffle([...chosen, ...rest].slice(0, count), random);
-}
-
-// A visit keeps its tiles so returning to the landing page does not reshuffle them.
-export function chooseTiles({ storage, random = Math.random } = {}) {
-  try {
-    const stored = JSON.parse(storage?.getItem(STORAGE_KEY) ?? 'null');
-    const tiles = Array.isArray(stored) ? stored.map(tileById) : [];
-    if (
-      tiles.length === Math.min(TILES_PER_VISIT, LANDING_TILES.length) &&
-      tiles.every(Boolean) &&
-      new Set(tiles).size === tiles.length
-    )
-      return tiles;
-  } catch {}
-  const tiles = pickTiles(LANDING_TILES, { random });
-  try {
-    storage?.setItem(STORAGE_KEY, JSON.stringify(tiles.map((tile) => tile.id)));
-  } catch {}
-  return tiles;
 }
 
 const arrowIcon = () => {
