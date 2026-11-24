@@ -163,7 +163,7 @@ export function createInspector(
       root.append(
         emptyState(
           'A closer look.',
-          'Choose a publication to inspect its metadata, follow references, or save it to your collection.',
+          'Choose a publication to see its details, follow references, or save it to your collection.',
           'book-open',
         ),
       );
@@ -408,7 +408,7 @@ export function createInspector(
                 disabled: following,
                 onclick: () => follow(chapter.doi),
               },
-              'Inspect chapter',
+              'View chapter',
             ),
           ),
         ),
@@ -458,7 +458,7 @@ export function createInspector(
         el(
           'p',
           { class: 'scope-note' },
-          'Name matches in the title or abstract. Open a place to inspect the context and explore related Crossref publications.',
+          'Name matches in the title or abstract. Open a place to see the context and explore related Crossref publications.',
         ),
         shared.length > 0 &&
           el(
@@ -637,7 +637,7 @@ export function createInspector(
             'li',
             {},
             `${updateLabel(update)}. Recorded by ${update.sources.map(sourceLabel).join(' and ') || 'a source Crossref does not name'}${when(update.date)}. `,
-            inspectButton(update.doi, 'Inspect the notice', `update-${index}`),
+            inspectButton(update.doi, 'View the notice', `update-${index}`),
           ),
         ),
         work.updateTo.map((update, index) =>
@@ -645,7 +645,7 @@ export function createInspector(
             'li',
             {},
             `This record is a ${noticeLabel(update).toLowerCase()}. `,
-            inspectButton(update.doi, 'Inspect the publication it concerns', `notice-${index}`),
+            inspectButton(update.doi, 'View the publication it concerns', `notice-${index}`),
           ),
         ),
       ),
@@ -711,7 +711,7 @@ export function createInspector(
                         disabled: following,
                         onclick: () => follow(candidate.doi),
                       },
-                      'Inspect candidate',
+                      'View possible match',
                     ),
                   ),
                 ),
@@ -786,7 +786,7 @@ export function createInspector(
                     disabled: following,
                     onclick: () => follow(doi),
                   },
-                  'Inspect reference',
+                  'View reference',
                 ),
                 el('small', {}, externalLink(`https://doi.org/${doi}`, doiURL(doi))),
               ),
@@ -832,7 +832,7 @@ export function createInspector(
                   disabled: following,
                   onclick: () => follow(doi),
                 },
-                'Inspect record',
+                'View record',
               ),
               el('small', {}, externalLink(doi, doiURL(doi))),
             ),

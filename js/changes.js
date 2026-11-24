@@ -87,7 +87,7 @@ export function createChangeReview(root, { getRecords, onAccept, onInspect }) {
               el(
                 'button',
                 { class: 'text-button', onclick: () => onInspect(next) },
-                'Inspect current record',
+                'View current record',
               ),
             );
             row.append(

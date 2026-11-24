@@ -726,7 +726,7 @@ export function createPlaces(
           : el(
               'p',
               {},
-              'No loaded candidate explicitly mentions a recognized place name. Try another search name or inspect the other candidates.',
+              'No loaded candidate explicitly mentions a recognized place name. Try another search name or look at the other candidates.',
             ),
       );
       if (other.length > 0)
@@ -738,7 +738,7 @@ export function createPlaces(
             el(
               'p',
               { class: 'scope-note' },
-              'These records have no recognized mention in the title or supplied abstract. Inspect them before associating them with this place.',
+              'These records have no recognized mention in the title or supplied abstract. Check them before associating them with this place.',
             ),
             el('ol', { class: 'place-publications' }, other.map(renderPublicationRow)),
           ),

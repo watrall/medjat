@@ -22,7 +22,7 @@ export function createResultRow(
     {
       class: 'result-open',
       onclick: () => onOpen(work),
-      'aria-label': `Inspect ${heading}`,
+      'aria-label': `View ${heading}`,
     },
     heading,
   );

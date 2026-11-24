@@ -235,7 +235,7 @@ test('refresh preserves a reference trail and expanded source connections', asyn
   await expect(page.locator('.result-row')).toHaveCount(25);
   await page.getByRole('tab', { name: 'Connections', exact: true }).click();
   await page.getByRole('button', { name: 'Show 20 more references', exact: true }).click();
-  await page.getByRole('button', { name: 'Inspect reference', exact: true }).nth(24).click();
+  await page.getByRole('button', { name: 'View reference', exact: true }).nth(24).click();
   await expect(page.locator('.detail-title')).toHaveText('A referenced publication');
   await page.reload();
   await expect(page.locator('.detail-title')).toHaveText('A referenced publication');
@@ -244,11 +244,9 @@ test('refresh preserves a reference trail and expanded source connections', asyn
     'aria-selected',
     'true',
   );
-  await expect(page.getByRole('button', { name: 'Inspect reference', exact: true })).toHaveCount(
-    30,
-  );
+  await expect(page.getByRole('button', { name: 'View reference', exact: true })).toHaveCount(30);
   await expect(
-    page.getByRole('button', { name: 'Inspect reference', exact: true }).nth(24),
+    page.getByRole('button', { name: 'View reference', exact: true }).nth(24),
   ).toBeFocused();
 });
 
@@ -580,7 +578,7 @@ test('reference navigation retains its source publication', async ({ page }) => 
   await expect(page.locator('.result-row')).toHaveCount(25);
   await page.getByRole('tab', { name: 'Connections', exact: true }).click();
   await page.getByRole('button', { name: 'Show 20 more references', exact: true }).click();
-  const reference = page.getByRole('button', { name: 'Inspect reference', exact: true }).nth(24);
+  const reference = page.getByRole('button', { name: 'View reference', exact: true }).nth(24);
   await reference.focus();
   await page.keyboard.press('Enter');
   await expect(
@@ -593,9 +591,7 @@ test('reference navigation retains its source publication', async ({ page }) => 
     'aria-selected',
     'true',
   );
-  await expect(page.getByRole('button', { name: 'Inspect reference', exact: true })).toHaveCount(
-    30,
-  );
+  await expect(page.getByRole('button', { name: 'View reference', exact: true })).toHaveCount(30);
   await expect(reference).toBeFocused();
 });
 test('empty search responses provide a useful recovery state', async ({ page }) => {
@@ -1344,10 +1340,10 @@ test('references without a DOI can be searched in Crossref from the inspector', 
   const before = requests.length;
   await page.getByRole('button', { name: 'Find in Crossref', exact: true }).click();
   await expect(page.getByText('Possible matches only.')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Inspect candidate' })).toHaveCount(2);
+  await expect(page.getByRole('button', { name: 'View possible match' })).toHaveCount(2);
   expect(requests.length).toBe(before + 1);
   expect(requests.at(-1).searchParams.get('query.bibliographic')).toContain('Cited monograph');
-  await page.getByRole('button', { name: 'Inspect candidate' }).first().click();
+  await page.getByRole('button', { name: 'View possible match' }).first().click();
   await expect(page.locator('.detail-title')).toHaveText('A referenced publication');
 });
 
@@ -1504,13 +1500,13 @@ test('retractions and notices are flagged in results and the inspector', async (
     .analyze();
   expect(axe.violations).toEqual([]);
 
-  await banner.getByRole('button', { name: 'Inspect the notice' }).click();
+  await banner.getByRole('button', { name: 'View the notice' }).click();
   await expect(page.locator('.detail-title')).toHaveText('A referenced publication');
   await page.getByRole('button', { name: 'Back to previous publication', exact: true }).click();
   await rows.nth(1).locator('.result-open').click();
   await expect(banner).toContainText('This record is a retraction notice.');
   await expect(
-    banner.getByRole('button', { name: 'Inspect the publication it concerns' }),
+    banner.getByRole('button', { name: 'View the publication it concerns' }),
   ).toBeVisible();
 });
 
@@ -1588,7 +1584,6 @@ test('a chapter offers to open the book it is part of', async ({ page }) => {
   await expect(book).toContainText('A referenced publication');
   await expect(book).toContainText('Ada Researcher');
   await expect(book).toContainText('2020 · Test publisher · Book chapter');
-  await expect(book.getByRole('button', { name: 'Inspect the book' })).toHaveCount(0);
   await book.getByRole('button', { name: 'View the book' }).click();
   await expect(page.locator('.detail-title')).toHaveText('A referenced publication');
   await page.getByRole('button', { name: 'Back to previous publication', exact: true }).click();
@@ -1613,7 +1608,7 @@ test('a chapter lists the other chapters of its book', async ({ page }) => {
   expect(query.searchParams.get('filter')).toBe(
     'relation.type:is-part-of,relation.object:https://doi.org/10.1234/test-book',
   );
-  await items.getByRole('button', { name: 'Inspect chapter' }).first().click();
+  await items.getByRole('button', { name: 'View chapter' }).first().click();
   await expect(page.locator('.detail-title')).toHaveText('A referenced publication');
 });
 

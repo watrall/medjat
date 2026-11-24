@@ -92,7 +92,7 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
             }
           },
         },
-        'Inspect reference',
+        'View reference',
       ),
       el(
         'button',
@@ -182,7 +182,7 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
                   el(
                     'button',
                     { class: 'text-button', onclick: () => onInspect(work) },
-                    'Inspect candidate',
+                    'View possible match',
                   ),
                   el(
                     'button',
