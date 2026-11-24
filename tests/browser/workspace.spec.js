@@ -1698,3 +1698,25 @@ test('a visit picks its landing tiles once, keeps them on reload, and credits on
   );
   expect(stored).toHaveLength(6);
 });
+test('a result and its detail read as a citation, with commas and a distinct style for each part', async ({
+  page,
+}) => {
+  await fixtures(page);
+  await page.goto('/?q=ancient+egypt');
+  const meta = page.locator('.result-row').first().locator('.result-meta');
+  await expect(meta).toHaveText('Ada Researcher, 2020, in Research in ancient Egypt, 23–39');
+  await expect(meta).not.toContainText('·');
+  const style = (selector) =>
+    meta.locator(selector).evaluate((node) => {
+      const { fontWeight, fontStyle } = getComputedStyle(node);
+      return { fontWeight, fontStyle };
+    });
+  expect(await style('.cite-authors')).toEqual({ fontWeight: '600', fontStyle: 'normal' });
+  expect(await style('.cite-container')).toEqual({ fontWeight: '400', fontStyle: 'italic' });
+  expect((await style('.cite-year')).fontWeight).toBe('500');
+  await expect(page.locator('.detail-authors')).toContainText('Ada Researcher');
+  await expect(page.locator('.detail-meta')).toHaveText(
+    '2020, in Research in ancient Egypt, 23–39',
+  );
+  await expect(page.locator('.detail-kind')).toHaveText('Book chapter, Test publisher');
+});

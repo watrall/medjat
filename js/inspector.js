@@ -17,6 +17,7 @@ import {
   getWork,
   getCitation,
 } from './crossref.js';
+import { citationLine } from './citation-line.js';
 import { el, icon, externalLink, emptyState, notify } from './dom.js';
 import { downloadText } from './download.js';
 import { createCover } from './covers.js';
@@ -248,7 +249,8 @@ export function createInspector(
         'div',
         { class: 'detail-authors' },
         work.authors.length
-          ? work.authors.map((author) =>
+          ? work.authors.flatMap((author, index) => [
+              index > 0 && (index === work.authors.length - 1 ? ' and ' : ', '),
               el(
                 'span',
                 {},
@@ -259,7 +261,7 @@ export function createInspector(
                     'aria-label': `ORCID profile for ${author.name}`,
                   }),
               ),
-            )
+            ])
           : work.editors.length
             ? [
                 el(
@@ -267,18 +269,20 @@ export function createInspector(
                   { class: 'detail-role' },
                   work.editors.length > 1 ? 'Editors: ' : 'Editor: ',
                 ),
-                ...work.editors.map((editor) => el('span', {}, editor.name)),
+                ...work.editors.flatMap((editor, index) => [
+                  index > 0 && (index === work.editors.length - 1 ? ' and ' : ', '),
+                  el('span', {}, editor.name),
+                ]),
               ]
             : 'Authors not supplied',
       ),
     );
     root.append(
+      el('p', { class: 'detail-meta' }, citationLine(work, { skip: ['authors'] })),
       el(
         'p',
-        { class: 'detail-meta' },
-        [work.year || 'Date not supplied', work.container || work.publisher, work.typeLabel]
-          .filter(Boolean)
-          .join(' · '),
+        { class: 'detail-kind' },
+        [work.typeLabel, work.container && work.publisher].filter(Boolean).join(', '),
       ),
     );
     const banner = updateBanner();

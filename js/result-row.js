@@ -1,4 +1,5 @@
-import { authorLine, displayTitle, openLicenseURL } from './data.js';
+import { citationLine } from './citation-line.js';
+import { displayTitle, openLicenseURL } from './data.js';
 import { el, icon } from './dom.js';
 import { noticeLabel, reportableUpdates, updateLabel, updateSeverity } from './updates.js';
 
@@ -75,13 +76,7 @@ export function createResultRow(
         el('span', {}, saved ? 'Saved' : 'Save'),
       ),
     ),
-    el(
-      'p',
-      { class: 'result-meta' },
-      [authorLine(work), work.year || 'Date not supplied', work.container || work.publisher]
-        .filter(Boolean)
-        .join(' · '),
-    ),
+    el('p', { class: 'result-meta' }, citationLine(work)),
     work.abstract && el('p', { class: 'result-snippet' }, work.abstract),
     el(
       'div',
