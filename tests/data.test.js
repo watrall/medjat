@@ -219,7 +219,7 @@ test('search history dedupes, keeps, and trims searches in storage', async () =>
   history.record(readQuery('?q=amarna&period=new-kingdom&sort=cited'));
   history.record(readQuery('?q=amarna&period=new-kingdom&sort=cited'));
   assert.equal(history.recent().length, 1);
-  assert.equal(history.recent()[0].detail, 'New Kingdom · Most cited');
+  assert.equal(history.recent()[0].detail, 'New Kingdom, Most cited');
   assert.equal(history.toggleKept(history.recent()[0].qs), true);
   for (let i = 0; i < MAX_RECENT + 4; i++) history.record(readQuery(`?q=topic${i}`));
   assert.equal(history.kept().length, 1);

@@ -20,7 +20,7 @@ export function describeSearch(query) {
     query.sort === 'cited' && 'Most cited',
   ]
     .filter(Boolean)
-    .join(' · ');
+    .join(', ');
 }
 
 export function createSearchHistory({ storage } = {}) {
