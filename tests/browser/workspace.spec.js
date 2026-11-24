@@ -1942,3 +1942,27 @@ test('keeping or removing a search leaves keyboard focus where the reader was', 
   await expect(page.locator('.history-row')).toHaveCount(3);
   await expect(page.locator('.history-link').nth(1)).toBeFocused();
 });
+
+test('each saved search is its own unit, apart from its neighbours, with a red bookmark when kept', async ({
+  page,
+}) => {
+  await seedSearches(page, 6);
+  await page.goto('/');
+  const rows = page.locator('.history-row');
+  const [first, second] = [await rows.nth(0).boundingBox(), await rows.nth(1).boundingBox()];
+  expect(second.x - (first.x + first.width)).toBeGreaterThanOrEqual(12);
+  const background = (locator) =>
+    locator.evaluate((node) => getComputedStyle(node).backgroundColor);
+  expect(await background(rows.first())).not.toBe(await background(page.locator('body')));
+  const color = (locator) => locator.evaluate((node) => getComputedStyle(node).color);
+  const accent = await page.evaluate(() => {
+    const probe = document.createElement('i');
+    probe.style.color = 'var(--color-accent)';
+    document.body.append(probe);
+    const value = getComputedStyle(probe).color;
+    probe.remove();
+    return value;
+  });
+  expect(await color(rows.nth(0).locator('[aria-pressed="true"] .icon'))).toBe(accent);
+  expect(await color(rows.nth(3).locator('[aria-pressed="false"] .icon'))).not.toBe(accent);
+});
