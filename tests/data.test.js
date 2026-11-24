@@ -517,3 +517,30 @@ test('every landing tile has both photo sizes on disk and a license link when it
   const images = LANDING_TILES.map((tile) => tile.image);
   assert.equal(new Set(images).size, images.length, 'each tile has its own photo');
 });
+
+test('license rows name each license, what it covers and when it starts', async () => {
+  const { licenseRows } = await import('../js/data.js');
+  const rows = licenseRows({
+    licenses: [
+      {
+        URL: 'http://creativecommons.org/licenses/by/4.0',
+        'content-version': 'vor',
+        start: { 'date-time': '2018-12-31T00:00:00Z' },
+      },
+      { URL: 'https://publisher.example/tdm', 'content-version': 'tdm' },
+      {
+        URL: 'https://creativecommons.org/licenses/by-nc/4.0/',
+        start: { 'date-time': '2999-01-01T00:00:00Z' },
+      },
+      { URL: 'javascript:alert(1)' },
+    ],
+  });
+  assert.deepEqual(
+    rows.map(({ label, detail }) => [label, detail]),
+    [
+      ['CC BY 4.0', 'version of record, from 2018-12-31'],
+      ['https://publisher.example/tdm', 'text and data mining only'],
+      ['CC BY-NC 4.0', 'starts 2999-01-01'],
+    ],
+  );
+});

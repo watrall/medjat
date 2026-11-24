@@ -216,6 +216,31 @@ export function openAccess(work) {
   return null;
 }
 
+const LICENSE_SCOPE = {
+  vor: 'version of record',
+  am: 'accepted manuscript',
+  tdm: 'text and data mining only',
+};
+
+// What the publisher declared, one row per license: its name, and what it covers and from when.
+export function licenseRows(work) {
+  return work.licenses.flatMap((license) => {
+    const url = safeURL(license?.URL);
+    if (!url) return [];
+    const start = Date.parse(license?.start?.['date-time'] || '');
+    const from = Number.isNaN(start)
+      ? ''
+      : `${start > Date.now() ? 'starts' : 'from'} ${new Date(start).toISOString().slice(0, 10)}`;
+    return [
+      {
+        url,
+        label: licenseLabel(url) === 'Open license' ? url : licenseLabel(url),
+        detail: [LICENSE_SCOPE[license['content-version']], from].filter(Boolean).join(', '),
+      },
+    ];
+  });
+}
+
 export function licenseLabel(url) {
   const cc = /creativecommons\.org\/licenses\/([a-z-]+)\/(\d\.\d)/i.exec(url);
   if (cc) return `CC ${cc[1].toUpperCase()} ${cc[2]}`;

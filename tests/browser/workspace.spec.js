@@ -32,6 +32,8 @@ async function fixtures(
     plainReference = false,
     updated = false,
     openAccess = false,
+    cited = false,
+    related = false,
     inBook = false,
     bare = false,
   } = {},
@@ -94,6 +96,23 @@ async function fixtures(
           },
         },
       });
+    if (url.searchParams.get('filter')?.includes('doi:10.1234/preprint'))
+      return route.fulfill({
+        json: {
+          message: {
+            items: [
+              {
+                ...publication(60),
+                DOI: '10.1234/preprint',
+                title: ['A preprint of the chapter'],
+                type: 'posted-content',
+                'container-title': [],
+                page: undefined,
+              },
+            ],
+          },
+        },
+      });
     if (url.searchParams.get('filter')?.includes('relation.object:'))
       return route.fulfill({
         json: {
@@ -131,6 +150,16 @@ async function fixtures(
         DOI: `10.1234/reference-${i}`,
         unstructured: `Deposited reference ${i + 1}`,
       }));
+    if (cited && items.length > 1) {
+      items[0]['is-referenced-by-count'] = 7;
+      items[1]['is-referenced-by-count'] = 0;
+    }
+    if (related && items.length) {
+      items[0].relation = {
+        'has-preprint': [{ 'id-type': 'doi', id: 'https://doi.org/10.1234/preprint' }],
+        'is-supplemented-by': [{ 'id-type': 'doi', id: 'https://doi.org/10.1234/not-in-crossref' }],
+      };
+    }
     if (openAccess && items.length > 1) {
       items[0].license = [
         {
@@ -1603,7 +1632,9 @@ test('a chapter offers to open the book it is part of', async ({ page }) => {
   });
   await expect(book).toContainText('A referenced publication');
   await expect(book).toContainText('Ada Researcher');
-  await expect(book).toContainText('2020 · Test publisher · Book chapter');
+  await expect(book.locator('.book-citation')).toHaveText(
+    'Ada Researcher, 2020, in Research in ancient Egypt, 23–39',
+  );
   await book.getByRole('button', { name: 'View the book' }).click();
   await expect(page.locator('.detail-title')).toHaveText('A referenced publication');
   await page.getByRole('button', { name: 'Back to previous publication', exact: true }).click();
@@ -1614,13 +1645,18 @@ test('a chapter lists the other chapters of its book', async ({ page }) => {
   const requests = await fixtures(page, { inBook: true });
   await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
-  await page.getByRole('button', { name: 'Show other chapters in this book' }).click();
+  const toggle = page.getByRole('button', { name: /^Other chapters/ });
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
   const items = page.locator('.detail-section', {
     has: page.getByRole('heading', { name: 'Part of a book' }),
   });
-  await expect(items.locator('li')).toHaveCount(2);
-  await expect(items.locator('li').nth(0)).toContainText('Sibling chapter B');
-  await expect(items.locator('li').nth(0)).toContainText('pp. 1-4');
+  await expect(items.locator('.chapter-list li')).toHaveCount(2);
+  await expect(toggle).toContainText('Other chapters (2)');
+  await expect(items.locator('.chapter-list li').nth(0)).toContainText('Sibling chapter B');
+  await expect(items.locator('.chapter-list li').nth(0)).toContainText('1–4');
+  await expect(items.getByRole('button', { name: 'View chapter' })).toHaveCount(0);
   await expect(items.getByText('The chapter being read')).toHaveCount(0);
   const query = requests.find((url) =>
     url.searchParams.get('filter')?.includes('relation.object:'),
@@ -1628,7 +1664,7 @@ test('a chapter lists the other chapters of its book', async ({ page }) => {
   expect(query.searchParams.get('filter')).toBe(
     'relation.type:is-part-of,relation.object:https://doi.org/10.1234/test-book',
   );
-  await items.getByRole('button', { name: 'View chapter' }).first().click();
+  await items.getByRole('button', { name: 'Sibling chapter B' }).click();
   await expect(page.locator('.detail-title')).toHaveText('A referenced publication');
 });
 
@@ -1751,4 +1787,93 @@ test('open access publications carry an Open access badge in the list and at the
   );
   await rows.nth(1).locator('.result-open').click();
   await expect(page.locator('.detail-open')).toHaveCount(0);
+});
+
+test('the book section keeps its two actions apart and lets the chapter list fold away', async ({
+  page,
+}) => {
+  await fixtures(page, { inBook: true });
+  await page.goto('/?q=ancient+egypt');
+  const view = page.getByRole('button', { name: 'View the book' });
+  const chapters = page.getByRole('button', { name: /^Other chapters/ });
+  await expect(view).toBeVisible();
+  const [a, b] = [await view.boundingBox(), await chapters.boundingBox()];
+  expect(a.height).toBeGreaterThanOrEqual(44);
+  expect(b.height).toBeGreaterThanOrEqual(44);
+  expect(b.x - (a.x + a.width)).toBeGreaterThanOrEqual(8);
+  await chapters.click();
+  await expect(page.locator('.chapter-list li')).toHaveCount(2);
+  await chapters.click();
+  await expect(chapters).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.locator('.chapter-list')).toHaveCount(0);
+});
+
+test('a place mention names Pleiades as its source, with a link', async ({ page }) => {
+  await fixtures(page);
+  await page.goto('/?q=ancient+egypt');
+  const places = page.locator('.detail-section', {
+    has: page.getByRole('heading', { name: 'Places mentioned' }),
+  });
+  await expect(places).toContainText(
+    'Names in the title or abstract match place records in Pleiades. Open a place',
+  );
+  await expect(places.getByRole('link', { name: 'Pleiades' })).toHaveAttribute(
+    'href',
+    'https://pleiades.stoa.org/',
+  );
+});
+
+test('the citation count sits under the title, with what it counts one click away', async ({
+  page,
+}) => {
+  await fixtures(page, { cited: true });
+  await page.goto('/?q=ancient+egypt');
+  const cited = page.locator('.detail-cited');
+  await expect(cited.locator('summary')).toHaveText('Cited by 7 in Crossref');
+  await expect(cited.getByText('does not list the citing works')).toBeHidden();
+  await cited.locator('summary').click();
+  await expect(cited.getByText('does not list the citing works')).toBeVisible();
+  await page.getByRole('tab', { name: 'Connections' }).click();
+  const first = page.locator('.detail-section').first();
+  await expect(first.getByRole('heading', { name: 'Cited by' })).toBeVisible();
+  await expect(first).toContainText('7 citations recorded in Crossref');
+  await page.locator('.result-open').nth(1).click();
+  await expect(page.locator('.detail-cited summary')).toHaveText('Cited by 0 in Crossref');
+});
+
+test('related records are shown as citations with the DOI last, and unknown ones by DOI alone', async ({
+  page,
+}) => {
+  await fixtures(page, { related: true });
+  await page.goto('/?q=ancient+egypt');
+  await page.getByRole('tab', { name: 'Connections' }).click();
+  const list = page.locator('.related-list');
+  await expect(list.locator('li')).toHaveCount(2);
+  const known = list.locator('li').nth(0);
+  await expect(known.locator('.related-kind')).toHaveText('Has preprint');
+  await expect(known.getByRole('button', { name: 'A preprint of the chapter' })).toBeVisible();
+  await expect(known.locator('.chapter-citation')).toContainText('Ada Researcher, 2020');
+  await expect(known.locator('.chapter-citation')).toContainText('10.1234/preprint');
+  const unknown = list.locator('li').nth(1);
+  await expect(unknown.locator('.related-kind')).toHaveText('Supplemented by');
+  await expect(unknown).toContainText('Details not available from Crossref');
+  await expect(unknown.getByRole('button')).toHaveCount(0);
+  await known.getByRole('button').click();
+  await expect(page.getByRole('button', { name: 'Back to previous publication' })).toBeVisible();
+});
+
+test('the license section says what each license covers and from when', async ({ page }) => {
+  await fixtures(page, { openAccess: true });
+  await page.goto('/?q=ancient+egypt');
+  const licenses = page.locator('.detail-section', {
+    has: page.getByRole('heading', { name: 'License of this publication' }),
+  });
+  await expect(licenses.locator('.license-list li')).toHaveText(
+    'CC BY 4.0, version of record, from 2018-12-31',
+  );
+  await expect(licenses).toContainText('Crossref, which makes all its metadata open for reuse');
+  await page.locator('.result-open').nth(1).click();
+  const tdm = page.locator('.license-list li');
+  await expect(tdm.nth(0)).toContainText('text and data mining only');
+  await expect(page.locator('.detail-section', { hasText: 'Open access under' })).toHaveCount(0);
 });

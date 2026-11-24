@@ -257,6 +257,31 @@ export async function checkUpdates(dois, { signal, fetcher, onBatch } = {}) {
   }
 }
 
+export const RELATED_LIMIT = 20;
+
+// One request for several records by DOI. DOIs Crossref does not hold are simply absent.
+export async function getWorks(dois, options = {}) {
+  const wanted = [...new Set(dois.map(normalizeDOI).filter(Boolean))].slice(0, RELATED_LIMIT);
+  if (!wanted.length) return new Map();
+  const params = new URLSearchParams({
+    filter: wanted.map((doi) => `doi:${doi}`).join(','),
+    rows: String(wanted.length),
+    mailto: CONTACT,
+  });
+  const response = await request(`${API}/works?${params}`, options);
+  const items = response.body?.message?.items;
+  if (!Array.isArray(items)) throw new Error('Crossref returned an unexpected response.');
+  const works = new Map();
+  for (const raw of items)
+    try {
+      const work = normalizeWork(raw);
+      works.set(work.doi, work);
+    } catch {
+      // A record that cannot be normalized is shown by its DOI alone.
+    }
+  return works;
+}
+
 export const BOOK_CHAPTER_LIMIT = 100;
 
 // Crossref matches relation.object against the identifier exactly as the member deposited it.

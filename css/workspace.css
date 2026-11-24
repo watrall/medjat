@@ -2950,10 +2950,10 @@ html {
 }
 
 .badge-open {
-  padding: 1px var(--space-sm);
-  border: 1px solid currentColor;
+  padding: 2px var(--space-sm);
   border-radius: 999px;
-  color: var(--color-success);
+  background: var(--color-success);
+  color: var(--color-surface);
   font-weight: 650;
 }
 .detail-open {
@@ -2963,4 +2963,91 @@ html {
   gap: var(--space-sm) var(--space-md);
   margin-top: var(--space-sm);
   font-size: var(--text-label);
+}
+
+.detail-cited summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-block-size: 44px;
+  font-size: var(--text-label);
+  font-weight: 600;
+  cursor: pointer;
+}
+.detail-cited summary .icon {
+  inline-size: 16px;
+  block-size: 16px;
+}
+.detail-cited p {
+  margin: 0 0 var(--space-sm);
+  max-inline-size: 65ch;
+  font-size: var(--text-caption);
+  color: var(--color-muted);
+}
+.book-citation {
+  margin-block-start: var(--space-xs);
+}
+.book-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  margin-block-start: var(--space-base);
+}
+.book-actions [aria-expanded='true'] .icon {
+  transform: rotate(180deg);
+}
+.book-chapters {
+  margin-block-start: var(--space-base);
+}
+.chapter-list,
+.related-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.chapter-list li,
+.related-list li {
+  padding-block: var(--space-sm);
+}
+.chapter-list li + li,
+.related-list li + li {
+  border-block-start: 1px solid var(--color-line);
+}
+.chapter-title {
+  min-block-size: 44px;
+  padding: 0;
+  color: var(--color-ink);
+  font-size: var(--text-label);
+  font-weight: 600;
+  text-align: start;
+  overflow-wrap: anywhere;
+}
+.chapter-title:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.chapter-citation,
+.related-kind {
+  margin: 0;
+  color: var(--color-muted);
+}
+.related-kind {
+  font-size: var(--text-caption);
+  font-weight: 600;
+}
+.license-list {
+  margin: 0 0 var(--space-sm);
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-label);
+  overflow-wrap: anywhere;
+}
+.license-detail {
+  color: var(--color-muted);
+}
+@media (max-width: 639px) {
+  .book-actions .button {
+    flex: 1 1 100%;
+  }
 }
