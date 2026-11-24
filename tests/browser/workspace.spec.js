@@ -2165,3 +2165,13 @@ test('an open access filter with nothing to show says so and offers all records'
   await page.getByRole('button', { name: 'Show all records' }).click();
   await expect(page.locator('.result-row')).toHaveCount(25);
 });
+
+test('a saved search does not remember the open access view of its results', async ({ page }) => {
+  await fixtures(page);
+  await page.goto('/?q=Hatshepsut&access=open');
+  await expect(page.getByText('No open access records yet.')).toBeVisible();
+  await page.goto('/');
+  const link = page.locator('.history-link').first();
+  await expect(link).toContainText('Hatshepsut');
+  expect(await link.getAttribute('href')).not.toContain('access');
+});

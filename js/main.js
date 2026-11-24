@@ -14,7 +14,7 @@ import {
   openAccess,
   searchKey,
 } from './data.js';
-import { createFacetLists } from './facet-lists.js';
+import { addChevrons, createFacetLists } from './facet-lists.js';
 import { facetURL, getFacets } from './facets.js';
 import { filterChips, filterEntries, readFilterControls, writeFilterControls } from './filters.js';
 import {
@@ -160,7 +160,9 @@ function updateURL({ push = false } = {}) {
 const facetLists = createFacetLists({
   onDecade: (decade, selected) =>
     applyRefinement(selected ? { from: '', to: '' } : { from: decade.from, to: decade.to }),
+  onAccess: (value) => setAccess(value),
 });
+addChevrons(document.querySelectorAll('#refinements summary'));
 function renderFacets() {
   facetLists.render({
     facets: state.facets,
@@ -179,24 +181,12 @@ function setAccess(value) {
   updateURL();
 }
 function renderAccess() {
-  const explore = state.view === 'explore' && !state.doiLookup;
-  const loaded = explore ? state.items.length : 0;
-  const open = explore ? state.items.filter(openAccess).length : 0;
-  const row = (value, label, total) =>
-    el(
-      'button',
-      {
-        type: 'button',
-        class: 'facet-option facet-button',
-        'aria-pressed': String((state.query.access || '') === value),
-        onclick: () => setAccess(value),
-      },
-      el('span', { class: 'facet-name' }, label),
-      el('span', { class: 'facet-count' }, total.toLocaleString()),
-    );
-  $('accessRows').replaceChildren(row('', 'All records', loaded), row('open', 'Open access', open));
-  $('accessNote').textContent =
-    'Counts are for the records loaded so far. Open access means the publisher declared an open license to Crossref.';
+  const shown = state.view === 'explore' && !state.doiLookup;
+  facetLists.renderAccess({
+    loaded: shown ? state.items.length : 0,
+    openAccess: shown ? state.items.filter(openAccess).length : 0,
+    selected: state.query.access,
+  });
 }
 async function loadFacets(query) {
   if (state.doiLookup || normalizeDOI(query.q) || query.field === 'doi') {
@@ -1058,7 +1048,7 @@ async function runSearch(append = false) {
     state.resultQuery = requestedQuery;
     if (!append) loadFacets(requestedQuery);
     if (!append && !result.doiLookup) {
-      searchHistory.record(requestedQuery);
+      searchHistory.record({ ...requestedQuery, access: '' });
       historyList.render();
     }
     if (!append && state.view === 'explore') {

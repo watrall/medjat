@@ -1,6 +1,6 @@
 import { el, icon, notify } from './dom.js';
 
-export const VISIBLE_SEARCHES = 6;
+const VISIBLE_SEARCHES = 6;
 
 export function createHistoryList(section, list, clearButton, { history, onOpen }) {
   let expanded = false;
@@ -76,7 +76,7 @@ export function createHistoryList(section, list, clearButton, { history, onOpen 
       (
         list.children[Math.min(index, list.children.length - 1)]?.querySelector('a') ||
         section.querySelector('h2')
-      )?.focus?.();
+      ).focus();
   }
   clearButton.addEventListener('click', () => {
     history.clearRecent();

@@ -2,8 +2,6 @@ import { decadeRows } from './aggregates.js';
 import { buildSearchURL, request } from './crossref.js';
 import { FACET_TYPE_IDS, TYPES } from './data.js';
 
-export const FACET_VISIBLE = 9;
-
 // The counts describe the search without its type and date choices, so every alternative shows
 // what choosing it would give, not just the one already chosen.
 export function facetURL(query) {
