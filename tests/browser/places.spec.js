@@ -476,3 +476,16 @@ test('names that suggest a place are matched across the index with the matched t
   await page.locator('.result-open').first().click();
   await expect(page.getByRole('button', { name: 'Explore Karanis in Places' })).toBeVisible();
 });
+test('Places says at the top, in both modes, that Crossref has no place metadata', async ({
+  page,
+}) => {
+  await blockTiles(page);
+  await page.goto('/?view=places');
+  const caveat = page.getByRole('note').filter({ hasText: 'Crossref has no place metadata' });
+  await expect(caveat).toBeVisible();
+  await expect(caveat).toContainText('not proof that the work concerns the place');
+  const modes = page.locator('.places-modes');
+  expect((await caveat.boundingBox()).y).toBeLessThan((await modes.boundingBox()).y);
+  await page.getByRole('button', { name: 'Your collection', exact: true }).click();
+  await expect(caveat).toBeVisible();
+});

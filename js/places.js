@@ -318,6 +318,11 @@ export function createPlaces(
         }),
       ),
       el(
+        'p',
+        { class: 'places-caveat', role: 'note' },
+        'Crossref has no place metadata. Places searches for a place\u2019s names and checks each title and abstract for them, so a match is a suggestion, not proof that the work concerns the place. Work that never names the place will not appear.',
+      ),
+      el(
         'div',
         { class: 'places-modes', 'aria-label': 'Places research scope' },
         ...[
