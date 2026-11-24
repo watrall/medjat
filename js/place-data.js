@@ -2,20 +2,30 @@ import { API, CONTACT, PAGE_SIZE, request } from './crossref.js';
 import { normalizeWork } from './data.js';
 let gazetteer;
 const matchers = new WeakMap();
-const normalizedText = new WeakMap();
+const preparedText = new WeakMap();
 const GAPS = /[\s\u2010-\u2015-]+/g;
-const comparable = (text) => text.normalize('NFC').toLowerCase().replace(GAPS, ' ');
 const WORDS = /[^\p{L}\p{N}\p{M}]+/u;
+export function fold(text) {
+  return text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+}
+const comparable = (text) => text.normalize('NFC').toLowerCase().replace(GAPS, ' ');
 const firstWord = (text) => text.split(WORDS).find(Boolean) ?? '';
 export const placeSource = (id) => `https://pleiades.stoa.org/places/${id}`;
-function prepare(data) {
-  const sites = data.places.map((place) => ({
-    ...place,
-    aliases: place.match,
-    source: placeSource(place.id),
-    searchText: fold([place.name, ...place.match, ...place.otherNames].join(' | ')),
-  }));
-  return { ...data, sites };
+export const primaryName = (place) => place.name.split('/')[0].trim();
+export const searchNames = (place) =>
+  [...new Set([...place.name.split('/').map((part) => part.trim()), ...place.aliases])].filter(
+    (name) => name.length >= 4 && name.length <= 60,
+  );
+export function preparePlaces(data) {
+  return {
+    ...data,
+    sites: data.places.map((place) => ({
+      ...place,
+      source: placeSource(place.id),
+      foldedName: fold(place.name),
+      searchText: fold([place.name, ...place.aliases, ...place.otherNames].join(' | ')),
+    })),
+  };
 }
 export async function loadGazetteer() {
   if (!gazetteer)
@@ -24,21 +34,12 @@ export async function loadGazetteer() {
         if (!response.ok) throw new Error('The place index could not be loaded.');
         return response.json();
       })
-      .then(prepare)
+      .then(preparePlaces)
       .catch((error) => {
         gazetteer = null;
         throw error;
       });
   return gazetteer;
-}
-export const primaryName = (place) => place.name.split('/')[0].trim();
-export const searchNames = (place) =>
-  [...new Set([...place.name.split('/').map((part) => part.trim()), ...place.aliases])].filter(
-    (name) => name.length >= 4 && name.length <= 60,
-  );
-export const isSharedName = (place) => place.shared === true;
-export function fold(text) {
-  return text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
 }
 function wholeName(alias) {
   const escaped = alias
@@ -63,7 +64,7 @@ function matcherFor(place) {
   return expressions;
 }
 function textsOf(work) {
-  let texts = normalizedText.get(work);
+  let texts = preparedText.get(work);
   if (!texts) {
     texts = [
       ['title', work.title || ''],
@@ -73,7 +74,7 @@ function textsOf(work) {
       const lower = comparable(text);
       return { field, text, lower, words: new Set(lower.split(WORDS)) };
     });
-    normalizedText.set(work, texts);
+    preparedText.set(work, texts);
   }
   return texts;
 }
@@ -102,46 +103,6 @@ export function placesForWork(work, sites) {
         Number(b.evidence.field === 'title') - Number(a.evidence.field === 'title') ||
         Number(Boolean(b.place.featured)) - Number(Boolean(a.place.featured)),
     );
-}
-const records = new Map();
-const text = (value) => (typeof value === 'string' ? value.trim() : '');
-const year = (value) => (Number.isFinite(value) ? value : null);
-export function summarizePleiades(raw) {
-  const spans = (Array.isArray(raw?.locations) ? raw.locations : []).flatMap((location) => {
-    const start = year(location?.start),
-      end = year(location?.end);
-    return start === null && end === null ? [] : [[start, end]];
-  });
-  const starts = spans.map(([start]) => start).filter((value) => value !== null);
-  const ends = spans.map(([, end]) => end).filter((value) => value !== null);
-  return {
-    description: text(raw?.description),
-    types: (Array.isArray(raw?.placeTypes) ? raw.placeTypes : []).map(text).filter(Boolean),
-    start: starts.length ? Math.min(...starts) : null,
-    end: ends.length ? Math.max(...ends) : null,
-    names: Array.isArray(raw?.names) ? raw.names.length : 0,
-    connections: Array.isArray(raw?.connections) ? raw.connections.length : 0,
-    creators: (Array.isArray(raw?.creators) ? raw.creators : [])
-      .map((creator) => text(creator?.name))
-      .filter(Boolean),
-  };
-}
-export function fetchPleiadesRecord(id, { signal } = {}) {
-  if (!records.has(id))
-    records.set(
-      id,
-      fetch(`${placeSource(id)}/json`, { signal, headers: { Accept: 'application/json' } })
-        .then((response) => {
-          if (!response.ok) throw new Error('Pleiades did not return this record.');
-          return response.json();
-        })
-        .then(summarizePleiades)
-        .catch((error) => {
-          records.delete(id);
-          throw error;
-        }),
-    );
-  return records.get(id);
 }
 export function placeSearchURL(
   place,

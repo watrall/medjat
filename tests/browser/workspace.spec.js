@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { readFile, writeFile } from 'node:fs/promises';
 import AxeBuilder from '@axe-core/playwright';
-import { blockTiles } from './fixtures.js';
+import { choosePlace, stubPlaceServices } from './fixtures.js';
 
 // Synthetic records are isolated to tests. The application has no fixture mode.
 const publication = (i) => ({
@@ -679,12 +679,12 @@ test('the main and Places inspectors keep citation controls uniquely identified'
   page,
 }) => {
   await fixtures(page);
-  await blockTiles(page);
+  await stubPlaceServices(page);
   await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
   await page.locator('#inspector').getByRole('tab', { name: 'Cite', exact: true }).click();
   await page.locator('#placesNav').click();
-  await page.locator('[data-place-id="756512"]').first().click();
+  await choosePlace(page, '756512');
   await page.locator('.other-place-candidates > summary').click();
   await expect(page.locator('.place-publication-title').first()).toBeVisible();
   await page.locator('.place-publication-title').first().click();
@@ -907,7 +907,7 @@ for (const width of [320, 390, 768, 1024, 1440]) {
 
 test('global navigation search opens Explore and preserves synchronized text', async ({ page }) => {
   const requests = await fixtures(page);
-  await blockTiles(page);
+  await stubPlaceServices(page);
   await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
   for (const id of ['collectionNav', 'visualizeNav', 'placesNav']) {
@@ -1080,7 +1080,7 @@ test('workspace tabs restore each reading position and Collection can map its sa
   page,
 }) => {
   await fixtures(page);
-  await blockTiles(page);
+  await stubPlaceServices(page);
   await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-open')).toHaveCount(25);
   await page.locator('.save-button').nth(0).click();

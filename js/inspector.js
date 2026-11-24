@@ -20,7 +20,7 @@ import {
 import { el, icon, externalLink, emptyState, notify } from './dom.js';
 import { downloadText } from './download.js';
 import { createCover } from './covers.js';
-import { isSharedName, loadGazetteer, placesForWork } from './place-data.js';
+import { loadGazetteer, placesForWork } from './place-data.js';
 import { createNotesForm } from './notes-form.js';
 import {
   noticeLabel,
@@ -85,9 +85,7 @@ export function createInspector(
             ?.focus({ preventScroll: true });
         focusAfterSites = null;
       })
-      .catch(() => {
-        sitesRequested = false;
-      });
+      .catch(() => {});
   }
 
   function readingPosition() {
@@ -465,9 +463,7 @@ export function createInspector(
             ),
           ),
         );
-      const shared = mentions
-        .filter(({ place }) => isSharedName(place))
-        .map(({ place }) => place.name);
+      const shared = mentions.filter(({ place }) => place.shared).map(({ place }) => place.name);
       const block = section(
         'Places mentioned',
         links(mentions.slice(0, 5)),

@@ -1,15 +1,13 @@
 import { fold } from './place-data.js';
 
-const rank = (place, query) => {
-  const name = fold(place.name);
-  if (name === query) return 0;
-  if (name.startsWith(query)) return 1;
-  if (
-    new RegExp(`(^|[^\\p{L}\\p{N}])${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'u').test(name)
-  )
-    return 2;
-  return 3;
-};
+const WORD_START = /[^\p{L}\p{N}]+/gu;
+
+// 0 exact, 1 starts with the query, 2 a word starts with it, 3 found only in another name.
+function rank(place, query) {
+  if (place.foldedName === query) return 0;
+  if (place.foldedName.startsWith(query)) return 1;
+  return ` ${place.foldedName.replace(WORD_START, ' ')}`.includes(` ${query}`) ? 2 : 3;
+}
 
 export function searchPlaces(sites, { query = '', type = '', period = '' } = {}) {
   const words = fold(query)
@@ -27,8 +25,8 @@ export function searchPlaces(sites, { query = '', type = '', period = '' } = {})
     .sort(
       (a, b) =>
         a.rank - b.rank ||
-        Number(Boolean(b.place.featured)) - Number(Boolean(a.place.featured)) ||
-        Number(Boolean(b.place.major)) - Number(Boolean(a.place.major)) ||
+        Number(!!b.place.featured) - Number(!!a.place.featured) ||
+        Number(!!b.place.major) - Number(!!a.place.major) ||
         a.place.name.localeCompare(b.place.name),
     )
     .map(({ place }) => place);

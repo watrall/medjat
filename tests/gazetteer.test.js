@@ -1,16 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { placeEvidence, placesForWork } from '../js/place-data.js';
+import { fold, placeEvidence, placesForWork, preparePlaces } from '../js/place-data.js';
 import { searchPlaces } from '../js/place-search.js';
-import { fold } from '../js/place-data.js';
 const data = JSON.parse(readFileSync(new URL('../data/places.json', import.meta.url)));
 const policy = JSON.parse(readFileSync(new URL('../data/place-name-policy.json', import.meta.url)));
-const sites = data.places.map((place) => ({
-  ...place,
-  aliases: place.match,
-  searchText: fold([place.name, ...place.match, ...place.otherNames].join(' | ')),
-}));
+const { sites } = preparePlaces(data);
 const named = (name) => sites.find((site) => site.name === name);
 
 test('the index holds attributed Pleiades places inside Egypt with stable identifiers', () => {
@@ -38,7 +33,7 @@ test('the index holds attributed Pleiades places inside Egypt with stable identi
 test('no place outside Egypt or in the Negev or Petra is included', () => {
   for (const name of ['Petra', 'Eilat', 'Avdat', 'Shivta', 'Nizana', 'Wadi Rum'])
     assert.equal(
-      sites.some((site) => [site.name, ...site.match].some((alias) => alias === name)),
+      sites.some((site) => [site.name, ...site.aliases].some((alias) => alias === name)),
       false,
       name,
     );
@@ -66,16 +61,16 @@ test('reviewed Pleiades variants match without conflating constituent places', (
 
 test('every reviewed alias is in the index and names that mean something else never match', () => {
   for (const place of data.places.filter((place) => place.featured))
-    for (const alias of policy.sites[place.id]) assert.ok(place.match.includes(alias), alias);
+    for (const alias of policy.sites[place.id]) assert.ok(place.aliases.includes(alias), alias);
   const excluded = new Set(policy.notPlaceNames.map(fold));
   for (const place of data.places.filter((place) => !place.featured))
-    for (const alias of place.match) {
+    for (const alias of place.aliases) {
       assert.ok(alias.length >= 5, alias);
       assert.equal(excluded.has(fold(alias)), false, alias);
     }
   const owners = new Map();
   for (const place of data.places.filter((place) => !place.featured))
-    for (const alias of place.match)
+    for (const alias of place.aliases)
       owners.set(fold(alias), (owners.get(fold(alias)) || new Set()).add(place.id));
   assert.equal([...owners.values()].filter((ids) => ids.size > 1).length, 0);
   for (const title of ['The Rosetta Stone', 'Cairo in 1900', 'Ramesses II and the Nile Delta'])

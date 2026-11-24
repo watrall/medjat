@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
-import { blockTiles } from './fixtures.js';
+import { choosePlace, stubPlaceServices } from './fixtures.js';
 const source = {
   DOI: '10.1234/abydos',
   title: ['Excavations at Abydos'],
@@ -13,7 +13,7 @@ test('Places discovers Crossref works from a Pleiades place without a saved coll
   const requests = [],
     errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  await blockTiles(page);
+  await stubPlaceServices(page);
   await page.route('https://api.crossref.org/**', (route) => {
     requests.push(new URL(route.request().url()));
     return route.fulfill({
@@ -29,7 +29,7 @@ test('Places discovers Crossref works from a Pleiades place without a saved coll
   await expect(page.locator('.result-row')).toHaveCount(2);
   await page.locator('#placesNav').click();
   await expect(page.locator('#placeMap .leaflet-control-zoom-in')).toBeVisible();
-  await page.locator('[data-place-id="756512"]').first().click();
+  await choosePlace(page, '756512');
   await expect(page.locator('.place-results-status')).toHaveText(
     '2 candidates loaded · 1 with a place-name mention',
   );
@@ -61,7 +61,7 @@ test('place bibliographies export their exact saved scope and retain manual rese
     { DOI: '10.1234/religion', title: ['Religion in ancient Egypt'] },
     { DOI: '10.1234/grammar', title: ['An Egyptian grammar'] },
   ];
-  await blockTiles(page);
+  await stubPlaceServices(page);
   await page.route('https://api.crossref.org/**', (route) =>
     route.fulfill({ json: { message: { items: records, 'total-results': 3 } } }),
   );
@@ -70,7 +70,7 @@ test('place bibliographies export their exact saved scope and retain manual rese
   for (let index = 0; index < 3; index++) await page.locator('.save-button').nth(index).click();
   await page.locator('#placesNav').click();
   await page.getByRole('button', { name: 'Your collection', exact: true }).click();
-  await page.locator('[data-place-id="756512"]').first().click();
+  await choosePlace(page, '756512');
   await expect(page.locator('.place-collection-coverage')).toContainText(
     '3 saved publications · 1 with place associations · 2 with no place assigned',
   );
@@ -119,7 +119,7 @@ test('place bibliographies export their exact saved scope and retain manual rese
 test('publication place links retain evidence and return to the search draft after refresh', async ({
   page,
 }) => {
-  await blockTiles(page);
+  await stubPlaceServices(page);
   await page.route('https://api.crossref.org/**', (route) =>
     route.fulfill({
       json: {
@@ -154,7 +154,7 @@ test('place pagination keeps its applied query while preserving unfinished topic
   page,
 }) => {
   const requested = [];
-  await blockTiles(page);
+  await stubPlaceServices(page);
   await page.route('https://api.crossref.org/**', (route) => {
     const url = new URL(route.request().url());
     requested.push(url);
@@ -186,7 +186,7 @@ test('place pagination keeps its applied query while preserving unfinished topic
 test('Places restores applied query, drafts, evidence scope and direct-entry collection count', async ({
   page,
 }) => {
-  await blockTiles(page);
+  await stubPlaceServices(page);
   await page.route('https://api.crossref.org/**', (r) =>
     r.fulfill({ json: { message: { items: [source], 'total-results': 1 } } }),
   );
@@ -215,7 +215,7 @@ test('an export keeps its original place identity while another place is selecte
   const gate = new Promise((resolve) => {
     release = resolve;
   });
-  await blockTiles(page);
+  await stubPlaceServices(page);
   await page.route('https://api.crossref.org/**', async (r) => {
     if (r.request().url().includes('/transform')) {
       await gate;
@@ -227,10 +227,10 @@ test('an export keeps its original place identity while another place is selecte
   await page.locator('.save-button').click();
   await page.locator('#placesNav').click();
   await page.getByRole('button', { name: 'Your collection', exact: true }).click();
-  await page.locator('[data-place-id="756512"]').first().click();
+  await choosePlace(page, '756512');
   await page.getByRole('button', { name: 'Export 1 publication', exact: true }).click();
   await page.locator('#placeSearch').fill('Thebes');
-  await page.locator('[data-place-id="786017"]').first().click();
+  await choosePlace(page, '786017');
   const pending = page.waitForEvent('download');
   release();
   const file = await pending;
@@ -257,7 +257,7 @@ test('assignment identifies duplicate titles, searches without changing selectio
       'container-title': ['Thebes studies'],
     },
   ];
-  await blockTiles(page);
+  await stubPlaceServices(page);
   await page.route('https://api.crossref.org/**', (r) =>
     r.fulfill({ json: { message: { items: records, 'total-results': 2 } } }),
   );
@@ -289,7 +289,7 @@ test('assignment identifies duplicate titles, searches without changing selectio
 test('Places reverses classification and removal without losing association reviews', async ({
   page,
 }) => {
-  await blockTiles(page);
+  await stubPlaceServices(page);
   await page.route('https://api.crossref.org/**', (r) =>
     r.fulfill({ json: { message: { items: [source], 'total-results': 1 } } }),
   );
@@ -313,7 +313,7 @@ test('Places reverses classification and removal without losing association revi
 test('Fit map changes only the camera while All places changes bibliography scope', async ({
   page,
 }) => {
-  await blockTiles(page);
+  await stubPlaceServices(page);
   await page.route('https://api.crossref.org/**', (r) =>
     r.fulfill({
       json: {
@@ -328,7 +328,7 @@ test('Fit map changes only the camera while All places changes bibliography scop
   for (const b of await page.locator('.save-button').all()) await b.click();
   await page.locator('#placesNav').click();
   await page.getByRole('button', { name: 'Your collection', exact: true }).click();
-  await page.locator('[data-place-id="756512"]').first().click();
+  await choosePlace(page, '756512');
   await page.getByRole('button', { name: 'Fit map', exact: true }).click();
   await expect(page.locator('[data-place-id="756512"]').first()).toHaveAttribute(
     'aria-pressed',
@@ -337,7 +337,7 @@ test('Fit map changes only the camera while All places changes bibliography scop
   await expect(
     page.getByRole('button', { name: 'Export 1 publication', exact: true }),
   ).toBeVisible();
-  await page.locator('[data-place-id=""]').click();
+  await choosePlace(page, '');
   await expect(
     page.getByRole('button', { name: 'Export 2 publications', exact: true }),
   ).toBeVisible();
@@ -352,7 +352,7 @@ test('search and review updates preserve keyboard position without stealing back
   const gate = new Promise((resolve) => {
     release = resolve;
   });
-  await blockTiles(page);
+  await stubPlaceServices(page);
   await page.route('https://api.crossref.org/**', async (r) => {
     if (new URL(r.request().url()).searchParams.get('query.bibliographic')?.includes('focus-test'))
       await gate;
@@ -426,7 +426,7 @@ test('the place finder searches every Pleiades place in Egypt by name, type and 
   page,
 }) => {
   const requests = [];
-  await blockTiles(page);
+  await stubPlaceServices(page);
   await page.route('https://api.crossref.org/**', (route) => {
     requests.push(new URL(route.request().url()));
     return route.fulfill({ json: { message: { items: [source], 'total-results': 12 } } });
@@ -441,7 +441,7 @@ test('the place finder searches every Pleiades place in Egypt by name, type and 
   await page.locator('#placePeriod').selectOption('pharaonic');
   await expect(status).toContainText('No place matches');
   await page.locator('#placePeriod').selectOption('');
-  await page.locator('[data-place-id="736932"]').click();
+  await choosePlace(page, '736932');
   await expect(page.getByRole('heading', { name: 'Karanis', exact: true })).toBeVisible();
   await expect(page.locator('[data-place-id="736932"]')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('.place-results-status')).toBeVisible();
@@ -454,7 +454,7 @@ test('the place finder searches every Pleiades place in Egypt by name, type and 
 test('names that suggest a place are matched across the index with the matched text shown', async ({
   page,
 }) => {
-  await blockTiles(page);
+  await stubPlaceServices(page);
   await page.route('https://api.crossref.org/**', (route) =>
     route.fulfill({
       json: {
@@ -479,7 +479,7 @@ test('names that suggest a place are matched across the index with the matched t
 test('Places says at the top, in both modes, that Crossref has no place metadata', async ({
   page,
 }) => {
-  await blockTiles(page);
+  await stubPlaceServices(page);
   await page.goto('/?view=places');
   const caveat = page.getByRole('note').filter({ hasText: 'Crossref has no place metadata' });
   await expect(caveat).toBeVisible();
@@ -492,7 +492,7 @@ test('Places says at the top, in both modes, that Crossref has no place metadata
 test('a chosen place shows its live Pleiades record, and says so when Pleiades cannot be reached', async ({
   page,
 }) => {
-  await blockTiles(page);
+  await stubPlaceServices(page);
   await page.route('https://api.crossref.org/**', (route) =>
     route.fulfill({ json: { message: { items: [source], 'total-results': 1 } } }),
   );
@@ -508,7 +508,7 @@ test('a chosen place shows its live Pleiades record, and says so when Pleiades c
   await page.unroute('https://pleiades.stoa.org/**');
   await page.route('https://pleiades.stoa.org/**', (route) => route.abort());
   await page.locator('#placeSearch').fill('Thebes');
-  await page.locator('[data-place-id="786017"]').first().click();
+  await choosePlace(page, '786017');
   await expect(page.locator('.place-record')).toContainText('could not be loaded');
   await expect(page.getByRole('heading', { name: 'Thebes', exact: true })).toBeVisible();
 });

@@ -1,14 +1,6 @@
-import { fetchPleiadesRecord, placeSource } from './place-data.js';
+import { placeSource } from './place-data.js';
+import { dateRange, fetchPleiadesRecord } from './pleiades-record.js';
 import { el, externalLink } from './dom.js';
-
-export const yearLabel = (value) => (value < 0 ? `${-value} BCE` : `${value} CE`);
-
-export function dateRange({ start, end }) {
-  if (start === null && end === null) return '';
-  if (start === null) return `until ${yearLabel(end)}`;
-  if (end === null) return `from ${yearLabel(start)}`;
-  return start === end ? yearLabel(start) : `${yearLabel(start)} to ${yearLabel(end)}`;
-}
 
 export function createPlaceRecord(place, { open = false } = {}) {
   const body = el('div', {}, el('p', { role: 'status' }, 'Loading the Pleiades record…'));

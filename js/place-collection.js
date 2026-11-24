@@ -8,6 +8,7 @@ import { placeKey, placeScopeKey } from './decision-keys.js';
 import { EXPORT_FORMATS, exportCollection, downloadFile } from './export.js';
 import { el, icon, notify } from './dom.js';
 const noun = (count) => (count === 1 ? 'publication' : 'publications');
+const TARGET_LIMIT = 50;
 
 export function collectionPlaces(records, sites, decisions = {}) {
   const associations = [],
@@ -130,12 +131,16 @@ export function createPlaceCollection(
       (link) =>
         (!selected || link.place.id === selected) && (status === 'all' || link.status === status),
     );
+  let counted = null;
   function stats(id) {
-    return (
-      snapshot?.associations.filter(
-        (link) => link.place.id === id && (status === 'all' || link.status === status),
-      ).length || 0
-    );
+    if (counted?.snapshot !== snapshot || counted.status !== status) {
+      const counts = new Map();
+      for (const link of snapshot?.associations ?? [])
+        if (status === 'all' || link.status === status)
+          counts.set(link.place.id, (counts.get(link.place.id) ?? 0) + 1);
+      counted = { snapshot, status, counts };
+    }
+    return counted.counts.get(id) ?? 0;
   }
   function syncExport() {
     const state = root.querySelector('[data-export-status]');
@@ -493,14 +498,14 @@ export function createPlaceCollection(
       const matches = query
         ? searchPlaces(sites, { query })
         : sites.filter((site) => site.featured);
-      const options = matches.slice(0, 50);
+      const options = matches.slice(0, TARGET_LIMIT);
       const current = sites.find((site) => site.id === kept);
       if (current && !options.includes(current)) options.push(current);
       target.replaceChildren(...options.map((site) => el('option', { value: site.id }, site.name)));
       if (kept) target.value = kept;
       draft.target = target.value;
       targetCount.textContent = query
-        ? `${matches.length.toLocaleString()} matching ${matches.length === 1 ? 'place' : 'places'}${matches.length > 50 ? '; showing 50' : ''}.`
+        ? `${matches.length.toLocaleString()} matching ${matches.length === 1 ? 'place' : 'places'}${matches.length > TARGET_LIMIT ? `; showing ${TARGET_LIMIT}` : ''}.`
         : 'Featured places shown. Search to find any other place.';
     }
     fillTargets();
@@ -587,7 +592,6 @@ export function createPlaceCollection(
     });
 
     if (draftFormat) format.value = draftFormat;
-    draft.target = target.value;
     draft.format = format.value;
     const reviewList = (title, rows, mode) =>
       createPlaceReviewList({

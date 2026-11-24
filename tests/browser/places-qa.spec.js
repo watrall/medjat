@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import AxeBuilder from '@axe-core/playwright';
-import { blockTiles } from './fixtures.js';
+import { choosePlace, stubPlaceServices } from './fixtures.js';
 
 const work = {
   DOI: '10.1234/abydos-qa',
@@ -11,7 +11,7 @@ const work = {
   published: { 'date-parts': [[2020]] },
 };
 test('history restores actual results for different topics at the same place', async ({ page }) => {
-  await blockTiles(page);
+  await stubPlaceServices(page);
   await page.route('https://api.crossref.org/**', (r) => {
     const q = new URL(r.request().url()).searchParams.get('query.bibliographic') || '';
     const topic = q.includes('burial') ? 'burial' : q.includes('pottery') ? 'pottery' : 'initial';
@@ -41,7 +41,7 @@ test('history restores actual results for different topics at the same place', a
 
 for (const format of ['csv', 'json', 'ris', 'bibtex'])
   test(`place evidence scope exports exact membership as ${format}`, async ({ page }) => {
-    await blockTiles(page);
+    await stubPlaceServices(page);
     await page.route('https://api.crossref.org/**', (r) => {
       const url = new URL(r.request().url());
       if (url.pathname.endsWith('/transform')) {
@@ -68,7 +68,7 @@ for (const format of ['csv', 'json', 'ris', 'bibtex'])
     for (const b of await page.locator('.save-button').all()) await b.click();
     await page.locator('#placesNav').click();
     await page.getByRole('button', { name: 'Your collection', exact: true }).click();
-    await page.locator('[data-place-id="756512"]').first().click();
+    await choosePlace(page, '756512');
     await page
       .locator(`[data-place-work="${work.DOI}"]`)
       .getByRole('button', { name: 'Confirm association', exact: true })
@@ -86,7 +86,7 @@ for (const format of ['csv', 'json', 'ris', 'bibtex'])
   });
 
 test('failed and cancelled place exports retain scope and recover with CSV', async ({ page }) => {
-  await blockTiles(page);
+  await stubPlaceServices(page);
   let slow = false;
   await page.route('https://api.crossref.org/**', async (r) => {
     if (r.request().url().includes('/transform')) {
@@ -99,7 +99,7 @@ test('failed and cancelled place exports retain scope and recover with CSV', asy
   await page.locator('.save-button').click();
   await page.locator('#placesNav').click();
   await page.getByRole('button', { name: 'Your collection', exact: true }).click();
-  await page.locator('[data-place-id="756512"]').first().click();
+  await choosePlace(page, '756512');
   await page.getByRole('button', { name: 'Export 1 publication', exact: true }).click();
   await expect(page.locator('[data-export-status]')).toContainText(
     'No bibliography was downloaded',
@@ -123,7 +123,7 @@ test('500 saved works remain searchable and accessible at narrow widths and enla
   page,
 }) => {
   test.setTimeout(60000);
-  await blockTiles(page);
+  await stubPlaceServices(page);
   await page.addInitScript(() =>
     localStorage.setItem(
       'ancient-egypt-research-collection-v1',
@@ -175,7 +175,7 @@ test('500 saved works remain searchable and accessible at narrow widths and enla
 test('return from a publication place link restores a nonzero page position and focus after reload', async ({
   page,
 }) => {
-  await blockTiles(page);
+  await stubPlaceServices(page);
   const source = { ...work, abstract: 'Research on burial in ancient Egypt. '.repeat(100) };
   await page.route('https://api.crossref.org/**', (r) =>
     r.fulfill({
@@ -202,7 +202,7 @@ test('return from a publication place link restores a nonzero page position and 
 });
 
 test('unsupported place URL values fall back to an explicit valid scope', async ({ page }) => {
-  await blockTiles(page);
+  await stubPlaceServices(page);
   await page.route('https://api.crossref.org/**', (r) =>
     r.fulfill({ json: { message: { items: [work], 'total-results': 1 } } }),
   );
@@ -219,7 +219,7 @@ test('unsupported place URL values fall back to an explicit valid scope', async 
 test('Places drafts survive leaving the view and refreshing elsewhere in the app', async ({
   page,
 }) => {
-  await blockTiles(page);
+  await stubPlaceServices(page);
   await page.route('https://api.crossref.org/**', (r) =>
     r.fulfill({ json: { message: { items: [work], 'total-results': 1 } } }),
   );

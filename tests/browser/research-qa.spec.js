@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { blockTiles } from './fixtures.js';
+import { choosePlace, stubPlaceServices } from './fixtures.js';
 
 test('research views retain accessible controls and reflow across desktop and mobile', async ({
   page,
@@ -40,7 +40,7 @@ test('research views retain accessible controls and reflow across desktop and mo
   await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(1);
   await page.locator('.save-button').click();
-  await blockTiles(page);
+  await stubPlaceServices(page);
   for (const view of ['visualize', 'places', 'places-collection', 'collection']) {
     await page.locator(`#${view === 'places-collection' ? 'places' : view}Nav`).click();
     if (view === 'places-collection') {
@@ -52,7 +52,7 @@ test('research views retain accessible controls and reflow across desktop and mo
       await expect(page.locator('#visualize')).toContainText('9,000,000 keyword matches');
     if (view === 'places') {
       await expect(page.locator('#placeMap .leaflet-marker-icon').first()).toBeVisible();
-      await page.locator('[data-place-id="756512"]').first().click();
+      await choosePlace(page, '756512');
       await expect(page.locator('.place-results-status')).toContainText('1 candidate loaded');
     }
     if (view === 'collection') {

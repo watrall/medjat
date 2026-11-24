@@ -4,7 +4,7 @@ import { searchPlaces } from './place-search.js';
 
 const STEP = 20;
 
-function filter(id, label, options, onchange) {
+function selectFilter(id, label, options, onchange) {
   return el(
     'label',
     { for: id },
@@ -67,8 +67,8 @@ export function createPlaceFinder({
         onsubmit: (event) => event.preventDefault(),
       },
       el('label', { class: 'place-finder-query', for: 'placeSearch' }, 'Find a place', input),
-      filter('placeType', 'Type', { '': 'Any type', ...types }, reset('type')),
-      filter('placePeriod', 'Period', { '': 'Any period', ...periods }, reset('period')),
+      selectFilter('placeType', 'Type', { '': 'Any type', ...types }, reset('type')),
+      selectFilter('placePeriod', 'Period', { '': 'Any period', ...periods }, reset('period')),
     ),
     status,
     list,
@@ -86,12 +86,7 @@ export function createPlaceFinder({
       if (open) input.focus();
     },
   });
-  const element = el(
-    'section',
-    { class: 'place-finder', 'aria-label': 'Find a place' },
-    toggle,
-    body,
-  );
+  const element = el('div', { class: 'place-finder' }, toggle, body);
   function present() {
     const place = sites.find((site) => site.id === getSelected());
     element.dataset.open = String(open);
@@ -102,7 +97,7 @@ export function createPlaceFinder({
     );
   }
 
-  function choice(place, meta) {
+  function choice(id, name, meta) {
     return el(
       'li',
       {},
@@ -111,31 +106,38 @@ export function createPlaceFinder({
         {
           class: 'place-choice',
           type: 'button',
-          'data-place-id': place?.id ?? '',
-          'aria-pressed': String((place?.id ?? '') === getSelected()),
-          onclick: () => onChoose(place?.id ?? ''),
+          'data-place-id': id,
+          'aria-pressed': String(id === getSelected()),
+          onclick: () => onChoose(id),
         },
-        el('span', { class: 'place-choice-name' }, place ? place.name : 'All places'),
+        el('span', { class: 'place-choice-name' }, name),
         meta && el('span', { class: 'place-choice-meta' }, meta),
       ),
     );
   }
 
   function describe(place) {
-    if (getMode() === 'collection') {
-      const count = getSavedCount(place.id);
-      return `${count} saved`;
-    }
+    if (getMode() === 'collection') return `${getSavedCount(place.id)} saved`;
+    const named = (period) => periods[period];
+    const [first, last] = [place.periods?.[0], place.periods?.at(-1)];
     const span =
-      place.periods?.length > 2 ? [place.periods[0], place.periods.at(-1)] : place.periods;
-    return [
-      types[place.types[0]],
-      span
-        ?.map((period) => periods[period])
-        .join(span.length > 1 && place.periods.length > 2 ? ' to ' : ' and '),
-    ]
-      .filter(Boolean)
-      .join(' · ');
+      place.periods?.length > 2
+        ? `${named(first)} to ${named(last)}`
+        : place.periods?.map(named).join(' and ');
+    return [types[place.types[0]], span].filter(Boolean).join(' · ');
+  }
+
+  function statusText({ collection, searching, found, shown, saved }) {
+    const count = (n, one, many) => `${n.toLocaleString()} ${n === 1 ? one : many}`;
+    if (collection && !searching)
+      return saved.length
+        ? `${count(saved.length, 'place has', 'places have')} saved publications. Search to choose another place.`
+        : 'None of your saved publications mentions a recognised place yet. Search to choose a place.';
+    if (!searching)
+      return `Featured places. Search to find any of ${sites.length.toLocaleString()} places in Egypt.`;
+    if (!found.length) return 'No place matches. Try another spelling or remove a filter.';
+    const tail = found.length > shown.length ? `; showing ${shown.length}` : '';
+    return `${count(found.length, 'place matches', 'places match')}${tail}.`;
   }
 
   function update() {
@@ -144,31 +146,23 @@ export function createPlaceFinder({
     const saved = collection ? sites.filter((place) => getSavedCount(place.id) > 0) : [];
     const found = searching
       ? searchPlaces(sites, state)
-      : collection
-        ? searchPlaces(saved, {})
-        : searchPlaces(sites, {}).filter((place) => place.featured);
-    const shown = found.slice(0, searching || collection ? state.limit : found.length);
-    const focused = document.activeElement?.closest?.('.place-finder-results')
+      : searchPlaces(collection ? saved : sites.filter((place) => place.featured));
+    const paged = searching || collection;
+    const shown = paged ? found.slice(0, state.limit) : found;
+    const focused = list.contains(document.activeElement)
       ? document.activeElement.dataset.placeId
       : null;
-    list.dataset.layout = searching || collection ? 'rows' : 'chips';
+    list.dataset.layout = paged ? 'rows' : 'chips';
     list.replaceChildren(
-      ...(collection ? [choice(null)] : []),
-      ...shown.map((place) => choice(place, searching || collection ? describe(place) : '')),
+      ...(collection ? [choice('', 'All places')] : []),
+      ...shown.map((place) => choice(place.id, place.name, paged ? describe(place) : '')),
     );
     if (focused !== null) list.querySelector(`[data-place-id="${CSS.escape(focused)}"]`)?.focus();
-    if (collection && !searching)
-      status.textContent = saved.length
-        ? `${saved.length} ${saved.length === 1 ? 'place has' : 'places have'} saved publications. Search to choose another place.`
-        : 'None of your saved publications mentions a recognised place yet. Search to choose a place.';
-    else if (!searching)
-      status.textContent = `Featured places. Search to find any of ${sites.length.toLocaleString()} places in Egypt.`;
-    else if (!found.length)
-      status.textContent = 'No place matches. Try another spelling or remove a filter.';
-    else
-      status.textContent = `${found.length.toLocaleString()} ${found.length === 1 ? 'place matches' : 'places match'}${found.length > shown.length ? `; showing ${shown.length}` : ''}.`;
+    status.textContent = statusText({ collection, searching, found, shown, saved });
+    const hadFocus = document.activeElement === more;
     more.hidden = found.length <= shown.length;
     more.textContent = `Show ${Math.min(STEP, found.length - shown.length)} more places`;
+    if (hadFocus && more.hidden) list.querySelector('li:last-child .place-choice')?.focus();
   }
 
   return {

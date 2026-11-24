@@ -67,17 +67,15 @@ PHARAONIC = ('predynastic', 'early-dynastic', 'old-kingdom', 'first-intermediate
 
 
 def period_of(key):
-    if key.startswith(PHARAONIC) or key in ('1200-bc-middle-east',):
+    if key.startswith(PHARAONIC) or '-bc-' in key:
         return 'pharaonic'
     if key.startswith(('ptolemaic', 'macedonian', 'hellenistic')):
         return 'ptolemaic'
-    if key.startswith('late-antique') or 'late-antique' in key:
+    if 'late-antique' in key:
         return 'late-antique'
-    if key.startswith(('roman', 'transition-roman')) or 'roman' in key:
+    if 'roman' in key:
         return 'roman'
-    if key:
-        return 'islamic-modern'
-    return None
+    return 'islamic-modern' if key else None
 
 
 def inside_egypt(lat, lon):
@@ -92,8 +90,15 @@ def inside_egypt(lat, lon):
     return lon <= 34.89 - (min(lat, 31.22) - 29.49) * 0.358
 
 
+def point(row):
+    try:
+        return float(row['reprLat']), float(row['reprLong'])
+    except ValueError:
+        return None
+
+
 def is_latin(text):
-    return all(ch in " -'’‘ʿʾ.," or ch.isalpha() and 'LATIN' in unicodedata.name(ch, '') for ch in text)
+    return all(ch in " -'’‘ʿʾ.," or (ch.isalpha() and 'LATIN' in unicodedata.name(ch, '')) for ch in text)
 
 
 def fold(text):
@@ -117,10 +122,95 @@ def rows(path):
 
 
 def digest(*paths):
+    """Hash the decompressed dumps, so the value does not depend on how they were compressed."""
     sha = hashlib.sha256()
     for path in paths:
-        sha.update(path.read_bytes())
+        with gzip.open(path, 'rb') as handle:
+            for chunk in iter(lambda: handle.read(1 << 20), b''):
+                sha.update(chunk)
     return sha.hexdigest()
+
+
+def read_places(places_path):
+    """Return every place, and the subset inside Egypt that has a site-like feature type."""
+    everything = {row['id']: row for row in rows(places_path)}
+    egypt = {}
+    for pid, row in everything.items():
+        coordinates = point(row)
+        if not coordinates or not inside_egypt(*coordinates):
+            continue
+        types = {t.strip() for t in row['featureTypes'].split(',')}
+        categories = sorted({TYPE_TO_CATEGORY[t] for t in types if t in TYPE_TO_CATEGORY})
+        if categories or pid in FEATURED:
+            egypt[pid] = dict(row, lat=coordinates[0], lon=coordinates[1], categories=categories)
+    missing = set(FEATURED) - set(egypt)
+    if missing:
+        raise ValueError(f'Reviewed places are missing from the dump or outside Egypt: {sorted(missing)}')
+    return everything, egypt
+
+
+def read_names(names_path, everything, egypt):
+    """Return the names of each Egyptian place, and which places use each name anywhere."""
+    variants, owners = {}, {}
+    def add(name, pid):
+        owners.setdefault(fold(name), set()).add(pid)
+        if pid in egypt:
+            variants.setdefault(pid, set()).add(name)
+    for row in rows(names_path):
+        pid = row['pid'].rsplit('/', 1)[-1]
+        for field in ('nameTransliterated', 'nameAttested'):
+            for value in (row[field] or '').split(','):
+                if value.strip():
+                    add(unicodedata.normalize('NFC', value.strip()), pid)
+    for pid, row in everything.items():
+        for part in row['title'].split('/'):
+            if part.strip():
+                add(unicodedata.normalize('NFC', part.strip()), pid)
+    return variants, owners
+
+
+def build_place(pid, row, names, owners, outside, stop, policy):
+    featured = pid in FEATURED
+    if featured:
+        reviewed = policy['sites'][pid]
+        absent = [alias for alias in reviewed if alias not in names]
+        if absent:
+            raise ValueError(f'{FEATURED[pid]}: reviewed names absent from the Pleiades dump: {absent}')
+        aliases = sorted({FEATURED[pid], *reviewed})
+    else:
+        aliases = sorted(
+            name for name in names
+            if len(name) >= 5 and is_latin(name) and fold(name) not in stop and owners[fold(name)] == {pid}
+        )
+    tags = row['tags']
+    place = dict(
+        id=pid,
+        name=FEATURED[pid] if featured else unicodedata.normalize('NFC', row['title'].strip()),
+        latitude=round(row['lat'], 5),
+        longitude=round(row['lon'], 5),
+        types=row['categories'],
+    )
+    periods = {period_of(key.strip()) for key in row['timePeriodsKeys'].split(',')} - {None}
+    if periods:
+        place['periods'] = sorted(periods, key=list(PERIODS).index)
+    if row['locationPrecision'] in ('rough', 'related'):
+        place['precision'] = row['locationPrecision']
+    if featured:
+        place['featured'] = True
+    if featured or any(mark in tags for mark in ('dare:major=1', 'major settlement', 'major fort')):
+        place['major'] = True
+    if any(owners.get(fold(alias), set()) & outside for alias in aliases):
+        place['shared'] = True
+    place['aliases'] = aliases
+    place['otherNames'] = sorted(name for name in names if name not in aliases and is_latin(name))
+    return place
+
+
+def write(path, header, places):
+    """One place per line, so that a rebuilt index produces a readable diff."""
+    lines = ',\n'.join(json.dumps(place, ensure_ascii=False, separators=(',', ':')) for place in places)
+    body = json.dumps(header, ensure_ascii=False, indent=2)[:-2]
+    path.write_text(f'{body},\n  "places": [\n{lines}\n  ]\n}}\n')
 
 
 def main():
@@ -131,81 +221,17 @@ def main():
     policy = json.loads((ROOT / 'data/place-name-policy.json').read_text())
     places_path, names_path = fetch('places', args.refresh), fetch('names', args.refresh)
 
-    everything = {}
-    for row in rows(places_path):
-        everything[row['id']] = row
-    egypt = {}
-    for pid, row in everything.items():
-        try:
-            lat, lon = float(row['reprLat']), float(row['reprLong'])
-        except ValueError:
-            continue
-        categories = sorted({TYPE_TO_CATEGORY[t.strip()] for t in row['featureTypes'].split(',') if t.strip() in TYPE_TO_CATEGORY})
-        if inside_egypt(lat, lon) and (categories or pid in FEATURED):
-            egypt[pid] = dict(row, lat=lat, lon=lon, categories=categories)
-    missing = set(FEATURED) - set(egypt)
-    if missing:
-        raise ValueError(f'Reviewed places are missing from the dump or outside the Egypt extent: {sorted(missing)}')
-
-    variants = {}
-    world = {}
-    for row in rows(names_path):
-        pid = row['pid'].rsplit('/', 1)[-1]
-        for field in ('nameTransliterated', 'nameAttested'):
-            for value in (row[field] or '').split(','):
-                value = unicodedata.normalize('NFC', value.strip())
-                if not value:
-                    continue
-                world.setdefault(fold(value), set()).add(pid)
-                if pid in egypt:
-                    variants.setdefault(pid, set()).add(value)
-    for pid, row in everything.items():
-        for part in row['title'].split('/'):
-            if part.strip():
-                world.setdefault(fold(part.strip()), set()).add(pid)
-
+    everything, egypt = read_places(places_path)
+    variants, owners = read_names(names_path, everything, egypt)
+    outside = {pid for pid, row in everything.items() if (c := point(row)) and not inside_egypt(*c)}
     stop = {fold(name) for name in policy['notPlaceNames']}
-    places, accepted = [], []
+    places = []
     for pid, row in sorted(egypt.items(), key=lambda item: int(item[0])):
-        title = unicodedata.normalize('NFC', row['title'].strip())
-        names = {title, *(part.strip() for part in title.split('/')), *variants.get(pid, ())}
-        names = {name for name in names if name}
-        if pid in FEATURED:
-            label = FEATURED[pid]
-            reviewed = policy['sites'][pid]
-            absent = [alias for alias in reviewed if alias not in names]
-            if absent:
-                raise ValueError(f'{label}: reviewed names absent from the Pleiades dump: {absent}')
-            match = sorted({label, *reviewed})
-        else:
-            label = title
-            match = sorted(
-                name for name in names
-                if len(name) >= 5 and is_latin(name) and fold(name) not in stop
-                and world.get(fold(name), {pid}) == {pid}
-            )
-        outside = [name for name in match if world.get(fold(name), set()) - set(egypt)]
-        record = dict(id=pid, name=label, latitude=round(row['lat'], 5), longitude=round(row['lon'], 5))
-        record['types'] = row['categories']
-        periods = sorted({p for key in row['timePeriodsKeys'].split(',') if (p := period_of(key.strip()))}, key=list(PERIODS).index)
-        if periods:
-            record['periods'] = periods
-        if row['locationPrecision'] in ('rough', 'related'):
-            record['precision'] = row['locationPrecision']
-        tags = row['tags']
-        if pid in FEATURED:
-            record['featured'] = True
-        if 'dare:major=1' in tags or 'major settlement' in tags or 'major fort' in tags or pid in FEATURED:
-            record['major'] = True
-        if outside:
-            record['shared'] = True
-        record['match'] = match
-        record['otherNames'] = sorted(name for name in names if name not in match and is_latin(name))
-        places.append(record)
-        if args.review and pid not in FEATURED:
-            accepted.extend(match)
+        names = {n for n in (row['title'].strip(), *row['title'].split('/'), *variants.get(pid, ())) if n.strip()}
+        names = {unicodedata.normalize('NFC', n.strip()) for n in names}
+        places.append(build_place(pid, row, names, owners, outside, stop, policy))
 
-    result = dict(
+    header = dict(
         source='Pleiades',
         attribution='Pleiades contributors; Ancient World Mapping Center and Institute for the Study of the Ancient World',
         license='CC BY 3.0',
@@ -218,12 +244,10 @@ def main():
         periods=PERIODS,
         count=len(places),
     )
-    lines = ',\n'.join(json.dumps(place, ensure_ascii=False, separators=(',', ':')) for place in places)
-    head = json.dumps(result, ensure_ascii=False, indent=2)[:-2]
-    (ROOT / 'data/places.json').write_text(f'{head},\n  "places": [\n{lines}\n  ]\n}}\n')
-    print(f'Wrote {len(places)} Pleiades places ({sum(1 for p in places if p["match"])} can match publication text)')
+    write(ROOT / 'data/places.json', header, places)
+    print(f'Wrote {len(places)} Pleiades places ({sum(1 for p in places if p["aliases"])} can match publication text)')
     if args.review:
-        print('\n'.join(sorted(set(accepted), key=str.lower)))
+        print('\n'.join(sorted({a for p in places if not p.get('featured') for a in p['aliases']}, key=str.lower)))
 
 
 if __name__ == '__main__':

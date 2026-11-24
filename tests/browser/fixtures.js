@@ -9,7 +9,11 @@ const pleiades = {
   connections: [{}],
   creators: [{ name: 'M. Drew Bear' }, { name: 'R. Talbert' }],
 };
-export async function blockTiles(page) {
+// Keeps place tests off the network: no map tiles, and a fixed Pleiades record for any place.
+export async function stubPlaceServices(page) {
   await page.route('https://tile.openstreetmap.org/**', (route) => route.abort());
   await page.route('https://pleiades.stoa.org/**', (route) => route.fulfill({ json: pleiades }));
+}
+export async function choosePlace(page, id) {
+  await page.locator(`[data-place-id="${id}"]`).first().click();
 }
