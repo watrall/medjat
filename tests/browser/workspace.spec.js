@@ -1963,3 +1963,20 @@ test('each saved search is its own unit, apart from its neighbours, with a red b
   expect(await color(rows.nth(0).locator('[aria-pressed="true"] .icon'))).toBe(accent);
   expect(await color(rows.nth(3).locator('[aria-pressed="false"] .icon'))).not.toBe(accent);
 });
+
+test('the landing page keeps its kicker above the headline, and a search tucks both away', async ({
+  page,
+}) => {
+  await fixtures(page);
+  await page.goto('/');
+  const kicker = page.locator('.intro-eyebrow');
+  await expect(kicker).toHaveText('Ancient worlds. New questions.');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Follow the research.');
+  expect((await kicker.boundingBox()).y).toBeLessThan(
+    (await page.getByRole('heading', { level: 1 }).boundingBox()).y,
+  );
+  await page.locator('#searchInput').fill('Hatshepsut');
+  await page.locator('#primarySearchSubmit').click();
+  await expect(page.locator('.result-row').first()).toBeVisible();
+  await expect(kicker).not.toBeInViewport();
+});
