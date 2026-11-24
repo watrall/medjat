@@ -436,16 +436,15 @@ export function createInspector(
                 },
                 icon('map-pin'),
                 place.name,
-                el(
-                  'span',
-                  {
-                    class: 'place-mention-field',
-                    title: `Matched “${evidence.alias}” in the ${evidence.field}`,
-                  },
-                  evidence.alias.toLowerCase() === place.name.toLowerCase()
-                    ? evidence.field
-                    : `${evidence.field}: “${evidence.alias}”`,
-                ),
+                evidence.alias.toLowerCase() !== place.name.toLowerCase() &&
+                  el(
+                    'span',
+                    {
+                      class: 'place-mention-field',
+                      title: `Matched “${evidence.alias}” in the ${evidence.field}`,
+                    },
+                    `as “${evidence.alias}”`,
+                  ),
               ),
             ),
           ),

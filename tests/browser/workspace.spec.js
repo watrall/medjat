@@ -1643,3 +1643,15 @@ test('the selected result is marked neutrally, never in the error red', async ({
   expect(row).toBe(neutral);
   expect(row).not.toBe(red);
 });
+
+test('a place mention shows only the place, plus the name it matched when that differs', async ({
+  page,
+}) => {
+  await fixtures(page);
+  await page.goto('/?q=ancient+egypt');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  const place = page.getByRole('button', { name: /^Explore Deir el-Medina in Places$/ });
+  await expect(place).toBeVisible();
+  await expect(place).not.toContainText('title');
+  await expect(place).not.toContainText('abstract');
+});
