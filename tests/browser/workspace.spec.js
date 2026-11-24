@@ -1611,3 +1611,12 @@ test('a chapter lists the other chapters of its book', async ({ page }) => {
   await items.getByRole('button', { name: 'Inspect chapter' }).first().click();
   await expect(page.locator('.detail-title')).toHaveText('A referenced publication');
 });
+
+test('the publication type list says edited volumes, not edited books', async ({ page }) => {
+  await fixtures(page);
+  await page.goto('/?q=ancient+egypt');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await page.getByRole('button', { name: /Show more types/ }).click();
+  await expect(page.getByRole('radio', { name: 'Edited volumes' })).toBeVisible();
+  await expect(page.getByRole('radio', { name: 'Edited books' })).toHaveCount(0);
+});

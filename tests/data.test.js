@@ -421,3 +421,13 @@ test('other chapters of a book come back in page order from one relation query',
     /unexpected response/,
   );
 });
+
+test('book types use the terms scholars use', async () => {
+  const { normalizeWork, TYPES } = await import('../js/data.js');
+  assert.equal(normalizeWork({ DOI: '10.1234/a', type: 'edited-book' }).typeLabel, 'Edited volume');
+  assert.equal(
+    normalizeWork({ DOI: '10.1234/b', type: 'reference-book' }).typeLabel,
+    'Reference work',
+  );
+  assert.equal(TYPES.get('edited-book'), 'Edited volume');
+});

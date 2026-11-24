@@ -49,7 +49,8 @@ export const TYPES = new Map([
   ['report', 'Report'],
   ['posted-content', 'Preprint'],
   ['reference-entry', 'Reference entry'],
-  ['edited-book', 'Edited book'],
+  ['edited-book', 'Edited volume'],
+  ['reference-book', 'Reference work'],
   ['monograph', 'Monograph'],
   ['dataset', 'Dataset'],
 ]);
