@@ -878,7 +878,7 @@ function renderStatus() {
     $('resultCount').textContent =
       `${visibleWorks().length} of ${state.collection.size} saved publications`;
     $('scopeNote').textContent =
-      'Your collection contains deposited records, not downloaded full texts.';
+      'Your collection holds Crossref records, not downloaded full texts.';
     $('resultsFooter').replaceChildren();
     $('requestNotice').hidden = !state.storageWarning;
     if (state.storageWarning)

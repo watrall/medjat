@@ -32,6 +32,7 @@ async function fixtures(
     plainReference = false,
     updated = false,
     inBook = false,
+    bare = false,
   } = {},
 ) {
   const requests = [];
@@ -147,6 +148,10 @@ async function fixtures(
           source: 'publisher',
         },
       ];
+    }
+    if (bare && items.length) {
+      delete items[0].abstract;
+      items[0].reference = [];
     }
     if (inBook)
       for (const item of items)
@@ -1454,7 +1459,7 @@ test('inspector views follow the tab pattern with arrow-key navigation', async (
   const connections = page.getByRole('tab', { name: 'Connections', exact: true });
   await expect(connections).toBeFocused();
   await expect(connections).toHaveAttribute('aria-selected', 'true');
-  await expect(page.getByRole('tabpanel')).toContainText('Follow deposited connections');
+  await expect(page.getByRole('tabpanel')).toContainText('Follow connections');
   await page.keyboard.press('End');
   await expect(page.getByRole('tab', { name: 'Cite', exact: true })).toBeFocused();
   await page.keyboard.press('Home');
@@ -1654,4 +1659,22 @@ test('a place mention shows only the place, plus the name it matched when that d
   await expect(place).toBeVisible();
   await expect(place).not.toContainText('title');
   await expect(place).not.toContainText('abstract');
+});
+
+test('missing abstracts and references say not available, without the word deposited', async ({
+  page,
+}) => {
+  await fixtures(page, { bare: true });
+  await page.goto('/?q=ancient+egypt');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  const panel = page.locator('#inspector');
+  await expect(panel).toContainText(
+    'No abstract available. Open the publication for more information.',
+  );
+  await expect(panel).not.toContainText(/deposit/i);
+  await page.getByRole('tab', { name: 'Connections', exact: true }).click();
+  await expect(panel).toContainText('No reference list available.');
+  await expect(panel).not.toContainText(/deposit/i);
+  await page.getByRole('tab', { name: 'Cite', exact: true }).click();
+  await expect(panel).not.toContainText(/deposit/i);
 });

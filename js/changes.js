@@ -45,7 +45,7 @@ export function createChangeReview(root, { getRecords, onAccept, onInspect }) {
       el(
         'p',
         {},
-        'Check saved DOI metadata for changes. Publication dates, registration dates, and metadata deposit dates are different. No detected update is not a guarantee that a publication has no correction or retraction.',
+        'Check saved DOI metadata for changes. Publication dates, registration dates, and the dates a publisher last updated the record are different. No detected update is not a guarantee that a publication has no correction or retraction.',
       ),
       cancel,
       status,

@@ -314,8 +314,6 @@ export async function getCitation(doi, style = 'apa', options = {}) {
     headers: { Accept: `text/x-bibliography; style=${styles[style]}; locale=en-US` },
   });
   if (!result.body.trim())
-    throw new Error(
-      'A formatted citation was not returned. You can still export the deposited metadata.',
-    );
+    throw new Error('A formatted citation was not returned. You can still export the metadata.');
   return result.body.trim();
 }

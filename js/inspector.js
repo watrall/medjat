@@ -163,7 +163,7 @@ export function createInspector(
       root.append(
         emptyState(
           'A closer look.',
-          'Choose a publication to inspect its metadata, follow deposited references, or save it to your collection.',
+          'Choose a publication to inspect its metadata, follow references, or save it to your collection.',
           'book-open',
         ),
       );
@@ -291,7 +291,7 @@ export function createInspector(
       el(
         'p',
         { class: 'detail-provenance' },
-        'Member-deposited metadata via Crossref. Identifiers and relationships are shown only when supplied.',
+        'Metadata from Crossref, supplied by the publisher. Identifiers and relationships appear only when the publisher provided them.',
       ),
     );
     if (focusKey)
@@ -496,8 +496,7 @@ export function createInspector(
         el(
           'p',
           { class: 'abstract-text' },
-          work.abstract ||
-            'No abstract was deposited for this record. Open the publication for more information.',
+          work.abstract || 'No abstract available. Open the publication for more information.',
         ),
       ),
     );
@@ -549,13 +548,13 @@ export function createInspector(
     if (licenses.length)
       container.append(
         section(
-          'Deposited licenses',
+          'Licenses',
           ...licenses.map((url) => el('p', {}, externalLink(url, url))),
           openLicenseURL(work) &&
             el(
               'p',
               { class: 'scope-note' },
-              'An open license is deposited. This describes reuse rights; it does not confirm that a free full text is available, so check the publisher page.',
+              'This record lists an open license. It describes reuse rights; it does not confirm that a free full text is available, so check the publisher page.',
             ),
         ),
       );
@@ -724,7 +723,7 @@ export function createInspector(
   function connections(container) {
     container.append(
       section(
-        'Follow deposited connections',
+        'Follow connections',
         el(
           'p',
           {},
@@ -750,9 +749,7 @@ export function createInspector(
       );
     const refs = work.references;
     if (!refs.length)
-      container.append(
-        section('References', el('p', {}, 'No reference list was deposited for this record.')),
-      );
+      container.append(section('References', el('p', {}, 'No reference list available.')));
     else {
       const list = el('ol', { class: 'reference-list' });
       for (const [index, ref] of refs.slice(0, referenceLimit).entries()) {

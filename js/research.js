@@ -14,7 +14,7 @@ function network(data) {
   svg.setAttribute('role', 'img');
   svg.setAttribute(
     'aria-label',
-    'Deposited citation network. Seed publications on the left, referenced DOIs on the right. Connection lists provide the same evidence.',
+    'Citation network. Seed publications on the left, referenced DOIs on the right. Connection lists provide the same evidence.',
   );
   const node = (tag, attrs, text) => {
     const n = document.createElementNS(ns, tag);
@@ -237,7 +237,7 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
       el(
         'p',
         {},
-        `${data.seeds.length} seed publications analyzed${total > RESEARCH_LIMITS.seeds ? ` of ${total}; select up to ${RESEARCH_LIMITS.seeds} records to control this set` : ''}. ${data.missingReferenceLists} have no deposited reference list. This is a bounded research set, not the whole search.`,
+        `${data.seeds.length} seed publications analyzed${total > RESEARCH_LIMITS.seeds ? ` of ${total}; select up to ${RESEARCH_LIMITS.seeds} records to control this set` : ''}. ${data.missingReferenceLists} have no reference list. This is a bounded research set, not the whole search.`,
       ),
     );
     root.append(
@@ -266,7 +266,7 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
       el(
         'p',
         { class: 'scope-note' },
-        'Solid lines are deposited DOI citations; dashed lines are researcher-confirmed matches. Connection lists below retain source provenance.',
+        'Solid lines are citations that include a DOI; dashed lines are researcher-confirmed matches. Connection lists below retain source provenance.',
       ),
       network(data),
     );
@@ -291,7 +291,7 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
             : el(
                 'p',
                 {},
-                'No items in this category. Missing deposited references can limit discovery.',
+                'No items in this category. Missing reference lists can limit discovery.',
               ),
           rows.length > RESEARCH_LIMITS.reviewRows &&
             el(
@@ -306,7 +306,7 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
       el(
         'details',
         {},
-        el('summary', {}, 'Deposited relationships'),
+        el('summary', {}, 'Listed relationships'),
         el(
           'ul',
           {},
@@ -324,7 +324,7 @@ export function createResearch(root, { getSeeds, getSaved, onSave, onInspect }) 
     worker?.terminate();
     const id = ++generation,
       seeds = getSeeds();
-    root.replaceChildren(el('p', { role: 'status' }, 'Comparing deposited references…'));
+    root.replaceChildren(el('p', { role: 'status' }, 'Comparing references…'));
     worker = new Worker(new URL('./research-worker.js', import.meta.url), { type: 'module' });
     worker.onmessage = (event) => {
       if (id !== generation) return;
