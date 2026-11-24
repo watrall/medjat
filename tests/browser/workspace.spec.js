@@ -1214,12 +1214,12 @@ test('the landing stays idle and thematic tiles submit their exact titles', asyn
   await expect(first).toBeFocused();
   await expect(first.locator('.tile-arrow')).toHaveCSS('opacity', '1');
   await page.keyboard.press('Enter');
-  await expect(search).toHaveValue('Hierakonpolis: The City of the Hawk');
+  await expect(search).toHaveValue('Hierakonpolis and the Predynastic elite cemetery');
   await expect(page.locator('#resultsTitle')).toBeFocused();
   await expect(page.locator('.result-row')).toHaveCount(25);
   expect(requests).toHaveLength(1);
   expect(requests[0].searchParams.get('query.bibliographic')).toBe(
-    'Hierakonpolis: The City of the Hawk',
+    'Hierakonpolis and the Predynastic elite cemetery',
   );
   const narrower = page.getByRole('button', { name: 'Search just Hierakonpolis' });
   await expect(narrower).toBeInViewport();
@@ -1232,7 +1232,7 @@ test('the landing stays idle and thematic tiles submit their exact titles', asyn
   expect(requests.at(-1).searchParams.get('query.bibliographic')).toBe('Hierakonpolis');
   await page.goBack();
   await expect(page.locator('#scopeNote')).toContainText(
-    'Results for “Hierakonpolis: The City of the Hawk”',
+    'Results for “Hierakonpolis and the Predynastic elite cemetery”',
   );
   await expect(narrower).toBeVisible();
   const beforeLanding = requests.length;
@@ -1260,7 +1260,7 @@ test('a missing landing photograph leaves its tile visible and usable', async ({
   const requests = await fixtures(page);
   await page.route('**/assets/landing/hierakonpolis*.webp', (route) => route.abort());
   await page.goto('/');
-  const tile = page.getByRole('link', { name: 'Hierakonpolis: The City of the Hawk' });
+  const tile = page.getByRole('link', { name: 'Hierakonpolis and the Predynastic elite cemetery' });
   await expect(tile).toBeVisible();
   await expect(tile.locator('img')).toHaveJSProperty('naturalWidth', 0);
   expect((await tile.boundingBox()).height).toBeGreaterThan(44);

@@ -20,7 +20,7 @@ export const LANDING_TILES = [
   {
     id: 'hierakonpolis',
     group: 'sites',
-    title: 'Hierakonpolis: The City of the Hawk',
+    title: 'Hierakonpolis and the Predynastic elite cemetery',
     period: 'predynastic',
     image: 'hierakonpolis',
     credit: {
