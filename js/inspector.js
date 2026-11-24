@@ -14,12 +14,12 @@ import {
   CITATION_STYLES,
   findCitationMatches,
   getBookChapters,
+  getCitation,
+  getWork,
   getWorks,
   RELATED_LIMIT,
-  getWork,
-  getCitation,
 } from './crossref.js';
-import { citationLine } from './citation-line.js';
+import { citationLine, nameSeparator } from './citation-line.js';
 import { el, icon, externalLink, emptyState, notify } from './dom.js';
 import { downloadText } from './download.js';
 import { createCover } from './covers.js';
@@ -35,6 +35,19 @@ import {
 
 const CITED_BY_NOTE =
   'Counts citations from reference lists that Crossref members deposited. It is not complete, and Crossref does not list the citing works.';
+const RELATION_LABELS = {
+  'is-part-of': 'Part of',
+  'has-part': 'Has part',
+  'is-preprint-of': 'Preprint of',
+  'has-preprint': 'Has preprint',
+  'is-version-of': 'Version of',
+  'has-version': 'Has version',
+  'is-supplement-to': 'Supplement to',
+  'is-supplemented-by': 'Supplemented by',
+  'is-review-of': 'Review of',
+  'is-reviewed-by': 'Reviewed by',
+  'is-same-as': 'Same as',
+};
 const TABS = [
   ['overview', 'Overview'],
   ['connections', 'Connections'],
@@ -191,6 +204,8 @@ export function createInspector(
       );
       return;
     }
+    const access = openAccess(work);
+    const kind = [work.typeLabel, work.container && work.publisher].filter(Boolean).join(', ');
     if (trail.length)
       root.append(
         el(
@@ -258,7 +273,7 @@ export function createInspector(
         { class: 'detail-authors' },
         work.authors.length
           ? work.authors.flatMap((author, index) => [
-              index > 0 && (index === work.authors.length - 1 ? ' and ' : ', '),
+              nameSeparator(index, work.authors.length),
               el(
                 'span',
                 {},
@@ -278,7 +293,7 @@ export function createInspector(
                   work.editors.length > 1 ? 'Editors: ' : 'Editor: ',
                 ),
                 ...work.editors.flatMap((editor, index) => [
-                  index > 0 && (index === work.editors.length - 1 ? ' and ' : ', '),
+                  nameSeparator(index, work.editors.length),
                   el('span', {}, editor.name),
                 ]),
               ]
@@ -287,17 +302,13 @@ export function createInspector(
     );
     root.append(
       el('p', { class: 'detail-meta' }, citationLine(work, { skip: ['authors'] })),
-      el(
-        'p',
-        { class: 'detail-kind' },
-        [work.typeLabel, work.container && work.publisher].filter(Boolean).join(', '),
-      ),
-      openAccess(work) &&
+      el('p', { class: 'detail-kind' }, kind),
+      access &&
         el(
           'p',
           { class: 'detail-open' },
           el('span', { class: 'metadata-badge badge-open' }, icon('book-open-text'), 'Open access'),
-          externalLink(openAccess(work).label, openAccess(work).url),
+          externalLink(access.label, access.url),
         ),
       work.citedBy !== null &&
         el(
@@ -384,7 +395,7 @@ export function createInspector(
           icon('chevron-down'),
         ),
       ),
-      chaptersOpen && chapterPanel(others),
+      chapterPanel(others),
     );
     return bookElement;
   }
@@ -423,16 +434,16 @@ export function createInspector(
   function chapterPanel(others) {
     return el(
       'div',
-      { id: 'book-chapters', class: 'book-chapters' },
+      { id: 'book-chapters', class: 'book-chapters', hidden: !chaptersOpen },
       chapters?.loading && el('p', { role: 'status', class: 'scope-note' }, 'Searching Crossref…'),
       chapters?.error && el('p', { role: 'alert', class: 'scope-note' }, chapters.error),
-      others && !others.length
-        ? el(
-            'p',
-            { class: 'scope-note', role: 'status' },
-            'Crossref lists no other chapters of this book.',
-          )
-        : others && chapterList(others),
+      others?.length === 0 &&
+        el(
+          'p',
+          { class: 'scope-note', role: 'status' },
+          'Crossref lists no other chapters of this book.',
+        ),
+      others?.length > 0 && chapterList(others),
     );
   }
   function chapterList(others) {
@@ -455,7 +466,7 @@ export function createInspector(
             el(
               'button',
               {
-                class: 'chapter-title',
+                class: 'record-title',
                 'data-focus-key': `chapter-${index}`,
                 disabled: following,
                 onclick: () => follow(chapter.doi),
@@ -464,7 +475,7 @@ export function createInspector(
             ),
             el(
               'p',
-              { class: 'chapter-citation' },
+              { class: 'record-citation' },
               citationLine(chapter, { skip: ['year', 'source'] }),
             ),
           ),
@@ -602,6 +613,7 @@ export function createInspector(
           ),
         ),
       );
+    const access = openAccess(work);
     const licenses = licenseRows(work);
     if (licenses.length)
       container.append(
@@ -619,11 +631,11 @@ export function createInspector(
               ),
             ),
           ),
-          openAccess(work) &&
+          access &&
             el(
               'p',
               { class: 'scope-note' },
-              `Open access under ${openAccess(work).label}. The status comes from the license the publisher declared to Crossref.`,
+              `Open access under ${access.label}. The status comes from the license the publisher declared to Crossref.`,
             ),
           el(
             'p',
@@ -725,19 +737,6 @@ export function createInspector(
       ),
     );
   }
-  const RELATION_LABELS = {
-    'is-part-of': 'Part of',
-    'has-part': 'Has part',
-    'is-preprint-of': 'Preprint of',
-    'has-preprint': 'Has preprint',
-    'is-version-of': 'Version of',
-    'has-version': 'Has version',
-    'is-supplement-to': 'Supplement to',
-    'is-supplemented-by': 'Supplemented by',
-    'is-review-of': 'Review of',
-    'is-reviewed-by': 'Reviewed by',
-    'is-same-as': 'Same as',
-  };
   function relationLabel(type) {
     if (RELATION_LABELS[type]) return RELATION_LABELS[type];
     const text = plainText(type.replaceAll('-', ' '));
@@ -761,9 +760,15 @@ export function createInspector(
     try {
       related = { works: await getWorks(entries.map((entry) => entry.doi)) };
     } catch {
-      related = { works: new Map() };
+      related = { failed: true };
     }
     if (id === generation) render();
+  }
+  function relatedNote() {
+    if (related?.loading) return 'Loading details…';
+    return related?.failed
+      ? 'Details could not be loaded.'
+      : 'Details not available from Crossref.';
   }
   function relatedList(entries) {
     const shown = entries.slice(0, RELATED_LIMIT);
@@ -790,20 +795,20 @@ export function createInspector(
                   el(
                     'button',
                     {
-                      class: 'chapter-title',
+                      class: 'record-title',
                       'data-focus-key': `relation-${index}`,
                       disabled: following,
                       onclick: () => follow(doi),
                     },
                     displayTitle(record.title),
                   ),
-                  el('p', { class: 'chapter-citation' }, citationLine(record, { doi: true })),
+                  el('p', { class: 'record-citation' }, citationLine(record, { doi: true })),
                 ]
               : el(
                   'p',
-                  { class: 'chapter-citation' },
+                  { class: 'record-citation' },
                   externalLink(doi, doiURL(doi)),
-                  related?.loading ? ' Loading details…' : ' Details not available from Crossref.',
+                  ` ${relatedNote()}`,
                 ),
           );
         }),

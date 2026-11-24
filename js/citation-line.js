@@ -3,11 +3,14 @@ import { el } from './dom.js';
 
 const MAX_NAMES = 3;
 
+// What goes before the name at this position: nothing, ", ", or " and " before the last.
+export const nameSeparator = (index, count) =>
+  index === 0 ? '' : index === count - 1 ? ' and ' : ', ';
+
 export function citationNames(people) {
   const names = people.map((person) => person.name);
   if (names.length > MAX_NAMES) return `${names.slice(0, MAX_NAMES).join(', ')} et al.`;
-  if (names.length < 2) return names.join('');
-  return `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`;
+  return names.map((name, index) => nameSeparator(index, names.length) + name).join('');
 }
 
 function creators(work) {
@@ -31,7 +34,7 @@ function source(work) {
 
 // Comma-separated groups, each a run of styled pieces, in the order a citation gives them.
 export function citationGroups(work, { doi = false } = {}) {
-  const pages = work.pages.replace(/(\d)\s*-\s*(\d)/, '$1–$2');
+  const pages = work.pages.replace(/(\d)\s*-\s*(\d)/g, '$1–$2');
   return [
     { key: 'authors', runs: creators(work) },
     {

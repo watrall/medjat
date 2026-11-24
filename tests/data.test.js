@@ -1,8 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  licenseLabel,
+  licenseRows,
   normalizeWork,
   normalizeDOI,
+  openAccess,
   orcidURL,
   plainText,
   readQuery,
@@ -246,7 +249,6 @@ test('notes and tags validate as research backup entries', async () => {
 });
 
 test('open access means an in-force open license that covers the content, not only text mining', async () => {
-  const { openAccess, licenseLabel } = await import('../js/data.js');
   const cc = 'https://creativecommons.org/licenses/by/4.0/';
   assert.deepEqual(openAccess({ licenses: [{ URL: cc }] }), { url: cc, label: 'CC BY 4.0' });
   assert.equal(
@@ -519,7 +521,6 @@ test('every landing tile has both photo sizes on disk and a license link when it
 });
 
 test('license rows name each license, what it covers and when it starts', async () => {
-  const { licenseRows } = await import('../js/data.js');
   const rows = licenseRows({
     licenses: [
       {

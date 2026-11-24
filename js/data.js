@@ -211,7 +211,7 @@ export function openAccess(work) {
     const start = Date.parse(license?.start?.['date-time'] || '');
     const inForce = Number.isNaN(start) || start <= now;
     if (url && inForce && license['content-version'] !== 'tdm' && OPEN_LICENSE.test(url))
-      return { url, label: licenseLabel(url) };
+      return { url, label: licenseLabel(url) || 'Open license' };
   }
   return null;
 }
@@ -234,7 +234,7 @@ export function licenseRows(work) {
     return [
       {
         url,
-        label: licenseLabel(url) === 'Open license' ? url : licenseLabel(url),
+        label: licenseLabel(url) || url,
         detail: [LICENSE_SCOPE[license['content-version']], from].filter(Boolean).join(', '),
       },
     ];
@@ -245,8 +245,7 @@ export function licenseLabel(url) {
   const cc = /creativecommons\.org\/licenses\/([a-z-]+)\/(\d\.\d)/i.exec(url);
   if (cc) return `CC ${cc[1].toUpperCase()} ${cc[2]}`;
   if (/publicdomain\/zero/i.test(url)) return 'CC0 1.0';
-  if (/publicdomain/i.test(url)) return 'Public domain';
-  return 'Open license';
+  return /publicdomain/i.test(url) ? 'Public domain' : '';
 }
 
 export const participationReportURL = (work) =>

@@ -82,3 +82,7 @@ test('the DOI is added only when asked for, as its own last part', () => {
   assert.equal(citationText(work({})).includes('10.1234'), false);
   assert.ok(citationText(work({}), { doi: true }).endsWith(', 10.1234/article'));
 });
+
+test('every page range in a list gets an en dash', () => {
+  assert.match(citationText(work({ page: '12-14, 20-22' })), /12–14, 20–22/);
+});

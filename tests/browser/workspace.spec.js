@@ -1805,7 +1805,8 @@ test('the book section keeps its two actions apart and lets the chapter list fol
   await expect(page.locator('.chapter-list li')).toHaveCount(2);
   await chapters.click();
   await expect(chapters).toHaveAttribute('aria-expanded', 'false');
-  await expect(page.locator('.chapter-list')).toHaveCount(0);
+  await expect(page.locator('.chapter-list')).toBeHidden();
+  await expect(page.locator('#book-chapters')).toBeAttached();
 });
 
 test('a place mention names Pleiades as its source, with a link', async ({ page }) => {
@@ -1852,8 +1853,8 @@ test('related records are shown as citations with the DOI last, and unknown ones
   const known = list.locator('li').nth(0);
   await expect(known.locator('.related-kind')).toHaveText('Has preprint');
   await expect(known.getByRole('button', { name: 'A preprint of the chapter' })).toBeVisible();
-  await expect(known.locator('.chapter-citation')).toContainText('Ada Researcher, 2020');
-  await expect(known.locator('.chapter-citation')).toContainText('10.1234/preprint');
+  await expect(known.locator('.record-citation')).toContainText('Ada Researcher, 2020');
+  await expect(known.locator('.record-citation')).toContainText('10.1234/preprint');
   const unknown = list.locator('li').nth(1);
   await expect(unknown.locator('.related-kind')).toHaveText('Supplemented by');
   await expect(unknown).toContainText('Details not available from Crossref');
