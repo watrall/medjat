@@ -301,22 +301,34 @@ export function createInspector(
       ),
     );
     root.append(
-      el('p', { class: 'detail-meta' }, citationLine(work, { skip: ['authors'] })),
-      el('p', { class: 'detail-kind' }, kind),
-      access &&
-        el(
-          'p',
-          { class: 'detail-open' },
-          el('span', { class: 'metadata-badge badge-open' }, icon('book-open-text'), 'Open access'),
-          externalLink(access.label, access.url),
-        ),
-      work.citedBy !== null &&
-        el(
-          'details',
-          { class: 'detail-cited' },
-          el('summary', {}, icon('quote'), `Cited by ${work.citedBy.toLocaleString()} in Crossref`),
-          el('p', {}, CITED_BY_NOTE),
-        ),
+      ...[
+        el('p', { class: 'detail-meta' }, citationLine(work, { skip: ['authors'] })),
+        el('p', { class: 'detail-kind' }, kind),
+        access &&
+          el(
+            'p',
+            { class: 'detail-open' },
+            el(
+              'span',
+              { class: 'metadata-badge badge-open' },
+              icon('book-open-text'),
+              'Open access',
+            ),
+            externalLink(access.label, access.url),
+          ),
+        work.citedBy !== null &&
+          el(
+            'details',
+            { class: 'detail-cited' },
+            el(
+              'summary',
+              {},
+              icon('quote'),
+              `Cited by ${work.citedBy.toLocaleString()} in Crossref`,
+            ),
+            el('p', {}, CITED_BY_NOTE),
+          ),
+      ].filter(Boolean),
     );
     const banner = updateBanner();
     if (banner) root.append(banner);

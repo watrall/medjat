@@ -1980,3 +1980,20 @@ test('the landing page keeps its kicker above the headline, and a search tucks b
   await expect(page.locator('.result-row').first()).toBeVisible();
   await expect(kicker).not.toBeInViewport();
 });
+
+test('a record with no license and no citation count shows no stray text in its header', async ({
+  page,
+}) => {
+  await fixtures(page, { bare: true });
+  await page.goto('/?q=ancient+egypt');
+  await expect(page.locator('.detail-kind')).toBeVisible();
+  const strays = await page.locator('.detail-kind').evaluate((node) =>
+    [...node.parentElement.childNodes]
+      .filter((child) => child.nodeType === Node.TEXT_NODE)
+      .map((child) => child.textContent.trim())
+      .filter(Boolean),
+  );
+  expect(strays).toEqual([]);
+  await expect(page.locator('.detail-open')).toHaveCount(0);
+  await expect(page.locator('.detail-cited')).toHaveCount(0);
+});
