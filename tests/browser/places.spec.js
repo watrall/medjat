@@ -29,7 +29,7 @@ test('Places discovers Crossref works from a Pleiades place without a saved coll
   await expect(page.locator('.result-row')).toHaveCount(2);
   await page.locator('#placesNav').click();
   await expect(page.locator('#placeMap .leaflet-control-zoom-in')).toBeVisible();
-  await page.locator('#placeSelect').selectOption('756512');
+  await page.locator('[data-place-id="756512"]').first().click();
   await expect(page.locator('.place-results-status')).toHaveText(
     '2 candidates loaded · 1 with a place-name mention',
   );
@@ -70,7 +70,7 @@ test('place bibliographies export their exact saved scope and retain manual rese
   for (let index = 0; index < 3; index++) await page.locator('.save-button').nth(index).click();
   await page.locator('#placesNav').click();
   await page.getByRole('button', { name: 'Your collection', exact: true }).click();
-  await page.locator('#placeSelect').selectOption('756512');
+  await page.locator('[data-place-id="756512"]').first().click();
   await expect(page.locator('.place-collection-coverage')).toContainText(
     '3 saved publications · 1 with place associations · 2 with no place assigned',
   );
@@ -86,7 +86,10 @@ test('place bibliographies export their exact saved scope and retain manual rese
   await page.locator('#assignPlaceWork').selectOption('10.1234/religion');
   await page.locator('#assignPlaceTarget').selectOption('786017');
   await page.getByRole('button', { name: 'Assign place', exact: true }).click();
-  await expect(page.locator('#placeSelect')).toHaveValue('786017');
+  await expect(page.locator('[data-place-id="786017"]').first()).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
   await expect(page.locator('.place-association')).toContainText('assigned manually');
   await page.getByText('No place assigned (1)', { exact: true }).click();
   await page
@@ -133,7 +136,10 @@ test('publication place links retain evidence and return to the search draft aft
     page.getByRole('button', { name: 'Explore Thebes in Places', exact: true }),
   ).toBeVisible();
   await abydos.click();
-  await expect(page.locator('#placeSelect')).toHaveValue('756512');
+  await expect(page.locator('[data-place-id="756512"]').first()).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
   await expect(page.locator('.place-origin')).toContainText('“Abydos” appears in the title');
   await page.reload();
   await expect(page.locator('.place-origin')).toContainText(source.title[0]);
@@ -221,9 +227,10 @@ test('an export keeps its original place identity while another place is selecte
   await page.locator('.save-button').click();
   await page.locator('#placesNav').click();
   await page.getByRole('button', { name: 'Your collection', exact: true }).click();
-  await page.locator('#placeSelect').selectOption('756512');
+  await page.locator('[data-place-id="756512"]').first().click();
   await page.getByRole('button', { name: 'Export 1 publication', exact: true }).click();
-  await page.locator('#placeSelect').selectOption('786017');
+  await page.locator('#placeSearch').fill('Thebes');
+  await page.locator('[data-place-id="786017"]').first().click();
   const pending = page.waitForEvent('download');
   release();
   const file = await pending;
@@ -321,13 +328,16 @@ test('Fit map changes only the camera while All places changes bibliography scop
   for (const b of await page.locator('.save-button').all()) await b.click();
   await page.locator('#placesNav').click();
   await page.getByRole('button', { name: 'Your collection', exact: true }).click();
-  await page.locator('#placeSelect').selectOption('756512');
+  await page.locator('[data-place-id="756512"]').first().click();
   await page.getByRole('button', { name: 'Fit map', exact: true }).click();
-  await expect(page.locator('#placeSelect')).toHaveValue('756512');
+  await expect(page.locator('[data-place-id="756512"]').first()).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
   await expect(
     page.getByRole('button', { name: 'Export 1 publication', exact: true }),
   ).toBeVisible();
-  await page.locator('#placeSelect').selectOption({ label: 'All places' });
+  await page.locator('[data-place-id=""]').click();
   await expect(
     page.getByRole('button', { name: 'Export 2 publications', exact: true }),
   ).toBeVisible();
@@ -353,10 +363,10 @@ test('search and review updates preserve keyboard position without stealing back
   await page.locator('#placeTopic').fill('focus-test');
   await page.locator('#placeTopic').press('Enter');
   await expect(page.locator('#placeTopic')).toBeFocused();
-  await page.locator('#placeSelect').focus();
+  await page.locator('#placeSearch').focus();
   release();
   await expect(page.locator('.place-results-status')).toBeVisible();
-  await expect(page.locator('#placeSelect')).toBeFocused();
+  await expect(page.locator('#placeSearch')).toBeFocused();
   await page.getByRole('button', { name: 'Save to collection', exact: true }).click();
   await page.getByRole('button', { name: 'Your collection', exact: true }).click();
   await page.getByRole('button', { name: 'Not place-specific', exact: true }).click();
@@ -411,4 +421,58 @@ test('mobile Places compacts geography, retains expansion choice and brings publ
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
+});
+test('the place finder searches every Pleiades place in Egypt by name, type and period', async ({
+  page,
+}) => {
+  const requests = [];
+  await blockTiles(page);
+  await page.route('https://api.crossref.org/**', (route) => {
+    requests.push(new URL(route.request().url()));
+    return route.fulfill({ json: { message: { items: [source], 'total-results': 12 } } });
+  });
+  await page.goto('/?view=places');
+  const status = page.locator('.place-finder-status');
+  await expect(status).toContainText('Featured places');
+  await expect(page.locator('.place-choice')).toHaveCount(25);
+  await page.locator('#placeSearch').fill('karanis');
+  await expect(status).toContainText('place matches');
+  await expect(page.locator('.place-choice-meta').first()).toContainText('Settlement or town');
+  await page.locator('#placePeriod').selectOption('pharaonic');
+  await expect(status).toContainText('No place matches');
+  await page.locator('#placePeriod').selectOption('');
+  await page.locator('[data-place-id="736932"]').click();
+  await expect(page.getByRole('heading', { name: 'Karanis', exact: true })).toBeVisible();
+  await expect(page.locator('[data-place-id="736932"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.place-results-status')).toBeVisible();
+  expect(requests.at(-1).searchParams.get('query.bibliographic')).toBe('Karanis Egypt');
+  await page.locator('#placeSearch').fill('');
+  await page.locator('#placeType').selectOption('extraction');
+  await expect(status).toContainText('places match');
+  await expect(page.locator('.place-choice-meta').first()).toContainText('Quarry or mine');
+});
+test('names that suggest a place are matched across the index with the matched text shown', async ({
+  page,
+}) => {
+  await blockTiles(page);
+  await page.route('https://api.crossref.org/**', (route) =>
+    route.fulfill({
+      json: {
+        message: {
+          items: [
+            {
+              DOI: '10.1234/karanis',
+              title: ['Granary houses at Karanis'],
+              type: 'journal-article',
+              abstract: 'Excavation of the Fayum village.',
+            },
+          ],
+          'total-results': 1,
+        },
+      },
+    }),
+  );
+  await page.goto('/?q=granary');
+  await page.locator('.result-open').first().click();
+  await expect(page.getByRole('button', { name: 'Explore Karanis in Places' })).toBeVisible();
 });

@@ -1,5 +1,6 @@
 // Loaded only when Places opens. Geographic data and tiles have separate provenance.
 import { icon } from './dom.js';
+import { primaryName } from './place-data.js';
 export async function createPlaceMap(
   root,
   { sites, onSelect, onError, isVisible = () => true, getCount = () => null },
@@ -24,15 +25,21 @@ export async function createPlaceMap(
   root.querySelector('.leaflet-control-zoom-in').replaceChildren(icon('plus'));
   root.querySelector('.leaflet-control-zoom-out').replaceChildren(icon('minus'));
   let failed = false,
-    destroyed = false;
+    destroyed = false,
+    selected = '';
   tiles.on('tileerror', () => {
     if (!failed) {
       failed = true;
       onError();
     }
   });
+  // Every place is drawn only once the map is zoomed in; until then the map shows featured
+  // places, major sites, places with saved publications and the selected place.
+  const DETAIL_ZOOM = 9;
+  const prominent = (site) =>
+    site.featured || site.major || site.id === selected || getCount(site.id) > 0;
   const overview = () => {
-    const visible = sites.filter((site) => isVisible(site.id));
+    const visible = sites.filter((site) => isVisible(site.id) && prominent(site));
     map.fitBounds(
       (visible.length ? visible : sites).map((site) => [site.latitude, site.longitude]),
       { padding: [35, 35], maxZoom: 7, animate: false },
@@ -40,7 +47,6 @@ export async function createPlaceMap(
   };
   overview();
   const layer = L.layerGroup().addTo(map);
-  let selected = '';
   function draw() {
     if (destroyed) return;
     const focused =
@@ -55,6 +61,7 @@ export async function createPlaceMap(
     );
     for (const site of ordered) {
       if (!isVisible(site.id) && site.id !== selected) continue;
+      if (map.getZoom() < DETAIL_ZOOM && !prominent(site)) continue;
       const point = map.latLngToContainerPoint([site.latitude, site.longitude]);
       if (
         point.x < 25 ||
@@ -75,8 +82,8 @@ export async function createPlaceMap(
         multiple = group.sites.length > 1,
         active = group.sites.some((site) => site.id === selected);
       const name = multiple
-        ? `Zoom to ${group.sites.length} places near ${site.name}`
-        : `Select ${site.name}`;
+        ? `Zoom to ${group.sites.length} places near ${primaryName(site)}`
+        : `Select ${primaryName(site)}`;
       const marker = L.marker([site.latitude, site.longitude], {
         title: name,
         keyboard: true,
@@ -93,12 +100,12 @@ export async function createPlaceMap(
       label.textContent = group.sites
         .map(
           (site) =>
-            `${site.name}${getCount(site.id) === null ? '' : ` · ${getCount(site.id)} saved`}`,
+            `${primaryName(site)}${getCount(site.id) === null ? '' : ` · ${getCount(site.id)} saved`}`,
         )
         .join(' / ');
       if (multiple) {
         const [first, second] = group.sites;
-        label.textContent = `${first.name}, ${second.name}${group.sites.length > 2 ? ` +${group.sites.length - 2}` : ''}`;
+        label.textContent = `${primaryName(first)}, ${primaryName(second)}${group.sites.length > 2 ? ` +${group.sites.length - 2}` : ''}`;
       }
       marker.bindTooltip(label, {
         direction: 'right',
@@ -136,9 +143,13 @@ export async function createPlaceMap(
       selected = id;
       const site = sites.find((site) => site.id === id);
       if (focus && site)
-        map.setView([site.latitude, site.longitude], Math.max(map.getZoom(), 7), {
-          animate: false,
-        });
+        map.setView(
+          [site.latitude, site.longitude],
+          Math.max(map.getZoom(), prominent(site) ? 7 : DETAIL_ZOOM),
+          {
+            animate: false,
+          },
+        );
       draw();
     },
     overview,

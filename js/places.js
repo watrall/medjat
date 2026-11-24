@@ -9,6 +9,7 @@ import {
 import { createPlacePublicationRow } from './place-publication-row.js';
 import { PAGE_SIZE } from './crossref.js';
 import { createPlaceMap } from './place-map.js';
+import { createPlaceFinder } from './place-finder.js';
 import { createInspector } from './inspector.js';
 import { createPlaceCollection } from './place-collection.js';
 import { BREAKPOINTS } from './breakpoints.js';
@@ -186,7 +187,7 @@ export function createPlaces(
       } catch {
         panels.mapNotice.hidden = false;
         panels.mapNotice.textContent =
-          'The map could not load. The place selector and Crossref search remain available.';
+          'The map could not load. The place finder and Crossref search remain available.';
       }
       if (mode === 'discover' && selected && !works.length) await search();
       if (reading?.inspector?.current?.raw) {
@@ -209,20 +210,12 @@ export function createPlaces(
     }
   }
   function build() {
-    const selector = el(
-      'select',
-      { id: 'placeSelect', onchange: (event) => choose(event.target.value) },
-      el('option', { value: '' }, mode === 'collection' ? 'All places' : 'Choose an ancient place'),
-      [...gazetteer.sites]
-        .sort((a, b) => a.name.localeCompare(b.name))
-        .map((site) => el('option', { value: site.id, selected: site.id === selected }, site.name)),
-    );
     const mapRoot = el('div', {
       id: 'placeMap',
       class: 'places-map',
       role: 'region',
       'aria-label':
-        'Map of ancient places in Egypt. Use arrow keys to pan, plus and minus to zoom, or the place selector.',
+        'Map of ancient places in Egypt. Use arrow keys to pan, plus and minus to zoom, or the place finder.',
     });
     const mapNotice = el('p', { class: 'notice', role: 'status', hidden: true });
     const mapToggle = el('button', {
@@ -290,9 +283,18 @@ export function createPlaces(
       },
     });
     const undo = el('div', { class: 'place-undo', hidden: true });
+    const finder = createPlaceFinder({
+      sites: gazetteer.sites,
+      types: gazetteer.types,
+      periods: gazetteer.periods,
+      getSelected: () => selected,
+      getMode: () => mode,
+      getSavedCount: (id) => panels.collection.stats(id),
+      onChoose: choose,
+    });
     panels = {
       undo,
-      selector,
+      finder,
       map: mapRoot,
       mapNotice,
       mapToggle,
@@ -341,10 +343,10 @@ export function createPlaces(
         el(
           'section',
           { class: 'places-geography', 'aria-label': 'Choose a place' },
+          finder.element,
           el(
             'div',
             { class: 'places-map-tools' },
-            el('label', { for: 'placeSelect' }, 'Ancient place', selector),
             mapToggle,
             el(
               'button',
@@ -377,11 +379,15 @@ export function createPlaces(
           el(
             'details',
             { class: 'places-source' },
-            el('summary', {}, `${gazetteer.sites.length} curated places · sources and coverage`),
+            el(
+              'summary',
+              {},
+              `${gazetteer.sites.length.toLocaleString()} places in Egypt · sources and coverage`,
+            ),
             el(
               'p',
               {},
-              'Fit map changes the camera only. Select a place to change publication scope. This curated index does not cover all ancient Egypt; points are not site boundaries. Place names and locations come from Pleiades; publication metadata comes from Crossref.',
+              'Fit map changes the camera only. Select a place to change publication scope. Places are those Pleiades describes as a settlement, temple, cemetery, tomb, fort, church, quarry or similar inside Egypt\u2019s present borders, so Nubia and the Levant are not included. Pleiades documents Roman and Late Antique Egypt in far more detail than Pharaonic Egypt, so a missing place says nothing about its importance. Points are not site boundaries. Place names and locations come from Pleiades; publication metadata comes from Crossref.',
             ),
             el(
               'p',
@@ -404,6 +410,7 @@ export function createPlaces(
         ),
       );
     renderPublications();
+    finder.sync();
     syncUndo();
     syncMapPresentation();
   }
@@ -450,13 +457,12 @@ export function createPlaces(
     loading = false;
     if (value !== 'collection') panels.collection.cancel();
     mode = value;
-    panels.selector.options[0].textContent =
-      mode === 'collection' ? 'All places' : 'Choose an ancient place';
     for (const button of root.querySelectorAll('[data-places-mode]'))
       button.setAttribute('aria-pressed', String(button.dataset.placesMode === mode));
     panels.detail.hidden = true;
     panels.publications.hidden = false;
     renderPublications();
+    panels.finder.sync();
     map?.refresh();
     onLocation(location());
     if (mode === 'discover' && selected && !works.length) search();
@@ -473,7 +479,7 @@ export function createPlaces(
     topic = '';
     term = place() ? primaryName(place()) : '';
     searchDraft = { term, topic: '' };
-    panels.selector.value = selected;
+    panels.finder.select();
     syncMapPresentation();
     panels.detail.hidden = true;
     panels.publications.hidden = false;
@@ -532,6 +538,7 @@ export function createPlaces(
   function renderPublicationContent() {
     if (mode === 'collection') {
       panels.collection.render(selected);
+      panels.finder.sync();
       map?.refresh();
       return;
     }
@@ -543,25 +550,7 @@ export function createPlaces(
         el(
           'p',
           {},
-          'Choose a site on the map to find publications in Crossref. You can use Places before saving anything to your collection.',
-        ),
-        el(
-          'div',
-          { class: 'place-starts' },
-          ['Abydos', 'Amarna', 'Thebes', 'Deir el-Medina'].map((name) => {
-            const site = gazetteer.sites.find((site) => site.name === name);
-            return el(
-              'button',
-              { class: 'text-button', onclick: () => choose(site.id) },
-              icon('map-pin'),
-              name,
-            );
-          }),
-        ),
-        el(
-          'p',
-          { class: 'scope-note' },
-          'Crossref does not supply a standard geographic subject field. Places uses gazetteer names to help you discover and evaluate publication metadata.',
+          'Search for a place, choose a featured place, or select a site on the map. You can use Places before saving anything to your collection.',
         ),
       );
       return;

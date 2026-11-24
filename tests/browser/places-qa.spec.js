@@ -68,7 +68,7 @@ for (const format of ['csv', 'json', 'ris', 'bibtex'])
     for (const b of await page.locator('.save-button').all()) await b.click();
     await page.locator('#placesNav').click();
     await page.getByRole('button', { name: 'Your collection', exact: true }).click();
-    await page.locator('#placeSelect').selectOption('756512');
+    await page.locator('[data-place-id="756512"]').first().click();
     await page
       .locator(`[data-place-work="${work.DOI}"]`)
       .getByRole('button', { name: 'Confirm association', exact: true })
@@ -99,7 +99,7 @@ test('failed and cancelled place exports retain scope and recover with CSV', asy
   await page.locator('.save-button').click();
   await page.locator('#placesNav').click();
   await page.getByRole('button', { name: 'Your collection', exact: true }).click();
-  await page.locator('#placeSelect').selectOption('756512');
+  await page.locator('[data-place-id="756512"]').first().click();
   await page.getByRole('button', { name: 'Export 1 publication', exact: true }).click();
   await expect(page.locator('[data-export-status]')).toContainText(
     'No bibliography was downloaded',
@@ -108,7 +108,10 @@ test('failed and cancelled place exports retain scope and recover with CSV', asy
   await page.getByRole('button', { name: 'Export 1 publication', exact: true }).click();
   await page.getByRole('button', { name: 'Cancel export', exact: true }).click();
   await expect(page.locator('[data-export-status]')).toContainText('cancelled');
-  await expect(page.locator('#placeSelect')).toHaveValue('756512');
+  await expect(page.locator('[data-place-id="756512"]').first()).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
   await expect(page.locator('#collectionCount')).toHaveText('1');
   await page.locator('#placeExportFormat').selectOption('csv');
   const file = page.waitForEvent('download');
@@ -226,7 +229,10 @@ test('Places drafts survive leaving the view and refreshing elsewhere in the app
   await page.locator('#exploreNav').click();
   await page.reload();
   await page.locator('#placesNav').click();
-  await expect(page.locator('#placeSelect')).toHaveValue('756512');
+  await expect(page.locator('[data-place-id="756512"]').first()).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
   await expect(page.locator('#placeTopic')).toHaveValue('Unfinished pottery question');
   await expect(page.locator('#placePublications')).toContainText('Applied search: Abydos · burial');
 });

@@ -684,7 +684,7 @@ test('the main and Places inspectors keep citation controls uniquely identified'
   await expect(page.locator('.result-row')).toHaveCount(25);
   await page.locator('#inspector').getByRole('tab', { name: 'Cite', exact: true }).click();
   await page.locator('#placesNav').click();
-  await page.locator('#placeSelect').selectOption('756512');
+  await page.locator('[data-place-id="756512"]').first().click();
   await page.locator('.other-place-candidates > summary').click();
   await expect(page.locator('.place-publication-title').first()).toBeVisible();
   await page.locator('.place-publication-title').first().click();

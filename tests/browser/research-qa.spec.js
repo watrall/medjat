@@ -52,7 +52,7 @@ test('research views retain accessible controls and reflow across desktop and mo
       await expect(page.locator('#visualize')).toContainText('9,000,000 keyword matches');
     if (view === 'places') {
       await expect(page.locator('#placeMap .leaflet-marker-icon').first()).toBeVisible();
-      await page.locator('#placeSelect').selectOption('756512');
+      await page.locator('[data-place-id="756512"]').first().click();
       await expect(page.locator('.place-results-status')).toContainText('1 candidate loaded');
     }
     if (view === 'collection') {

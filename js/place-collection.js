@@ -1,6 +1,7 @@
 import { preservePlaceFocus } from './place-focus.js';
 import { publicationMetadata, assignmentLabel } from './place-publication.js';
 import { placeEvidence } from './place-data.js';
+import { searchPlaces } from './place-search.js';
 import { createPlaceReviewList } from './place-review-list.js';
 import { researchData, reviewDecision } from './research-store.js';
 import { placeKey, placeScopeKey } from './decision-keys.js';
@@ -477,13 +478,32 @@ export function createPlaceCollection(
       onDraft();
     });
     filterAssignments();
-    const target = el(
-      'select',
-      { id: 'assignPlaceTarget' },
-      [...sites]
-        .sort((a, b) => a.name.localeCompare(b.name))
-        .map((site) => el('option', { value: site.id, selected: selected === site.id }, site.name)),
-    );
+    const target = el('select', { id: 'assignPlaceTarget' });
+    const targetCount = el('p', { class: 'scope-note', role: 'status' });
+    const targetQuery = el('input', {
+      id: 'assignPlaceQuery',
+      type: 'search',
+      autocomplete: 'off',
+      placeholder: 'Abydos, Medinet Habu, Tell el-Dab\u2018a',
+      oninput: () => fillTargets(),
+    });
+    function fillTargets() {
+      const query = targetQuery.value.trim();
+      const kept = target.value || draftTarget || selected;
+      const matches = query
+        ? searchPlaces(sites, { query })
+        : sites.filter((site) => site.featured);
+      const options = matches.slice(0, 50);
+      const current = sites.find((site) => site.id === kept);
+      if (current && !options.includes(current)) options.push(current);
+      target.replaceChildren(...options.map((site) => el('option', { value: site.id }, site.name)));
+      if (kept) target.value = kept;
+      draft.target = target.value;
+      targetCount.textContent = query
+        ? `${matches.length.toLocaleString()} matching ${matches.length === 1 ? 'place' : 'places'}${matches.length > 50 ? '; showing 50' : ''}.`
+        : 'Featured places shown. Search to find any other place.';
+    }
+    fillTargets();
     const assignment = el(
       'details',
       { class: 'place-assignment' },
@@ -540,7 +560,9 @@ export function createPlaceCollection(
           },
         },
         el('label', { for: 'assignPlaceWork' }, 'Saved publication', publication),
-        el('label', { for: 'assignPlaceTarget' }, 'Ancient place', target),
+        el('label', { for: 'assignPlaceQuery' }, 'Find a place', targetQuery),
+        el('label', { for: 'assignPlaceTarget' }, 'Place to assign', target),
+        targetCount,
         el(
           'button',
           { class: 'button', type: 'submit', disabled: !getSaved().size },
@@ -564,7 +586,6 @@ export function createPlaceCollection(
       onDraft();
     });
 
-    if (draftTarget && sites.some((site) => site.id === draftTarget)) target.value = draftTarget;
     if (draftFormat) format.value = draftFormat;
     draft.target = target.value;
     draft.format = format.value;
