@@ -482,3 +482,30 @@ test('every landing tile has a unique id, a known period, and a licensed credit'
     );
   }
 });
+
+test('the real tile pool gives every visit six different kinds of scholarship', async () => {
+  const { LANDING_TILES, pickTiles } = await import('../js/landing-tiles.js');
+  assert.equal(LANDING_TILES.length, 18);
+  const groups = new Map();
+  for (const tile of LANDING_TILES) groups.set(tile.group, (groups.get(tile.group) ?? 0) + 1);
+  assert.equal(groups.size, 6);
+  assert.deepEqual([...groups.values()], [3, 3, 3, 3, 3, 3]);
+  for (let i = 0; i < 200; i++) {
+    const picked = pickTiles(LANDING_TILES);
+    assert.equal(new Set(picked.map((tile) => tile.group)).size, 6);
+    assert.equal(new Set(picked.map((tile) => tile.id)).size, 6);
+  }
+});
+
+test('every landing tile has both photo sizes on disk and a license link when it has one', async () => {
+  const { existsSync } = await import('node:fs');
+  const { LANDING_TILES } = await import('../js/landing-tiles.js');
+  const spdx = /^(CC BY(-SA)? \d\.\d|CC0)$/;
+  for (const tile of LANDING_TILES) {
+    for (const file of [`${tile.image}.webp`, `${tile.image}-small.webp`])
+      assert.ok(existsSync(new URL(`../assets/landing/${file}`, import.meta.url)), file);
+    assert.ok(spdx.test(tile.credit.license) || tile.credit.license === 'Public domain', tile.id);
+  }
+  const images = LANDING_TILES.map((tile) => tile.image);
+  assert.equal(new Set(images).size, images.length, 'each tile has its own photo');
+});
