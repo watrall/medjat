@@ -431,3 +431,54 @@ test('book types use the terms scholars use', async () => {
   );
   assert.equal(TYPES.get('edited-book'), 'Edited volume');
 });
+
+test('a visit shows one tile per group first, never repeats, and stays stable', async () => {
+  const { LANDING_TILES, TILES_PER_VISIT, pickTiles, chooseTiles } =
+    await import('../js/landing-tiles.js');
+  const seeded = (seed) => () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296;
+  const wide = Array.from({ length: 18 }, (_, i) => ({ id: `t${i}`, group: `g${i % 6}` }));
+  for (let seed = 1; seed <= 40; seed++) {
+    const picked = pickTiles(wide, { random: seeded(seed) });
+    assert.equal(picked.length, TILES_PER_VISIT);
+    assert.equal(new Set(picked).size, TILES_PER_VISIT);
+    assert.equal(new Set(picked.map((tile) => tile.group)).size, 6, 'one tile from each group');
+  }
+  const orders = new Set(
+    Array.from({ length: 30 }, (_, i) =>
+      pickTiles(wide, { random: seeded(i + 1) })
+        .map((t) => t.id)
+        .join(),
+    ),
+  );
+  assert.ok(orders.size > 10, 'different visits see different tiles');
+  const few = [...LANDING_TILES].slice(0, 4);
+  assert.equal(pickTiles(few, { random: seeded(3) }).length, 4);
+
+  const store = new Map();
+  const storage = {
+    getItem: (key) => store.get(key) ?? null,
+    setItem: (key, value) => store.set(key, value),
+  };
+  const first = chooseTiles({ storage, random: seeded(7) });
+  assert.equal(first.length, Math.min(TILES_PER_VISIT, LANDING_TILES.length));
+  assert.deepEqual(chooseTiles({ storage, random: seeded(99) }), first, 'kept within a visit');
+  store.set('medjat-landing-tiles', '["nope"]');
+  assert.equal(chooseTiles({ storage, random: seeded(5) }).length, first.length);
+  store.set('medjat-landing-tiles', '{bad');
+  assert.equal(chooseTiles({ storage, random: seeded(5) }).length, first.length);
+  assert.equal(chooseTiles({ storage: undefined, random: seeded(5) }).length, first.length);
+});
+
+test('every landing tile has a unique id, a known period, and a licensed credit', async () => {
+  const { LANDING_TILES } = await import('../js/landing-tiles.js');
+  const { PERIODS } = await import('../js/data.js');
+  assert.equal(new Set(LANDING_TILES.map((tile) => tile.id)).size, LANDING_TILES.length);
+  assert.equal(new Set(LANDING_TILES.map((tile) => tile.title)).size, LANDING_TILES.length);
+  for (const tile of LANDING_TILES) {
+    assert.ok(!tile.period || PERIODS.some((period) => period.id === tile.period), tile.id);
+    assert.ok(
+      tile.credit.text && tile.credit.url.startsWith('https://') && tile.credit.license,
+      tile.id,
+    );
+  }
+});

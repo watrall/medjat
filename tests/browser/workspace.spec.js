@@ -36,6 +36,12 @@ async function fixtures(
   } = {},
 ) {
   const requests = [];
+  await page.addInitScript(() =>
+    sessionStorage.setItem(
+      'medjat-landing-tiles',
+      JSON.stringify(['hierakonpolis', 'ostraca', 'amarna', 'coffins', 'blue', 'dating']),
+    ),
+  );
   await page.route('https://fonts.googleapis.com/**', (r) => r.abort());
   await page.route('https://assets.crossref.org/**', (r) => r.abort());
   await page.route('https://covers.openlibrary.org/**', (r) =>
@@ -1672,4 +1678,23 @@ test('missing abstracts and references say not available, without the word depos
   await expect(panel).not.toContainText(/deposit/i);
   await page.getByRole('tab', { name: 'Cite', exact: true }).click();
   await expect(panel).not.toContainText(/deposit/i);
+});
+
+test('a visit picks its landing tiles once, keeps them on reload, and credits only those', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const tiles = page.locator('.research-tile');
+  await expect(tiles).toHaveCount(6);
+  const titles = await page.locator('.tile-title').allTextContents();
+  expect(new Set(titles).size).toBe(6);
+  await page.getByText('About the images', { exact: true }).click();
+  await expect(page.locator('#landingCredits li')).toHaveCount(6);
+  await expect(page.locator('#landingCredits li').first()).toContainText('Cropped and resized.');
+  await page.reload();
+  expect(await page.locator('.tile-title').allTextContents()).toEqual(titles);
+  const stored = await page.evaluate(() =>
+    JSON.parse(sessionStorage.getItem('medjat-landing-tiles')),
+  );
+  expect(stored).toHaveLength(6);
 });
