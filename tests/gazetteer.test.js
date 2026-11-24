@@ -113,5 +113,5 @@ test('matching 200 saved publications against every place stays fast', () => {
   }));
   const started = performance.now();
   for (const work of works) placesForWork(work, sites);
-  assert.ok(performance.now() - started < 1500);
+  assert.ok(performance.now() - started < 500);
 });

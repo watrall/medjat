@@ -40,47 +40,50 @@ export const isSharedName = (place) => place.shared === true;
 export function fold(text) {
   return text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
 }
+function wholeName(alias) {
+  const escaped = alias
+    .normalize('NFC')
+    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    .replace(/[\s\u2010-\u2015-]+/g, '[\\s\\u2010-\\u2015-]+');
+  return new RegExp(`(?<![\\p{L}\\p{N}\\p{M}])${escaped}(?![\\p{L}\\p{N}\\p{M}])`, 'iu');
+}
 function matcherFor(place) {
   let expressions = matchers.get(place);
   if (!expressions) {
     expressions = [...new Set(place.aliases)]
       .filter((name) => name.length >= 4)
-      .map((alias) => {
-        const escaped = alias
-          .normalize('NFC')
-          .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-          .replace(/[\s\u2010-\u2015-]+/g, '[\\s\\u2010-\\u2015-]+');
-        return {
-          needle: comparable(alias),
-          word: firstWord(comparable(alias)),
-          expression: new RegExp(
-            `(?<![\\p{L}\\p{N}\\p{M}])${escaped}(?![\\p{L}\\p{N}\\p{M}])`,
-            'iu',
-          ),
-        };
-      });
+      .map((alias) => ({
+        alias,
+        needle: comparable(alias),
+        word: firstWord(comparable(alias)),
+        expression: null,
+      }));
     matchers.set(place, expressions);
   }
   return expressions;
 }
-export function placeEvidence(work, place) {
-  const expressions = matcherFor(place);
-  let haystack = normalizedText.get(work);
-  if (!haystack) {
-    haystack = [work.title || '', work.abstract || ''].map((text) => {
+function textsOf(work) {
+  let texts = normalizedText.get(work);
+  if (!texts) {
+    texts = [
+      ['title', work.title || ''],
+      ['abstract', work.abstract || ''],
+    ].map(([field, source]) => {
+      const text = source.normalize('NFC');
       const lower = comparable(text);
-      return { lower, words: new Set(lower.split(WORDS)) };
+      return { field, text, lower, words: new Set(lower.split(WORDS)) };
     });
-    normalizedText.set(work, haystack);
+    normalizedText.set(work, texts);
   }
-  for (const [index, [field, sourceText]] of [
-    ['title', work.title || ''],
-    ['abstract', work.abstract || ''],
-  ].entries()) {
-    const text = sourceText.normalize('NFC');
-    for (const { needle, word, expression } of expressions) {
-      if (!haystack[index].words.has(word) || !haystack[index].lower.includes(needle)) continue;
-      const match = expression.exec(text);
+  return texts;
+}
+export function placeEvidence(work, place) {
+  const candidates = matcherFor(place);
+  for (const { field, text, lower, words } of textsOf(work))
+    for (const candidate of candidates) {
+      if (!words.has(candidate.word) || !lower.includes(candidate.needle)) continue;
+      candidate.expression ??= wholeName(candidate.alias);
+      const match = candidate.expression.exec(text);
       if (match)
         return {
           field,
@@ -88,7 +91,6 @@ export function placeEvidence(work, place) {
           text: `${match.index > 70 ? '…' : ''}${text.slice(Math.max(0, match.index - 70), match.index + match[0].length + 110)}${text.length > match.index + match[0].length + 110 ? '…' : ''}`,
         };
     }
-  }
   return null;
 }
 export function placesForWork(work, sites) {
