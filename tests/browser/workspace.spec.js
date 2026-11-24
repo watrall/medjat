@@ -1580,8 +1580,11 @@ test('a chapter offers to open the book it is part of', async ({ page }) => {
   const book = page.locator('.detail-section', {
     has: page.getByRole('heading', { name: 'Part of a book' }),
   });
-  await expect(book).toContainText('Research in ancient Egypt');
-  await book.getByRole('button', { name: 'Inspect the book' }).click();
+  await expect(book).toContainText('A referenced publication');
+  await expect(book).toContainText('Ada Researcher');
+  await expect(book).toContainText('2020 · Test publisher · Book chapter');
+  await expect(book.getByRole('button', { name: 'Inspect the book' })).toHaveCount(0);
+  await book.getByRole('button', { name: 'View the book' }).click();
   await expect(page.locator('.detail-title')).toHaveText('A referenced publication');
   await page.getByRole('button', { name: 'Back to previous publication', exact: true }).click();
   await expect(book).toBeVisible();

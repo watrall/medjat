@@ -62,6 +62,8 @@ export function createInspector(
     citationLoading = false;
   const matches = new Map();
   let chapters = null;
+  let book = null;
+  let bookElement = null;
   let trail = [],
     referenceLimit = 20,
     followError = '',
@@ -108,8 +110,10 @@ export function createInspector(
     following = false;
     matches.clear();
     chapters = null;
+    book = work?.type === 'book-chapter' && work.partOf ? { loading: true } : null;
     if (!fromReference) trail = [];
     render();
+    if (book) loadBook();
     if (reading) {
       const target =
         reading.focusKey &&
@@ -298,9 +302,21 @@ export function createInspector(
     return el('section', { class: 'detail-section' }, el('h3', {}, title), ...children);
   }
   function bookSection() {
-    return section(
+    const info = book?.work;
+    bookElement = section(
       'Part of a book',
-      el('p', {}, work.container || 'This chapter belongs to a containing book.'),
+      el(
+        'p',
+        { class: 'book-title' },
+        info
+          ? displayTitle(info.title)
+          : work.container || 'This chapter belongs to a containing book.',
+      ),
+      info && el('p', {}, authorLine(info, 4)),
+      info && el('p', {}, [info.year, info.publisher, info.typeLabel].filter(Boolean).join(' · ')),
+      book?.loading &&
+        el('p', { role: 'status', class: 'scope-note' }, 'Loading the book’s details…'),
+      book?.error && el('p', { class: 'scope-note' }, 'The book’s details could not be loaded.'),
       el(
         'button',
         {
@@ -309,7 +325,7 @@ export function createInspector(
           disabled: following,
           onclick: () => follow(work.partOf),
         },
-        'Inspect the book',
+        'View the book',
       ),
       el(
         'button',
@@ -325,6 +341,19 @@ export function createInspector(
       chapters?.error && el('p', { role: 'alert', class: 'scope-note' }, chapters.error),
       chapters?.works && chapterList(),
     );
+    return bookElement;
+  }
+  // Replaces only the book section, so a note being typed in the same panel is not lost.
+  async function loadBook() {
+    const id = generation;
+    try {
+      book = { work: await getWork(work.partOf) };
+    } catch {
+      book = { error: true };
+    }
+    if (id !== generation || !bookElement?.isConnected) return;
+    const stale = bookElement;
+    stale.replaceWith(bookSection());
   }
   async function findChapters() {
     const id = generation;
