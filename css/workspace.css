@@ -2255,6 +2255,11 @@ html {
   color: var(--color-ink);
   font-weight: 600;
 }
+.facet-button {
+  font: inherit;
+  font-size: var(--text-label);
+  line-height: inherit;
+}
 .facet-name {
   min-inline-size: 0;
   overflow-wrap: anywhere;
@@ -2285,6 +2290,7 @@ html {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  padding-block: var(--space-xs);
   border-top: 1px solid var(--color-line);
   font-size: var(--text-label);
   line-height: 1.5;
@@ -2300,12 +2306,16 @@ html {
   flex-shrink: 0;
   display: grid;
   place-items: center;
-  color: var(--color-muted);
+  border: 1px solid var(--color-ink);
   border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-ink);
 }
 .remove-filter:hover {
-  color: var(--color-accent);
-  background: var(--color-selected);
+  background: var(--color-subtle);
+}
+.clear-filters {
+  margin: var(--space-sm) 0 var(--space-base);
 }
 .apply-range {
   margin-top: var(--space-md);

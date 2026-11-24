@@ -583,10 +583,7 @@ test('period queries, filters, pagination, and browser back preserve research co
   await page.locator('#yearRefinement > summary').click();
   await page.getByLabel('From', { exact: true }).fill('2000');
   await page.getByLabel('To', { exact: true }).fill('2025');
-  await page
-    .locator('.filter-section > summary')
-    .filter({ hasText: /^Metadata available$/ })
-    .click();
+  await page.locator('.filter-section > summary').filter({ hasText: 'Metadata available' }).click();
   await page.getByRole('checkbox', { name: 'Abstract', exact: true }).check();
   await page.getByRole('button', { name: 'Apply range', exact: true }).click();
   await expect(page).toHaveURL(/from=2000/);
@@ -639,7 +636,7 @@ test('period refinements apply immediately and clear while retaining the query',
     )
     .toContain('type:book');
 
-  await page.getByRole('button', { name: 'Clear refinements', exact: true }).click();
+  await page.getByRole('button', { name: 'Clear filters', exact: true }).click();
   await expect(page).not.toHaveURL(/period=|type=/);
   await expect(period).toHaveValue('');
   await expect(page.locator('#periodDates')).toBeHidden();
@@ -1050,8 +1047,8 @@ test('immediate filters retain pending text and dates, and every filter can be r
   expect(requests.at(-1).searchParams.get('query.bibliographic')).toBe('Abydos');
   await page.getByRole('button', { name: 'Remove filter: Book', exact: true }).click();
   await expect(page).not.toHaveURL(/type=book/);
-  await expect(page.getByRole('button', { name: 'Clear refinements', exact: true })).toBeFocused();
-  await page.getByRole('button', { name: 'Clear refinements', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Clear filters', exact: true })).toBeFocused();
+  await page.getByRole('button', { name: 'Clear filters', exact: true }).click();
   await expect(page).not.toHaveURL(/from=|type=/);
   await expect(page.locator('#searchInput')).toHaveValue('Unsubmitted topic');
 });
@@ -1105,7 +1102,7 @@ test('removing the final refinement and clearing all retain meaningful keyboard 
   await page.getByRole('button', { name: 'Remove filter: Book', exact: true }).click();
   await expect(summary).toBeFocused();
   await page.getByRole('radio', { name: 'Book', exact: true }).check();
-  await page.getByRole('button', { name: 'Clear refinements', exact: true }).click();
+  await page.getByRole('button', { name: 'Clear filters', exact: true }).click();
   await expect(summary).toBeFocused();
 });
 
@@ -2125,8 +2122,46 @@ test('without counts from Crossref the filters still work and no count note is s
   await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
   await expect(page.locator('#facetNote')).toBeHidden();
-  await expect(page.locator('.facet-count')).toHaveCount(0);
+  await expect(page.locator('#publicationTypeRows .facet-count')).toHaveCount(0);
   await expect(page.locator('#decadeFilter')).toBeHidden();
   await page.getByRole('radio', { name: 'Journal article', exact: true }).check();
   await expect(page).toHaveURL(/type=journal-article/);
+});
+
+test('the Access filter narrows the loaded records to open access ones without a new search', async ({
+  page,
+}) => {
+  const requests = await fixtures(page, { openAccess: true });
+  await page.goto('/?q=ancient+egypt');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  const rows = page.locator('#accessRows .facet-option');
+  await expect(rows.nth(0)).toContainText('All records');
+  await expect(rows.nth(0)).toContainText('25');
+  await expect(rows.nth(1)).toContainText('Open access');
+  await expect(rows.nth(1)).toContainText('1');
+  await expect(rows.nth(0)).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#facetNote')).toBeVisible();
+  const before = requests.length;
+  await rows.nth(1).click();
+  await expect(page.locator('.result-row')).toHaveCount(1);
+  await expect(page).toHaveURL(/access=open/);
+  await expect(rows.nth(1)).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#resultCount')).toContainText('1 open access');
+  await expect(page.locator('#currentFilters')).toContainText('Open access (loaded results)');
+  expect(requests.length).toBe(before);
+  await page.getByRole('button', { name: 'Remove filter: Open access (loaded results)' }).click();
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await expect(page).not.toHaveURL(/access=open/);
+  expect(requests.length).toBe(before);
+});
+
+test('an open access filter with nothing to show says so and offers all records', async ({
+  page,
+}) => {
+  await fixtures(page);
+  await page.goto('/?q=ancient+egypt&access=open');
+  await expect(page.getByText('No open access records yet.')).toBeVisible();
+  await expect(page.getByText('None of the 25 loaded records is open access')).toBeVisible();
+  await page.getByRole('button', { name: 'Show all records' }).click();
+  await expect(page.locator('.result-row')).toHaveCount(25);
 });

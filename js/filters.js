@@ -86,6 +86,7 @@ export function filterEntries(query) {
     { key: 'abstract', label: query.abstract && 'Has abstract' },
     { key: 'orcid', label: query.orcid && 'Has ORCID' },
     { key: 'references', label: query.references && 'Has references' },
+    { key: 'access', label: query.access === 'open' && 'Open access (loaded results)' },
   ].filter((entry) => typeof entry.label === 'string' && entry.label.length > 0);
 }
 

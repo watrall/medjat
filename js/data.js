@@ -351,6 +351,9 @@ export function readQuery(search = '') {
   };
 }
 
+// Open access narrows the records already loaded, so changing it is not a new search.
+export const searchKey = (query) => queryString({ ...query, access: '' });
+
 export function queryString(query) {
   const p = new URLSearchParams();
   for (const [key, value] of Object.entries(query))

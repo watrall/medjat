@@ -207,10 +207,23 @@
                 </svg>
               </summary>
               <div id="currentFilters" class="current-filter-list"></div>
-              <button id="clearFilters" class="text-button" type="button">Clear refinements</button>
+              <button id="clearFilters" class="button clear-filters" type="button">
+                Clear filters
+              </button>
             </details>
             <p id="facetNote" class="filter-help facet-note" hidden></p>
             <form id="filterForm" class="filter-form">
+              <details class="filter-section" open>
+                <summary>
+                  Access<svg class="icon chevron chevron-down" aria-hidden="true">
+                    <use href="assets/icons.svg#chevron-down" /></svg
+                  ><svg class="icon chevron chevron-up" aria-hidden="true">
+                    <use href="assets/icons.svg#chevron-up" />
+                  </svg>
+                </summary>
+                <div id="accessRows" class="facet-rows"></div>
+                <p id="accessNote" class="filter-help"></p>
+              </details>
               <details class="filter-section" open>
                 <summary>
                   Historical period<svg class="icon chevron chevron-down" aria-hidden="true">

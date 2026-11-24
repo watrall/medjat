@@ -11,6 +11,8 @@ import {
   authorLine,
   normalizeWork,
   normalizeDOI,
+  openAccess,
+  searchKey,
 } from './data.js';
 import { createFacetLists } from './facet-lists.js';
 import { facetURL, getFacets } from './facets.js';
@@ -167,6 +169,35 @@ function renderFacets() {
     to: state.query.to,
   });
 }
+function setAccess(value) {
+  cancelRestoration();
+  state.query = { ...state.query, access: value };
+  state.draft = { ...state.draft, access: value };
+  renderList();
+  renderStatus();
+  renderAppliedQuery();
+  updateURL();
+}
+function renderAccess() {
+  const explore = state.view === 'explore' && !state.doiLookup;
+  const loaded = explore ? state.items.length : 0;
+  const open = explore ? state.items.filter(openAccess).length : 0;
+  const row = (value, label, total) =>
+    el(
+      'button',
+      {
+        type: 'button',
+        class: 'facet-option facet-button',
+        'aria-pressed': String((state.query.access || '') === value),
+        onclick: () => setAccess(value),
+      },
+      el('span', { class: 'facet-name' }, label),
+      el('span', { class: 'facet-count' }, total.toLocaleString()),
+    );
+  $('accessRows').replaceChildren(row('', 'All records', loaded), row('open', 'Open access', open));
+  $('accessNote').textContent =
+    'Counts are for the records loaded so far. Open access means the publisher declared an open license to Crossref.';
+}
 async function loadFacets(query) {
   if (state.doiLookup || normalizeDOI(query.q) || query.field === 'doi') {
     state.facets = null;
@@ -214,6 +245,7 @@ function readDraft() {
     abstract: filters.abstract,
     orcid: filters.orcid,
     references: filters.references,
+    access: state.query.access,
     sort: state.query.sort,
   };
 }
@@ -299,6 +331,11 @@ function renderAppliedQuery() {
                     ? 'Remove added ancient Egypt terms'
                     : `Remove filter: ${label}`,
                 onclick: () => {
+                  if (key === 'access') {
+                    setAccess('');
+                    focusRefinementAction();
+                    return;
+                  }
                   applyRefinement({
                     [key]: ['context', 'abstract', 'orcid', 'references'].includes(key)
                       ? false
@@ -490,10 +527,12 @@ function reconcileCollection() {
   }
 }
 function visibleWorks() {
-  if (state.view === 'explore')
+  if (state.view === 'explore') {
+    const items = state.query.access === 'open' ? state.items.filter(openAccess) : state.items;
     return state.query.sort === 'cited'
-      ? [...state.items].sort((a, b) => (b.citedBy ?? -1) - (a.citedBy ?? -1))
-      : state.items;
+      ? [...items].sort((a, b) => (b.citedBy ?? -1) - (a.citedBy ?? -1))
+      : items;
+  }
   const query = state.collectionQuery.trim().toLowerCase();
   const research = researchData();
   const tag = state.collectionTag.toLocaleLowerCase();
@@ -799,6 +838,7 @@ function selectWork(work) {
   updateURL({ push: true });
 }
 function renderList() {
+  renderAccess();
   const list = $('resultList');
   list.setAttribute('aria-busy', String(state.view === 'explore' && state.loading));
   if (state.view === 'explore' && !state.query.q && state.directRecord) {
@@ -850,6 +890,17 @@ function renderList() {
           },
           state.collection.size ? 'Clear collection search' : 'Explore publications',
         ),
+      );
+      list.replaceChildren(el('li', {}, empty));
+      return;
+    }
+    if (state.items.length && state.query.access === 'open') {
+      const empty = emptyState(
+        'No open access records yet.',
+        `None of the ${state.items.length} loaded records is open access. Load more results, or show all records.`,
+      );
+      empty.append(
+        el('button', { class: 'button', onclick: () => setAccess('') }, 'Show all records'),
       );
       list.replaceChildren(el('li', {}, empty));
       return;
@@ -932,12 +983,12 @@ function renderStatus() {
   const previous =
     state.items.length &&
     state.resultQuery &&
-    queryString(state.resultQuery) !== queryString(state.query);
+    searchKey(state.resultQuery) !== searchKey(state.query);
   $('resultCount').textContent = state.loading
     ? state.appending
       ? 'Loading more publications…'
       : 'Searching Crossref…'
-    : `${previous ? 'Previous results: ' : ''}${resultTally(state.items.length, state.total, state.doiLookup)} results loaded`;
+    : `${previous ? 'Previous results: ' : ''}${resultTally(state.items.length, state.total, state.doiLookup)} results loaded${state.query.access === 'open' ? `, ${visibleWorks().length} open access` : ''}`;
   const resultQuery = state.resultQuery || state.query;
   const ranking =
     resultQuery.sort === 'relevance'
@@ -1321,7 +1372,7 @@ async function restoreLocation(resume = null) {
     if (
       view === 'explore' &&
       state.query.q &&
-      (!state.resultQuery || queryString(state.resultQuery) !== queryString(state.query))
+      (!state.resultQuery || searchKey(state.resultQuery) !== searchKey(state.query))
     )
       await runSearch();
     if (navigation !== navigationGeneration) return;
