@@ -1,6 +1,7 @@
 // Keep search available without moving the page or interrupting keyboard input.
 export function createSearchHandoff() {
   const header = document.querySelector('.masthead');
+  const nav = document.querySelector('.main-nav');
   const row = document.getElementById('primarySearchRow');
   const form = document.getElementById('navSearchForm');
   const slot = document.querySelector('.nav-search-slot');
@@ -26,7 +27,9 @@ export function createSearchHandoff() {
     document.documentElement.style.setProperty('--masthead-height', `${headerHeight}px`);
   }
   function measure() {
-    const height = header.getBoundingClientRect().height;
+    // On phones only the navigation bar stays pinned; the logo bar scrolls away.
+    const height = (matchMedia('(max-width: 639px)').matches ? nav : header).getBoundingClientRect()
+      .height;
     headerHeight = height;
     if (matchMedia('(max-width: 999px)').matches) {
       const bounds = brandName.getBoundingClientRect();
@@ -52,6 +55,8 @@ export function createSearchHandoff() {
   }
   const resizeObserver = new ResizeObserver(measure);
   resizeObserver.observe(header);
+  resizeObserver.observe(nav);
+  matchMedia('(max-width: 639px)').addEventListener('change', measure);
   resizeObserver.observe(slot);
   resizeObserver.observe(brandName);
   form.addEventListener('focusout', (event) => {

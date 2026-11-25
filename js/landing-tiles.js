@@ -298,16 +298,14 @@ export function renderLandingTiles(list, credits, tiles) {
       ),
     ),
   );
+  // One running line, each credit separated from the next by a semicolon.
   credits.replaceChildren(
-    ...tiles.map(({ credit }) =>
-      el(
-        'li',
-        {},
-        el('a', { href: credit.url }, credit.text),
-        ' · ',
-        CC[credit.license] ? el('a', { href: CC[credit.license] }, credit.license) : credit.license,
-        '. Cropped and resized.',
-      ),
-    ),
+    ...tiles.flatMap(({ credit }, index) => [
+      index ? '; ' : '',
+      el('a', { href: credit.url }, credit.text),
+      ', ',
+      CC[credit.license] ? el('a', { href: CC[credit.license] }, credit.license) : credit.license,
+    ]),
+    '. Images are cropped and resized.',
   );
 }

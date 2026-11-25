@@ -1053,13 +1053,15 @@ h1 {
   align-items: center;
   justify-content: space-between;
 }
+.footer-source .icon {
+  fill: currentColor;
+  stroke: none;
+}
 .footer-inner a {
   display: inline-flex;
   align-items: center;
+  gap: var(--space-sm);
   min-height: 44px;
-}
-.footer-inner p {
-  max-width: 80ch;
 }
 
 .mobile-detail-open .results-column,
@@ -2044,6 +2046,19 @@ html {
   flex: 1 1 15rem;
   min-width: 0;
 }
+.search-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  justify-content: flex-end;
+  gap: 0 var(--space-lg);
+}
+.search-links .text-button {
+  align-items: start;
+  padding-block: 0;
+  min-block-size: 44px;
+  line-height: inherit;
+}
 .search-help-link {
   font-size: var(--text-label);
   white-space: nowrap;
@@ -2388,6 +2403,14 @@ html {
   visibility: hidden;
 }
 
+.intro:has(+ #landing:not([hidden])) {
+  padding-block-end: calc(var(--space-lg) * 0.8);
+}
+@media (max-width: 599px) {
+  .intro:has(+ #landing:not([hidden])) {
+    padding-block-end: calc(var(--space-base) * 0.5);
+  }
+}
 .research-start {
   margin-block: clamp(var(--space-base), 2vw, var(--space-lg)) var(--space-2xl);
 }
@@ -2560,7 +2583,6 @@ html {
 }
 .research-image-credits {
   margin-block-start: var(--space-md);
-  max-inline-size: 70ch;
   color: var(--color-secondary);
   font-size: var(--text-label);
 }
@@ -2569,20 +2591,9 @@ html {
   min-block-size: 44px;
   cursor: pointer;
 }
-.research-image-credits li {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  column-gap: 0.3em;
-}
-.research-image-credits li a {
-  display: inline-flex;
-  align-items: center;
-  min-block-size: 44px;
-  min-inline-size: 44px;
-}
-.research-image-credits li + li {
-  margin-block-start: var(--space-sm);
+.research-image-credits p {
+  margin-block: 0 var(--space-sm);
+  line-height: 1.6;
 }
 
 .import-status:empty {
@@ -3375,5 +3386,94 @@ html {
 @media (prefers-reduced-motion: no-preference) {
   .viz-nav button {
     transition: color 0.15s ease-out;
+  }
+}
+
+/* Phone header: the logo on its own, then a navigation bar with tabs and a search button. */
+.search-toggle {
+  display: none;
+}
+@media (max-width: 639px) {
+  .masthead,
+  .masthead-inner {
+    display: contents;
+  }
+  .brand {
+    min-height: 56px;
+    padding-inline: var(--space-base);
+    background: var(--color-surface);
+  }
+  .brand-name span {
+    font-size: var(--text-caption);
+  }
+  .brand-mark {
+    width: 32px;
+    height: 36px;
+  }
+  .main-nav {
+    position: sticky;
+    top: 0;
+    z-index: var(--layer-sticky);
+    grid-column: auto;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    margin: 0;
+    padding-inline: var(--space-base);
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-block: 1px solid var(--color-line);
+    background: var(--color-surface);
+  }
+  .main-nav::-webkit-scrollbar {
+    display: none;
+  }
+  .nav-button {
+    flex: none;
+    min-height: 48px;
+  }
+  .has-nav-search .brand-name {
+    visibility: visible;
+  }
+  .nav-search-slot {
+    display: none;
+  }
+  .search-toggle {
+    display: grid;
+    place-items: center;
+    min-width: 44px;
+    margin-inline-start: auto;
+    color: var(--color-ink);
+    margin-block: 2px;
+    border: 0;
+    border-radius: var(--radius-base);
+  }
+  .search-toggle[aria-expanded='true'] {
+    background: var(--color-selected);
+    color: var(--color-accent);
+  }
+  .search-area {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition:
+      grid-template-rows var(--duration-slow, 260ms) var(--ease-out),
+      opacity var(--duration-slow, 260ms) var(--ease-out),
+      visibility 0s;
+  }
+  .search-area-inner {
+    min-height: 0;
+    overflow: hidden;
+    /* Room for the focus ring, which would otherwise be clipped while open. */
+    margin: -4px;
+    padding: 4px;
+  }
+  .search-area[data-open='false'] {
+    grid-template-rows: 0fr;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      grid-template-rows var(--duration-slow, 260ms) var(--ease-out),
+      opacity var(--duration-fast) var(--ease-out),
+      visibility 0s var(--duration-slow, 260ms);
   }
 }

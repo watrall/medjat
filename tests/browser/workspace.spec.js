@@ -951,6 +951,8 @@ for (const width of [320, 390, 768, 1024, 1440]) {
     await fixtures(page);
     await page.goto('/?q=ancient+egypt');
     await expect(page.locator('.result-row')).toHaveCount(25);
+    // Phones use the navigation bar's search button instead (see the phone header test).
+    test.skip(width < 640, 'phone header');
     const nav = page.locator('#navSearchForm');
     await expect(nav).toHaveAttribute('aria-hidden', 'true');
     await page.locator('#searchInput').fill('Abydos draft');
@@ -1001,6 +1003,39 @@ for (const width of [320, 390, 768, 1024, 1440]) {
     await expect(nav).toHaveCSS('transition-duration', '0s');
   });
 }
+
+test('the phone header is a logo bar over a pinned navigation bar with a search toggle', async ({
+  page,
+}) => {
+  await fixtures(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  const toggle = page.locator('#searchToggle');
+  const area = page.locator('#searchArea');
+  await expect(toggle).toBeVisible();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.locator('#searchInput')).toBeVisible();
+  await expect(page.locator('.header-attribution')).toBeHidden();
+  const logo = await page.locator('.brand').boundingBox();
+  const nav = await page.locator('.main-nav').boundingBox();
+  expect(nav.y).toBeGreaterThanOrEqual(logo.y + logo.height);
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await expect(area).toHaveCSS('visibility', 'hidden');
+  await expect(page.locator('#searchInput')).toBeHidden();
+  await toggle.click();
+  await expect(page.locator('#searchInput')).toBeVisible();
+  await expect(page.locator('#searchInput')).toBeFocused();
+  await page.evaluate(() => window.scrollTo(0, 600));
+  expect((await page.locator('.main-nav').boundingBox()).y).toBe(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
+  await page.locator('#collectionNav').evaluate((e) => (e.disabled = false));
+  await page.locator('#placesNav').click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await toggle.click();
+  await expect(page.locator('#exploreNav')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#searchInput')).toBeFocused();
+});
 
 test('global navigation search opens Explore and preserves synchronized text', async ({ page }) => {
   const requests = await fixtures(page);
@@ -1123,7 +1158,7 @@ test('the masthead reflows enlarged text and hands off at a fractional header he
   page,
 }) => {
   await fixtures(page);
-  await page.setViewportSize({ width: 320, height: 844 });
+  await page.setViewportSize({ width: 768, height: 844 });
   await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
   await page.evaluate(() => (document.documentElement.style.fontSize = '200%'));
@@ -1132,7 +1167,7 @@ test('the masthead reflows enlarged text and hands off at a fractional header he
     nav: document.querySelector('.main-nav').getBoundingClientRect().toJSON(),
     width: document.documentElement.scrollWidth,
   }));
-  expect(geometry.width).toBe(320);
+  expect(geometry.width).toBe(768);
   expect(geometry.nav.bottom).toBeLessThanOrEqual(geometry.header.bottom);
   const before = geometry.header.height;
   const enlargedEdge = await page.evaluate(
@@ -1304,7 +1339,7 @@ test('the landing stays idle and thematic tiles submit their exact titles', asyn
   await page.locator('#searchField').selectOption('author');
   expect(requests).toHaveLength(0);
   await page.mouse.move(0, 0);
-  await page.locator('#landingPlaces').focus();
+  await page.locator('.search-help-link').focus();
   await page.keyboard.press('Tab');
   await expect(first).toBeFocused();
   await expect(first.locator('.tile-arrow')).toHaveCSS('opacity', '1');
@@ -1795,8 +1830,10 @@ test('every page load draws its own six landing tiles and credits only those', a
   }
   expect(draws.size).toBeGreaterThan(1);
   await page.getByText('About the images', { exact: true }).click();
-  await expect(page.locator('#landingCredits li')).toHaveCount(6);
-  await expect(page.locator('#landingCredits li').first()).toContainText('Cropped and resized.');
+  const credits = page.locator('#landingCredits');
+  await expect(credits.locator('a[href^="http"]:not([href*="creativecommons"])')).toHaveCount(6);
+  expect(((await credits.textContent()) ?? '').split('; ')).toHaveLength(6);
+  await expect(credits).toContainText('Images are cropped and resized.');
 });
 test('a result and its detail read as a citation, with commas and a distinct style for each part', async ({
   page,

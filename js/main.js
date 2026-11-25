@@ -39,6 +39,7 @@ import { reportableUpdates } from './updates.js';
 import { renderSearchFooter, renderSearchNotice } from './search-status.js';
 import { VIEW_CONFIG } from './view-config.js';
 import { createSearchHandoff } from './search-handoff.js';
+import { createSearchToggle } from './search-toggle.js';
 import { BREAKPOINTS } from './breakpoints.js';
 import { el, icon, emptyState, notify, skeletons } from './dom.js';
 
@@ -89,6 +90,7 @@ const state = {
 };
 
 const searchHandoff = createSearchHandoff();
+createSearchToggle();
 
 let initialized = false,
   restoringLocation = false;
@@ -794,6 +796,7 @@ function renderExploreSurface() {
   const explore = state.view === 'explore';
   const idle = explore && !state.query.q && !state.directRecord;
   $('landing').hidden = !idle;
+  $('landingPlaces').hidden = !idle;
   document.body.classList.toggle('is-compact', state.view === 'visualize' || (explore && !idle));
   $('research').hidden = state.view !== 'collection' && (!explore || idle);
   document.querySelector('.skip-link').href = idle
