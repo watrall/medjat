@@ -20,7 +20,6 @@ export function palette() {
     red: token('--viz-red'),
     clay: token('--viz-clay'),
     teal: token('--viz-teal'),
-    mist: token('--viz-mist'),
     text: token('--color-ink'),
     secondary: token('--color-secondary'),
     muted: token('--color-muted'),

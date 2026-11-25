@@ -5,7 +5,7 @@ import { copyFile, mkdir } from 'node:fs/promises';
 // committed like the other vendored files. Run this after changing the list below.
 const entry = `
 import * as echarts from 'echarts/core';
-import { ScatterChart, TreemapChart } from 'echarts/charts';
+import { BarChart, ScatterChart, TreemapChart } from 'echarts/charts';
 import {
   GridComponent,
   GraphicComponent,
@@ -16,6 +16,7 @@ import {
 import { LabelLayout } from 'echarts/features';
 import { SVGRenderer } from 'echarts/renderers';
 echarts.use([
+  BarChart,
   ScatterChart,
   TreemapChart,
   GridComponent,

@@ -1,14 +1,19 @@
 import {
+  FIELDS,
   constellation,
+  fingerprint,
   publisherTree,
   registration,
   shorten,
   typeGroups,
+  typeMix,
   waffle,
   yearStack,
 } from './viz-data.js';
 
-const escape = (text) =>
+const LARGE = 400;
+const WAFFLE_WIDTH = 650;
+const escapeHtml = (text) =>
   String(text).replace(
     /[&<>"]/g,
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c],
@@ -20,7 +25,7 @@ function tip(colors, { title, line, dot, tail }) {
   const mark = dot
     ? `<span style="display:inline-block;inline-size:9px;block-size:9px;border-radius:50%;background:${dot};margin-inline-end:8px"></span>`
     : '';
-  return `<div style="font:500 13px ${colors.font};padding:12px 14px;max-inline-size:320px;color:${colors.text}"><div style="font-weight:700;line-height:1.35;margin-block-end:6px">${escape(title)}</div>${line ? `<div style="color:${colors.secondary};line-height:1.5">${escape(line)}</div>` : ''}${tail ? `<div style="margin-block-start:8px;color:${colors.secondary}">${mark}${tail}</div>` : ''}</div>`;
+  return `<div style="font:500 13px ${colors.font};padding:12px 14px;max-inline-size:320px;color:${colors.text}"><div style="font-weight:700;line-height:1.35;margin-block-end:6px">${escapeHtml(title)}</div>${line ? `<div style="color:${colors.secondary};line-height:1.5">${escapeHtml(line)}</div>` : ''}${tail ? `<div style="margin-block-start:8px;color:${colors.secondary}">${mark}${tail}</div>` : ''}</div>`;
 }
 
 const tooltip = (colors, formatter) => ({
@@ -33,6 +38,7 @@ const tooltip = (colors, formatter) => ({
   formatter,
 });
 
+const refinableVenue = (venue) => Boolean(venue) && !venue.includes(',');
 const venueLine = (work) => [work.container, work.year].filter(Boolean).join(', ');
 const base = (colors, animate) => ({
   animation: animate,
@@ -55,14 +61,16 @@ const xAxis = (colors, extra) => ({
   ...extra,
 });
 
-function constellationChart(works, { colors, groupOf, groupNames, window }) {
-  const first = constellation(works, { width: 1000, height: 480 });
+function constellationChart(works, { colors, groupOf, groupNames, windowSize }) {
+  const radius = works.length > LARGE ? 3.6 : 5.4;
+  const height = works.length > LARGE ? 860 : 560;
+  const first = constellation(works, { width: 1000, height: 480, radius, pack: false });
   const colorOf = (work) => colors.groups[groupNames.indexOf(groupOf(work))];
   const topTitle = first.top ? shorten(first.top.work.title, 64) : '';
   return {
     id: 'cited',
     title: 'Citations',
-    coverage: `${first.total} of ${window} records dated`,
+    coverage: `${first.total} of ${windowSize} records dated`,
     lead: first.total
       ? first.citedShare === 0
         ? ['None of these records has been cited by another Crossref record yet.']
@@ -76,15 +84,16 @@ function constellationChart(works, { colors, groupOf, groupNames, window }) {
             '.',
           ]
       : ['No record in this window has a publication date.'],
-    note: 'Each dot is one record. Across is the publication year. Up is the number of Crossref records that cite it, on a log scale. Records no one has cited yet sit in the band below the line.',
+    note: 'Each dot is one record. Across is the publication year. Up is the number of Crossref records that cite it, on a log scale. Records with few citations are spread slightly so none overlap. Records no one has cited yet sit in the band below the line.',
     label: `Scatter of ${first.total} dated records by publication year and citation count`,
-    height: 560,
+    height,
     filters: true,
     option(width, animate) {
       const margin = { left: 64, right: 28, top: 28, bottom: 44 };
       const layout = constellation(works, {
         width: width - margin.left - margin.right,
-        height: 560 - margin.top - margin.bottom,
+        height: height - margin.top - margin.bottom,
+        radius,
       });
       const ticks = [
         [0.45, '1 citation'],
@@ -102,7 +111,7 @@ function constellationChart(works, { colors, groupOf, groupNames, window }) {
             title: p.data.work.title,
             line: venueLine(p.data.work),
             dot: p.color,
-            tail: `${escape(p.data.work.typeLabel)} · <b>${p.data.cited.toLocaleString()}</b> ${p.data.cited === 1 ? 'citation' : 'citations'}`,
+            tail: `${escapeHtml(p.data.work.typeLabel)} · <b>${p.data.cited.toLocaleString()}</b> ${p.data.cited === 1 ? 'citation' : 'citations'}`,
           }),
         ),
         series: [
@@ -178,7 +187,7 @@ function constellationChart(works, { colors, groupOf, groupNames, window }) {
   };
 }
 
-function yearsChart(works, { colors, groupOf, groupNames, window }) {
+function yearsChart(works, { colors, groupOf, groupNames, windowSize }) {
   const stack = yearStack(works, groupOf, groupNames);
   const colorOf = (work) => colors.groups[groupNames.indexOf(groupOf(work))];
   const counts = new Map();
@@ -187,7 +196,7 @@ function yearsChart(works, { colors, groupOf, groupNames, window }) {
     return {
       id: 'years',
       title: 'Publication years',
-      coverage: `0 of ${window} records dated`,
+      coverage: `0 of ${windowSize} records dated`,
       lead: ['No record in this window has a publication date.'],
       note: '',
       label: '',
@@ -195,10 +204,11 @@ function yearsChart(works, { colors, groupOf, groupNames, window }) {
       empty: true,
       table: { head: [], rows: [] },
     };
+  const height = Math.min(760, Math.max(440, stack.tallest * 9 + 80));
   return {
     id: 'years',
     title: 'Publication years',
-    coverage: `${stack.total} of ${window} records dated`,
+    coverage: `${stack.total} of ${windowSize} records dated`,
     lead: [
       strong(`${stack.sinceShare}%`),
       ' of this literature was published since 2000. The busiest year, ',
@@ -207,11 +217,15 @@ function yearsChart(works, { colors, groupOf, groupNames, window }) {
     ],
     note: `Each dot is one record, stacked in its publication year and grouped by type.${stack.early ? ` ${plural(stack.early, 'earlier record is', 'earlier records are')} not shown.` : ''}`,
     label: `Dot chart of ${stack.total} records stacked by publication year, busiest year ${stack.peak.year}`,
-    height: 440,
+    height,
     option(width, animate) {
       const margin = { left: 28, right: 28, top: 36, bottom: 40 };
       const span = 2027 - stack.start;
-      const size = Math.min(15, ((width - margin.left - margin.right) / span) * 0.78);
+      const size = Math.min(
+        15,
+        ((width - margin.left - margin.right) / span) * 0.78,
+        ((height - margin.top - margin.bottom) / (stack.tallest + 2)) * 0.92,
+      );
       return {
         ...base(colors, animate),
         grid: margin,
@@ -233,7 +247,7 @@ function yearsChart(works, { colors, groupOf, groupNames, window }) {
             title: p.data.work.title,
             line: venueLine(p.data.work),
             dot: p.color,
-            tail: escape(p.data.work.typeLabel),
+            tail: escapeHtml(p.data.work.typeLabel),
           }),
         ),
         series: [
@@ -291,14 +305,301 @@ function yearsChart(works, { colors, groupOf, groupNames, window }) {
   };
 }
 
-function wafflesChart(works, { colors, groupOf, groupNames, groups, window }) {
+function typeMixPanel(works, { colors, groupOf, groupNames, windowSize }) {
+  const mix = typeMix(works, groupOf, groupNames);
+  if (mix.rows.length < 2) return undefined;
+  const first = mix.rows[0];
+  const last = mix.rows.at(-1);
+  const leader = (row) => row.counts.indexOf(Math.max(...row.counts));
+  const share = (row, index) => Math.round((100 * row.counts[index]) / row.total);
+  const [from, to] = [leader(first), leader(last)];
+  return {
+    title: 'How the publication mix has changed',
+    coverage: `${mix.total} of ${windowSize} records dated`,
+    lead:
+      from === to
+        ? [
+            strong(groupNames[to]),
+            ` leads in every period, from ${share(first, to)}% of the records published ${first.when} to `,
+            strong(`${share(last, to)}%`),
+            ` of those published ${last.when}.`,
+          ]
+        : [
+            strong(groupNames[from]),
+            ` made up ${share(first, from)}% of the records published ${first.when}. `,
+            strong(groupNames[to]),
+            ` makes up ${share(last, to)}% of those published ${last.when}.`,
+          ],
+    note: `Each bar is one period and fills the full width, so you compare shares, not counts.`,
+    label: `Share of each publication type by period`,
+    height: mix.rows.length * 54 + 36,
+    option(_width, animate) {
+      return {
+        ...base(colors, animate),
+        grid: { left: 108, right: 8, top: 4, bottom: 4 },
+        xAxis: { type: 'value', min: 0, max: 100, show: false },
+        yAxis: {
+          type: 'category',
+          inverse: true,
+          data: mix.rows.map((row) => `${row.label} (${row.total})`),
+          axisLine: { show: false },
+          axisTick: { show: false },
+          axisLabel: {
+            color: colors.secondary,
+            fontFamily: colors.font,
+            fontSize: 12.5,
+            fontWeight: 600,
+          },
+        },
+        tooltip: {
+          ...tooltip(colors, (p) =>
+            tip(colors, {
+              title: p.seriesName,
+              line: `${p.data.count} of ${p.data.total} records ${p.data.when}`,
+              dot: p.color,
+              tail: `<b>${Math.round(p.value)}%</b> of the period`,
+            }),
+          ),
+        },
+        series: groupNames.map((name, index) => ({
+          type: 'bar',
+          name,
+          stack: 'share',
+          barWidth: 30,
+          itemStyle: { color: colors.groups[index], borderColor: colors.canvas, borderWidth: 1.5 },
+          label: {
+            show: true,
+            color: '#fff',
+            fontFamily: colors.font,
+            fontWeight: 700,
+            fontSize: 12,
+            formatter: (p) => (p.value >= 12 ? p.data.count : ''),
+          },
+          emphasis: { focus: 'series' },
+          blur: { itemStyle: { opacity: 0.35 } },
+          data: mix.rows.map((row) => ({
+            value: (100 * row.counts[index]) / row.total,
+            count: row.counts[index],
+            total: row.total,
+            when: row.when,
+          })),
+        })),
+      };
+    },
+    table: {
+      head: ['Period', ...groupNames],
+      rows: mix.rows.map((row) => ({ cells: [`${row.label} (${row.total})`, ...row.counts] })),
+    },
+  };
+}
+
+const ROW = 62;
+const HEAD = 40;
+
+function fingerprintChart(works, { colors, windowSize }) {
+  const print = fingerprint(works);
+  const labels = FIELDS.map(([, label]) => label);
+  const text = (size, color, weight = 700) => ({
+    show: true,
+    color,
+    fontFamily: colors.font,
+    fontWeight: weight,
+    fontSize: size,
+  });
+  const caption = (data) => ({ type: 'scatter', silent: true, symbolSize: 0, data });
+  const cells = print.rows.flatMap((row, y) =>
+    FIELDS.map(([, label, phrase], x) => ({
+      row,
+      x,
+      y,
+      info: {
+        row: row.name,
+        field: label,
+        phrase,
+        count: row.counts[x],
+        total: row.total,
+        share: row.shares[x],
+      },
+    })),
+  );
+  const HIT = 'hit';
+  // One active cell stays at full strength and the rest fade; -1 means nothing is hovered.
+  const visuals = (width, active) => {
+    const left = Math.min(230, width * 0.3);
+    const track = (width - left - 8) / FIELDS.length - 18;
+    const strength = (index, rest) => (active < 0 || index === active ? rest : 0.28);
+    const barY = (y) => y + 0.4;
+    return {
+      track: cells.map(({ x, y }, index) => ({
+        value: [x + 0.5, barY(y)],
+        itemStyle: { opacity: strength(index, 1) },
+      })),
+      fill: cells.map(({ row, x, y }, index) => {
+        const fill = row.shares[x] ? Math.max(2, (track * row.shares[x]) / 100) : 0;
+        return {
+          value: [x + 0.5, barY(y)],
+          symbolSize: [fill, 10],
+          symbolOffset: [-(track - fill) / 2, 0],
+          itemStyle: { opacity: active === index ? 1 : strength(index, 0.8) },
+        };
+      }),
+      percent: cells.map(({ row, x, y }, index) => ({
+        value: [x + 0.5, y + 0.8],
+        label: {
+          ...text(12, colors.secondary, 600),
+          formatter: `${row.shares[x]}%`,
+          opacity: strength(index, 1),
+        },
+      })),
+    };
+  };
+  return {
+    id: 'fingerprint',
+    title: 'Which fields Crossref holds',
+    coverage: `${works.length} of ${windowSize} records`,
+    lead: [
+      strong(`${print.best.share}%`),
+      ` of these records have ${print.best.phrase}, but only `,
+      strong(`${print.worst.share}%`),
+      ` have ${print.worst.phrase}.`,
+    ],
+    note: 'Each bar is the share of that row’s records that carry the field. An empty bar means Crossref holds no value, not that none exists.',
+    label: `Share of records carrying each metadata field, for all records and the ${print.rows.length - 1} largest publishers`,
+    height: print.rows.length * ROW + HEAD + 12,
+    option(width, animate) {
+      const left = Math.min(230, width * 0.3);
+      const pitch = (width - left - 8) / FIELDS.length;
+      const track = pitch - 18;
+      const head = HEAD / ROW;
+      const now = visuals(width, -1);
+      return {
+        ...base(colors, animate),
+        animationDurationUpdate: 160,
+        grid: { left, right: 8, top: 6, bottom: 6 },
+        xAxis: { type: 'value', min: 0, max: FIELDS.length, show: false },
+        yAxis: { type: 'value', inverse: true, min: -head, max: print.rows.length, show: false },
+        tooltip: tooltip(colors, (p) =>
+          tip(colors, {
+            title: `${p.data.row}: ${p.data.field}`,
+            line: `${p.data.count} of ${p.data.total} records have ${p.data.phrase}`,
+            tail: `<b>${p.data.share}%</b>`,
+          }),
+        ),
+        series: [
+          {
+            id: 'track',
+            type: 'scatter',
+            silent: true,
+            symbol: 'rect',
+            symbolSize: [track, 10],
+            itemStyle: { color: colors.line },
+            data: now.track,
+          },
+          {
+            id: 'fill',
+            type: 'scatter',
+            silent: true,
+            symbol: 'rect',
+            itemStyle: { color: colors.plum },
+            data: now.fill,
+          },
+          {
+            id: 'percent',
+            type: 'scatter',
+            silent: true,
+            symbolSize: 0,
+            data: now.percent,
+          },
+          caption(
+            labels.map((name, x) => ({
+              value: [x + 0.5, -head / 2],
+              label: { ...text(12.5, colors.secondary, 600), formatter: name },
+            })),
+          ),
+          caption(
+            print.rows.map((row, y) => ({
+              value: [0, y + 0.5],
+              label: {
+                ...text(12.5, colors.text, 600),
+                position: 'left',
+                distance: 14,
+                width: left - 20,
+                overflow: 'truncate',
+                formatter: `${row.name} (${row.total})`,
+              },
+            })),
+          ),
+          {
+            id: HIT,
+            type: 'scatter',
+            symbol: 'rect',
+            symbolSize: [pitch, ROW],
+            itemStyle: { color: 'transparent' },
+            emphasis: { disabled: true },
+            data: cells.map(({ x, y, info }) => ({ value: [x + 0.5, y + 0.5], ...info })),
+          },
+        ],
+      };
+    },
+    bind(chart, canvas) {
+      let active = -1;
+      const paint = (next) => {
+        if (chart.isDisposed()) return;
+        const visual = visuals(chart.getWidth(), next);
+        chart.setOption({
+          series: [
+            { id: 'track', data: visual.track },
+            { id: 'fill', data: visual.fill },
+            { id: 'percent', data: visual.percent },
+          ],
+        });
+      };
+      // The cell under the pointer is worked out from its position, so the fade always follows
+      // the pointer and clears the moment it leaves the grid.
+      const cellAt = (event) => {
+        const box = canvas.getBoundingClientRect();
+        const width = chart.getWidth();
+        const left = Math.min(230, width * 0.3);
+        const pitch = (width - left - 8) / FIELDS.length;
+        const column = Math.floor((event.clientX - box.left - left) / pitch);
+        const row = Math.floor((event.clientY - box.top - 6 - HEAD) / ROW);
+        const inside = column >= 0 && column < FIELDS.length && row >= 0 && row < print.rows.length;
+        return inside ? row * FIELDS.length + column : -1;
+      };
+      const follow = (event) => {
+        const next = cellAt(event);
+        if (next === active) return;
+        active = next;
+        paint(next);
+      };
+      const leave = () => {
+        if (active === -1) return;
+        active = -1;
+        paint(-1);
+      };
+      canvas.addEventListener('pointermove', follow);
+      canvas.addEventListener('pointerleave', leave);
+    },
+    table: {
+      head: ['Records', ...labels],
+      rows: print.rows.map((row) => ({
+        cells: [
+          `${row.name} (${row.total})`,
+          ...row.counts.map((n, i) => `${n} (${row.shares[i]}%)`),
+        ],
+      })),
+    },
+  };
+}
+
+function wafflesChart(works, { colors, groupOf, groupNames, groups, windowSize }) {
   const grid = waffle(works, groupOf, groupNames);
   const colorOf = (work) => colors.groups[groupNames.indexOf(groupOf(work))];
   const lead = groups[0];
   return {
     id: 'types',
     title: 'Publication types',
-    coverage: `${works.length} of ${window} records`,
+    coverage: `${works.length} of ${windowSize} records`,
     lead: [
       strong(lead.name),
       ' is the commonest type, ',
@@ -307,8 +608,9 @@ function wafflesChart(works, { colors, groupOf, groupNames, groups, window }) {
     ],
     note: 'Each square is one record. Select a type to search Crossref for it.',
     label: `Grid of ${works.length} records by publication type`,
-    height: Math.max(80, grid.rows * 26 + 8),
-    maxWidth: 650,
+    height: Math.max(80, Math.round(grid.rows * (WAFFLE_WIDTH / grid.columns)) + 8),
+    maxWidth: WAFFLE_WIDTH,
+    side: typeMixPanel(works, { colors, groupOf, groupNames, windowSize }),
     legend: groups.map((group, index) => ({
       name: group.name,
       count: group.count,
@@ -328,7 +630,7 @@ function wafflesChart(works, { colors, groupOf, groupNames, groups, window }) {
             title: p.data.work.title,
             line: venueLine(p.data.work),
             dot: p.color,
-            tail: escape(p.data.work.typeLabel),
+            tail: escapeHtml(p.data.work.typeLabel),
           }),
         ),
         series: [
@@ -359,7 +661,7 @@ function wafflesChart(works, { colors, groupOf, groupNames, groups, window }) {
   };
 }
 
-function publishersChart(works, { colors, window }) {
+function publishersChart(works, { colors, windowSize }) {
   const tree = publisherTree(works);
   const data = tree.data.map((publisher, index) => ({
     ...publisher,
@@ -368,7 +670,7 @@ function publishersChart(works, { colors, window }) {
   return {
     id: 'publishers',
     title: 'Publishers and venues',
-    coverage: `${works.length} of ${window} records`,
+    coverage: `${works.length} of ${windowSize} records`,
     lead: [
       tree.data.length === 1
         ? 'One publisher accounts for '
@@ -389,11 +691,9 @@ function publishersChart(works, { colors, window }) {
             tip(colors, {
               title: p.name,
               line: `${p.value.toLocaleString()} ${p.value === 1 ? 'record' : 'records'}`,
-              tail:
-                p.data.venue && /^[^,]+$/.test(p.data.venue) ? 'Select to search this venue' : '',
+              tail: refinableVenue(p.data.venue) ? 'Select to search this venue' : '',
             }),
           ),
-          trigger: 'item',
         },
         series: [
           {
@@ -459,14 +759,13 @@ function publishersChart(works, { colors, window }) {
         ],
       };
     },
-    click: (data) =>
-      data?.venue && !data.venue.includes(',') ? { refine: { container: data.venue } } : null,
+    click: (data) => (refinableVenue(data?.venue) ? { refine: { container: data.venue } } : null),
     table: {
       head: ['Publisher', 'Venue', 'Records'],
       rows: tree.data.flatMap((publisher) =>
         publisher.children.map((child) => ({
           cells: [publisher.name, child.name, child.value],
-          refine: child.venue && !child.venue.includes(',') ? { container: child.venue } : null,
+          refine: refinableVenue(child.venue) ? { container: child.venue } : null,
           refineLabel: `Search ${shorten(child.name, 40)}`,
         })),
       ),
@@ -474,14 +773,15 @@ function publishersChart(works, { colors, window }) {
   };
 }
 
-function registrationChart(works, { colors, groupOf, groupNames, window }) {
+function registrationChart(works, { colors, groupOf, groupNames, windowSize }) {
   const result = registration(works);
+  const dot = works.length > LARGE ? [10, 7] : [13, 9];
   const colorOf = (work) => colors.groups[groupNames.indexOf(groupOf(work))];
   if (!result.total)
     return {
       id: 'registration',
       title: 'When DOIs were registered',
-      coverage: `0 of ${window} records`,
+      coverage: `0 of ${windowSize} records`,
       lead: ['No record in this window has both a publication year and a registration year.'],
       note: '',
       label: '',
@@ -492,7 +792,7 @@ function registrationChart(works, { colors, groupOf, groupNames, window }) {
   return {
     id: 'registration',
     title: 'When DOIs were registered',
-    coverage: `${result.total} of ${window} records with both years`,
+    coverage: `${result.total} of ${windowSize} records with both years`,
     lead: result.late
       ? [
           strong(`${result.late}`),
@@ -529,7 +829,7 @@ function registrationChart(works, { colors, groupOf, groupNames, window }) {
               value: point.value,
               work: point.work,
               gap: point.gap,
-              symbolSize: point.gap >= 10 ? 13 : 9,
+              symbolSize: dot[point.gap >= 10 ? 0 : 1],
               itemStyle: {
                 color: colorOf(point.work),
                 opacity: point.gap >= 10 ? 0.92 : 0.7,
@@ -582,7 +882,7 @@ function registrationChart(works, { colors, groupOf, groupNames, window }) {
 export function buildSections(works, colors) {
   const { groups, of } = typeGroups(works);
   const groupNames = groups.map((group) => group.name);
-  const context = { colors, groupOf: of, groupNames, groups, window: works.length };
+  const context = { colors, groupOf: of, groupNames, groups, windowSize: works.length };
   return [
     {
       id: 'what',
@@ -595,5 +895,10 @@ export function buildSections(works, colors) {
       charts: [yearsChart(works, context), registrationChart(works, context)],
     },
     { id: 'cited', name: 'How cited', charts: [constellationChart(works, context)] },
+    {
+      id: 'complete',
+      name: 'How complete',
+      charts: [fingerprintChart(works, context)],
+    },
   ];
 }
