@@ -40,6 +40,7 @@ import { renderSearchFooter, renderSearchNotice } from './search-status.js';
 import { VIEW_CONFIG } from './view-config.js';
 import { createSearchHandoff } from './search-handoff.js';
 import { createSearchToggle } from './search-toggle.js';
+import { createHelpDialog } from './help-dialog.js';
 import { BREAKPOINTS } from './breakpoints.js';
 import { el, icon, emptyState, notify, skeletons } from './dom.js';
 
@@ -91,6 +92,7 @@ const state = {
 
 const searchHandoff = createSearchHandoff();
 createSearchToggle();
+createHelpDialog();
 
 let initialized = false,
   restoringLocation = false;
@@ -291,7 +293,7 @@ function renderAppliedQuery() {
     ? `Exact DOI lookup: ${query.q}. Topic and publication refinements do not apply.`
     : query.field === 'author'
       ? `Author names: ${query.q}. Added bibliographic terms: ${addedSearchTerms(query) || 'none'}.`
-      : `Ranking context sent to Crossref: ${bibliographicTerms(query)}${state.total > DATE_BROWSE_LIMIT ? '. Crossref counts every record that matches any query word, so a large total includes loosely related records.' : ''}`;
+      : `Ranking context sent to Crossref: ${bibliographicTerms(query)}${state.total > DATE_BROWSE_LIMIT ? '. Large totals include loosely related records.' : ''}`;
   const current = state.query;
   const doi = Boolean(normalizeDOI(current.q)) || current.field === 'doi';
   const entries = doi ? [] : filterEntries(current);
@@ -804,11 +806,6 @@ function renderExploreSurface() {
     : '#' + VIEW_CONFIG[state.view].skipTarget;
   if (idle) document.querySelector('.skip-link').textContent = 'Skip to search';
   else document.querySelector('.skip-link').textContent = VIEW_CONFIG[state.view].skipLabel;
-  $('searchRefinementsHelp').hidden = !idle;
-  if (idle) $('searchRefinementsHelp').open = false;
-  document.querySelector('.search-help-link').href = idle
-    ? '#searchRefinementsHelp'
-    : '#searchExplanation';
   $('searchSiteOnly').hidden = !(explore && state.query.q === tileById('hierakonpolis').title);
 }
 function resultTally(loaded, total, doiLookup) {
@@ -1252,15 +1249,6 @@ $('clearFilters').addEventListener('click', () => {
     references: false,
   });
   focusRefinementAction();
-});
-document.querySelector('.search-help-link').addEventListener('click', (event) => {
-  event.preventDefault();
-  if (state.view !== 'explore') setView('explore');
-  const help = $('research').hidden ? $('searchRefinementsHelp') : $('searchExplanation');
-  help.open = true;
-  const summary = help.querySelector('summary');
-  summary.focus();
-  summary.scrollIntoView({ block: 'nearest' });
 });
 $('exploreNav').addEventListener('click', () => setView('explore'));
 $('placesNav').addEventListener('click', () => setView('places'));

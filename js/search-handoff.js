@@ -8,7 +8,7 @@ export function createSearchHandoff() {
   const row = document.getElementById('primarySearchRow');
   const form = document.getElementById('navSearchForm');
   const slot = document.querySelector('.nav-search-slot');
-  const brandName = document.querySelector('.brand-name');
+  const brandName = document.querySelector('.masthead .brand-name');
   const input = document.getElementById('navSearchInput');
   const primary = document.getElementById('searchInput');
   let view = 'explore';

@@ -80,3 +80,17 @@ test('every referenced icon exists in the sprite', async () => {
   for (const icon of references)
     assert.ok(symbols.has(icon), `Referenced icon is missing from assets/icons.svg: ${icon}`);
 });
+
+test('the icon sprite is exactly what scripts/build-icons.mjs builds', async () => {
+  const script = await read('scripts/build-icons.mjs');
+  const listed = [
+    ...script.slice(script.indexOf('['), script.indexOf(']')).matchAll(/'([\w-]+)'/g),
+  ];
+  const sprite = await read('assets/icons.svg');
+  const symbols = [...sprite.matchAll(/<symbol id="([^"]+)"/g)].map((match) => match[1]);
+  assert.deepEqual(
+    [...symbols].sort(),
+    listed.map((match) => match[1]).sort(),
+    'Add the icon to the names list in scripts/build-icons.mjs and run npm run build:icons',
+  );
+});

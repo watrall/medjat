@@ -986,7 +986,7 @@ for (const width of [320, 390, 768, 1024, 1440]) {
       .locator('.main-nav')
       .evaluate((e) => e.getBoundingClientRect().toJSON());
     expect(stickyTabs).toEqual(tabs);
-    await expect(page.locator('.brand-name')).toHaveCSS(
+    await expect(page.locator('.masthead .brand-name')).toHaveCSS(
       'visibility',
       width >= 1000 ? 'visible' : 'hidden',
     );
@@ -1016,7 +1016,7 @@ test('the phone header is a logo bar over a pinned navigation bar with a search 
   await expect(toggle).toHaveAttribute('aria-expanded', 'true');
   await expect(page.locator('#searchInput')).toBeVisible();
   await expect(page.locator('.header-attribution')).toBeHidden();
-  const logo = await page.locator('.brand').boundingBox();
+  const logo = await page.locator('a.brand').boundingBox();
   const nav = await page.locator('.main-nav').boundingBox();
   expect(nav.y).toBeGreaterThanOrEqual(logo.y + logo.height);
   await toggle.click();
@@ -1158,19 +1158,124 @@ test('removing the final refinement and clearing all retain meaningful keyboard 
   await expect(summary).toBeFocused();
 });
 
-test('search help from Visualize opens a visible explanation and preserves the draft', async ({
-  page,
-}) => {
+test('search help opens as a dialog from any view and preserves the draft', async ({ page }) => {
   await fixtures(page);
   await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
   await page.locator('#searchInput').fill('An unfinished topic');
   await page.locator('#visualizeNav').click();
-  await page.getByRole('link', { name: 'Search help', exact: true }).click();
-  await expect(page.locator('#exploreNav')).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('#searchExplanation')).toBeVisible();
-  await expect(page.locator('#searchExplanation > summary')).toBeFocused();
+  const trigger = page.getByRole('button', { name: 'Search help', exact: true });
+  await trigger.click();
+  const dialog = page.getByRole('dialog', { name: 'Search help' });
+  await expect(dialog).toBeVisible();
+  await expect(page.locator('#visualizeNav')).toHaveAttribute('aria-pressed', 'true');
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(trigger).toBeFocused();
   await expect(page.locator('#searchInput')).toHaveValue('An unfinished topic');
+});
+
+test('the search help dialog has tabs, branding, live limits and a contained focus', async ({
+  page,
+}) => {
+  await fixtures(page);
+  await page.goto('/');
+  await page.locator('.search-help-link').click();
+  const dialog = page.getByRole('dialog', { name: 'Search help' });
+  await expect(dialog.locator('.brand-name')).toContainText('Medjat');
+  await expect(dialog.locator('.brand-mark')).toBeVisible();
+  await expect(dialog.getByRole('tab', { name: 'How to search' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  await expect(dialog.getByRole('heading', { name: 'What you can search for' })).toBeVisible();
+  // Keyboard: arrows move between tabs.
+  await dialog.getByRole('tab', { name: 'How to search' }).focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(dialog.getByRole('tab', { name: 'Limitations' })).toBeFocused();
+  await expect(dialog.getByRole('tab', { name: 'Limitations' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  await expect(dialog.getByRole('heading', { name: 'How Crossref returns results' })).toBeVisible();
+  await expect(dialog.getByRole('heading', { name: 'What the metadata contains' })).toBeVisible();
+  // The numbers come from the same constants the application enforces.
+  const limits = await page.evaluate(async () => {
+    const [crossref, aggregates] = await Promise.all([
+      import('/js/crossref.js'),
+      import('/js/aggregates.js'),
+    ]);
+    return {
+      pageSize: crossref.PAGE_SIZE.toLocaleString(),
+      maxRows: crossref.MAX_ROWS.toLocaleString(),
+      dateLimit: crossref.DATE_BROWSE_LIMIT.toLocaleString(),
+      windowSize: aggregates.WINDOW_SIZE.toLocaleString(),
+      largeWindowSize: aggregates.LARGE_WINDOW_SIZE.toLocaleString(),
+    };
+  });
+  for (const [key, value] of Object.entries(limits))
+    await expect(dialog.locator(`[data-help="${key}"]`)).toHaveText(value);
+  // Focus stays inside, and the page behind is not reachable.
+  for (let i = 0; i < 8; i++) await page.keyboard.press('Tab');
+  expect(
+    await page.evaluate(() =>
+      document.getElementById('searchHelp').contains(document.activeElement),
+    ),
+  ).toBe(true);
+  await page.locator('#searchHelpClose').click();
+  await expect(dialog).toBeHidden();
+  await expect(page.locator('.search-help-link')).toBeFocused();
+  await page.locator('.search-help-link').click();
+  await page.mouse.click(5, 5);
+  await expect(dialog).toBeHidden();
+  await expect(page.locator('.search-help-link')).toBeFocused();
+});
+
+test('the search help dialog passes an accessibility scan on both tabs', async ({ page }) => {
+  await fixtures(page);
+  await page.goto('/');
+  await page.locator('.search-help-link').click();
+  for (const tab of ['How to search', 'Limitations']) {
+    await page.getByRole('tab', { name: tab }).click();
+    const result = await new AxeBuilder({ page })
+      .include('#searchHelp')
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
+      .analyze();
+    expect(result.violations).toEqual([]);
+  }
+});
+
+test('contextual notes open Search help on the matching limitation', async ({ page }) => {
+  await fixtures(page);
+  await page.goto('/?q=ancient+egypt');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  await page.locator('#facetNote .inline-help').click();
+  const dialog = page.getByRole('dialog', { name: 'Search help' });
+  await expect(dialog.getByRole('tab', { name: 'Limitations' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  const target = await page.locator('#help-totals').boundingBox();
+  const body = await page.locator('.help-body').boundingBox();
+  expect(target.y).toBeGreaterThanOrEqual(body.y);
+  expect(target.y).toBeLessThan(body.y + body.height / 2);
+});
+
+test('the phone search help dialog fills the screen without horizontal scroll', async ({
+  page,
+}) => {
+  await fixtures(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await page.locator('.search-help-link').click();
+  const box = await page.locator('#searchHelp').boundingBox();
+  expect(box.width).toBe(390);
+  expect(box.height).toBeCloseTo(844, 0);
+  await page.getByRole('tab', { name: 'Limitations' }).click();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
+  expect(await page.locator('.help-body').evaluate((e) => e.scrollWidth <= e.clientWidth)).toBe(
+    true,
+  );
 });
 
 test('the masthead reflows enlarged text and hands off at a fractional header height', async ({
@@ -1594,7 +1699,7 @@ test('results offer searches beyond Crossref with the applied search words', asy
   await fixtures(page);
   await page.goto('/?q=Hierakonpolis+temple');
   await expect(page.locator('.result-row')).toHaveCount(25);
-  const summary = page.getByText('Search beyond Crossref', { exact: true });
+  const summary = page.locator('summary', { hasText: 'Search beyond Crossref' });
   await summary.click();
   const scholar = page.getByRole('link', { name: 'Google Scholar' });
   await expect(scholar).toHaveAttribute(

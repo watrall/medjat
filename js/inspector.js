@@ -20,7 +20,7 @@ import {
   RELATED_LIMIT,
 } from './crossref.js';
 import { citationLine, nameSeparator } from './citation-line.js';
-import { el, icon, externalLink, emptyState, notify } from './dom.js';
+import { el, icon, externalLink, emptyState, helpLink, notify } from './dom.js';
 import { downloadText } from './download.js';
 import { createCover } from './covers.js';
 import { loadGazetteer, placesForWork } from './place-data.js';
@@ -326,7 +326,7 @@ export function createInspector(
               icon('quote'),
               `Cited by ${work.citedBy.toLocaleString()} in Crossref`,
             ),
-            el('p', {}, CITED_BY_NOTE),
+            el('p', {}, CITED_BY_NOTE, ' ', helpLink('limits:citations')),
           ),
       ].filter(Boolean),
     );
@@ -902,6 +902,8 @@ export function createInspector(
             {},
             `${work.citedBy.toLocaleString()} citations recorded in Crossref. `,
             CITED_BY_NOTE,
+            ' ',
+            helpLink('limits:citations'),
           ),
         ),
       );

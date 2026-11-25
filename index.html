@@ -144,7 +144,12 @@
                   <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#map-pin" /></svg>
                   Explore by place
                 </button>
-                <a class="search-help-link" href="#searchExplanation">Search help</a>
+                <button class="text-button search-help-link" type="button" data-help-open="search">
+                  <svg class="icon" aria-hidden="true">
+                    <use href="assets/icons.svg#circle-question-mark" />
+                  </svg>
+                  Search help
+                </button>
               </div>
             </div>
           </div>
@@ -159,14 +164,6 @@
         </div>
       </section>
       <section id="landing" class="research-start" aria-labelledby="researchStartTitle">
-        <details id="searchRefinementsHelp" class="search-explanation">
-          <summary>How to search</summary>
-          <p>
-            Enter a title, topic, or place, choose Author for a name, or paste a DOI to open its
-            publication record. Crossref searches records supplied by publishers. Coverage and
-            available details vary.
-          </p>
-        </details>
         <section
           id="searchHistory"
           class="search-history"
@@ -373,13 +370,10 @@
             <summary>How these results were found</summary>
             <p id="effectiveQuery"></p>
             <p>
-              Crossref ranks keyword matches across publisher-supplied metadata. Adding period words
-              can broaden the candidates; it does not verify a publication's historical subject.
-              Publication year, type, and metadata controls apply separate filters.
-            </p>
-            <p>
-              Screen the titles and sources for relevance. Older and non-DOI scholarship may be
-              missing. Try alternative spellings and the language of the scholarship you need.
+              Crossref ranks keyword matches across publisher-supplied metadata. Period words
+              broaden the candidates; they do not verify a publication's subject.
+              <button class="inline-help" type="button" data-help-open="limits">Search help</button>
+              explains what this search can and cannot find.
             </p>
           </details>
           <div id="activeQuery" class="active-query" aria-label="Current search"></div>
@@ -402,6 +396,215 @@
         ></aside>
       </section>
     </main>
+
+    <dialog id="searchHelp" class="help-dialog" aria-labelledby="searchHelpTitle">
+      <div class="help-frame">
+        <header class="help-header">
+          <div class="help-brand">
+            <img class="brand-mark" src="assets/mark.svg" width="42" height="43" alt="" />
+            <span class="brand-name">Medjat<span>Ancient Egyptian Research Explorer</span></span>
+          </div>
+          <form method="dialog">
+            <button id="searchHelpClose" class="help-close" aria-label="Close search help">
+              <svg class="icon" aria-hidden="true"><use href="assets/icons.svg#x" /></svg>
+            </button>
+          </form>
+        </header>
+        <h2 id="searchHelpTitle" class="help-title" tabindex="-1">Search help</h2>
+        <div class="help-tabs" role="tablist" aria-label="Search help sections">
+          <button
+            id="helpTab-search"
+            data-tab="search"
+            class="help-tab"
+            type="button"
+            role="tab"
+            aria-controls="helpPanel-search"
+            aria-selected="true"
+          >
+            How to search
+          </button>
+          <button
+            id="helpTab-limits"
+            data-tab="limits"
+            class="help-tab"
+            type="button"
+            role="tab"
+            aria-controls="helpPanel-limits"
+            aria-selected="false"
+            tabindex="-1"
+          >
+            Limitations
+          </button>
+        </div>
+        <div class="help-body">
+          <section
+            id="helpPanel-search"
+            role="tabpanel"
+            aria-labelledby="helpTab-search"
+            tabindex="0"
+          >
+            <p>
+              Medjat searches Crossref, a registry where publishers deposit descriptive records
+              (metadata) for the articles, chapters and books they publish.
+            </p>
+            <h3>What you can search for</h3>
+            <ul>
+              <li>
+                <strong>A topic, title words, a place or a site.</strong> For example, Hierakonpolis
+                excavation or Deir el-Medina ostraca.
+              </li>
+              <li>
+                <strong>An author.</strong> Change All metadata to Author beside the search box.
+              </li>
+              <li>
+                <strong>A DOI.</strong> Paste one, with or without the https://doi.org/ prefix, to
+                open that exact record. Filters do not apply to DOI lookups.
+              </li>
+            </ul>
+            <h3>How matching works</h3>
+            <ul>
+              <li>
+                Crossref finds records that contain any of your words and ranks the best matches
+                first. It is not a phrase search, and quotation marks do not make it one. A few
+                specific words usually work better than a long sentence.
+              </li>
+              <li>
+                When no historical period is chosen and your search does not mention Egypt, Medjat
+                adds &ldquo;ancient Egypt&rdquo; to the ranking words. You can turn this off under
+                Search context in the filters.
+              </li>
+            </ul>
+            <h3>Narrowing and sorting</h3>
+            <ul>
+              <li>
+                Filter by publication year, publication type, open access, historical period, and
+                which metadata a record has (abstract, ORCID, references).
+              </li>
+              <li>
+                Sort by relevance, newest, oldest, or most cited. Most cited only reorders the
+                records already loaded.
+              </li>
+            </ul>
+            <h3>Getting better results</h3>
+            <ul>
+              <li>Try alternative spellings and transliterations.</li>
+              <li>Try the language of the scholarship you need.</li>
+              <li>
+                Add a site, an object type or a person, or narrow the years, if a search is too
+                broad.
+              </li>
+            </ul>
+            <h3>Once you find something</h3>
+            <p>
+              Open a record to read its details and references, and save it to your Collection
+              (stored in this browser). Then use Visualize to see patterns across the top results,
+              or Places to find work that mentions a site.
+            </p>
+          </section>
+          <section
+            id="helpPanel-limits"
+            role="tabpanel"
+            aria-labelledby="helpTab-limits"
+            tabindex="0"
+            hidden
+          >
+            <p>
+              Medjat shows what Crossref holds. Crossref links DOIs to descriptive records very
+              well, but it was not built as a subject bibliography. These are the limits to keep in
+              mind.
+            </p>
+            <h3>How Crossref returns results</h3>
+            <ul>
+              <li>
+                <strong>Words, not subjects.</strong> Crossref has no label for &ldquo;ancient
+                Egypt&rdquo; or for a period. Medjat finds work by matching words in descriptive
+                fields, so it will miss some relevant work and include some that is not.
+              </li>
+              <li id="help-totals">
+                <strong>Totals run high.</strong> Crossref counts records matching any of your
+                words, so a large total is the size of the candidate pool, not the amount of
+                relevant scholarship.
+              </li>
+              <li id="help-load">
+                <strong>Only part of a long list loads.</strong> Medjat asks for
+                <span data-help="pageSize"></span> records at a time. Crossref never sends more than
+                <span data-help="maxRows"></span> in one request, and date sorting stops after
+                <span data-help="dateLimit"></span> candidates. Narrow the search or the years to
+                get past that.
+              </li>
+              <li>
+                <strong>Some controls work on loaded records only.</strong> Most cited and the open
+                access filter reorder or narrow what has already loaded.
+              </li>
+              <li>
+                <strong>Charts are a sample.</strong> Visualize describes the first
+                <span data-help="windowSize"></span> or <span data-help="largeWindowSize"></span>
+                ranked matches, not the whole literature.
+              </li>
+              <li>
+                <strong>A shared public service.</strong> Medjat paces its requests, so a search can
+                occasionally be slow or fail; try again. Results are kept for five minutes, and
+                Crossref&rsquo;s records change as publishers update them.
+              </li>
+              <li>
+                <strong>Metadata only.</strong> Medjat searches records, not the text inside
+                articles. A phrase that appears only in the body of a paper will not be found.
+              </li>
+            </ul>
+            <h3>What the metadata contains</h3>
+            <ul>
+              <li>
+                <strong>Supplied by publishers.</strong> Publishers deposit the records and Crossref
+                does not check or complete them, so detail varies by publisher.
+              </li>
+              <li>
+                <strong>Only works with a DOI.</strong> Many books, older articles, excavation
+                reports and some regional publications have no DOI and do not appear.
+              </li>
+              <li>
+                <strong>Gaps are common.</strong> Abstracts, reference lists, ORCID iDs, licences
+                and funders exist for only some records. A missing field means nothing was
+                deposited. It says nothing about quality or about whether other relevant work
+                exists.
+              </li>
+              <li>
+                <strong>Records can be untidy.</strong> Authors may be missing, especially on book
+                chapters. Titles may be in capitals. Translations, preprints and published versions
+                can appear as separate records.
+              </li>
+              <li>
+                <strong>Dates are publication dates.</strong> They show when something was
+                published, not the historical period it studies. Period filters are search words,
+                not classifications.
+              </li>
+              <li>
+                <strong>Open access is a declaration.</strong> The badge means the publisher told
+                Crossref the work carries an open licence. Medjat does not check it, and a DOI link
+                can still lead to a page you cannot read.
+              </li>
+              <li id="help-citations">
+                <strong>Citations are partial.</strong> Cited-by counts only reflect reference lists
+                that participating publishers deposited, and Crossref does not list the citing
+                works. Retraction and correction notices appear only where they were deposited or
+                recorded.
+              </li>
+              <li id="help-places">
+                <strong>Places are suggestions.</strong> Crossref has no place data. Places looks
+                for a site&rsquo;s names in titles and abstracts, so a match is something to check,
+                not proof that the work concerns that place.
+              </li>
+            </ul>
+            <h3>Looking further</h3>
+            <p>
+              Treat results as a starting point. Check important claims against the publication
+              itself, and search other catalogues for books and older scholarship. Results pages
+              include a <strong>Search beyond Crossref</strong> list that runs your words in Google
+              Scholar, WorldCat, Internet Archive Scholar and Open Library.
+            </p>
+          </section>
+        </div>
+      </div>
+    </dialog>
     <footer class="site-footer">
       <div class="shell footer-inner">
         <a

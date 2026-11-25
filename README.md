@@ -59,6 +59,8 @@ The source runs directly without compilation. For hosting, use `npm run build` t
 
 ## Coverage and interpretation
 
+The in-app **Search help** dialog (How to search, Limitations) states these limits in plain language. Keep it in step with this section.
+
 Crossref exposes metadata deposited for DOI-bearing research outputs. It is **not a complete bibliography of scholarship on ancient Egypt**. Older scholarship, non-DOI publications, and some books and journals may be absent.
 
 - Queries are relevance ranked; they are not exact-phrase or controlled-vocabulary searches. Crossref keyword totals count records matching any word, so the charts sample the first 250 (or 1,000) ranked matches instead of reporting those totals.

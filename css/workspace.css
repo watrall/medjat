@@ -692,7 +692,8 @@ h1 {
   border-bottom: 1px solid var(--color-line);
   margin-bottom: var(--space-lg);
 }
-.inspector-tab {
+.inspector-tab,
+.help-tab {
   min-width: 44px;
   min-height: 44px;
   padding: 0 0 0.75rem;
@@ -700,7 +701,8 @@ h1 {
   font-size: var(--text-label);
   font-weight: 500;
 }
-.inspector-tab[aria-selected='true'] {
+.inspector-tab[aria-selected='true'],
+.help-tab[aria-selected='true'] {
   border-color: var(--color-accent);
   color: var(--color-accent);
 }
@@ -1970,6 +1972,10 @@ html {
   padding-block: 0;
   min-block-size: 44px;
   line-height: inherit;
+}
+/* Lowercase text sits below its line box centre, so a centred icon reads high. */
+.search-links .icon {
+  transform: translateY(1px);
 }
 .search-help-link {
   font-size: var(--text-label);
@@ -3443,5 +3449,154 @@ html {
   }
   .refinement-body {
     margin-top: var(--space-base);
+  }
+}
+
+/* Search help dialog */
+.inline-help {
+  display: inline;
+  padding: 0;
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.inline-help:hover {
+  color: var(--color-accent-hover);
+}
+/* Hiding the page scrollbar behind the backdrop must not shift the page. */
+html:has(.help-dialog[open]) {
+  overflow: hidden;
+  scrollbar-gutter: stable;
+}
+.help-dialog {
+  --help-gutter: var(--space-lg);
+  --help-rise: translateY(var(--space-sm));
+  width: min(44rem, calc(100% - 2rem));
+  max-width: none;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-base);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-raised);
+  color: var(--color-ink);
+  overflow: hidden;
+  opacity: 0;
+  transform: var(--help-rise);
+  transition:
+    opacity var(--duration-slow) var(--ease-out),
+    transform var(--duration-slow) var(--ease-out),
+    display var(--duration-slow) allow-discrete,
+    overlay var(--duration-slow) allow-discrete;
+}
+.help-dialog[open] {
+  opacity: 1;
+  transform: none;
+}
+.help-dialog::backdrop {
+  background: oklch(24% 0.03 330 / 0.45);
+  opacity: 0;
+  transition:
+    opacity var(--duration-slow) var(--ease-out),
+    display var(--duration-slow) allow-discrete,
+    overlay var(--duration-slow) allow-discrete;
+}
+.help-dialog[open]::backdrop {
+  opacity: 1;
+}
+/* The state to enter from; the closed rules above are the state to leave to. */
+@starting-style {
+  .help-dialog[open] {
+    opacity: 0;
+    transform: var(--help-rise);
+  }
+  .help-dialog[open]::backdrop {
+    opacity: 0;
+  }
+}
+.help-frame {
+  display: flex;
+  flex-direction: column;
+  max-height: min(46rem, calc(100dvh - 2rem));
+}
+.help-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-base);
+  padding: var(--space-base) var(--space-base) 0 var(--help-gutter);
+}
+.help-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+.help-close {
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: var(--radius-base);
+}
+.help-close:hover {
+  background: var(--color-selected);
+  color: var(--color-accent);
+}
+.help-title {
+  margin: var(--space-base) var(--help-gutter) var(--space-md);
+  font-size: var(--text-section);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.2;
+}
+.help-title:focus {
+  outline: none;
+}
+.help-tabs {
+  display: flex;
+  gap: var(--space-lg);
+  padding-inline: var(--help-gutter);
+  border-bottom: 1px solid var(--color-line);
+}
+.help-body {
+  min-height: 0;
+  padding: var(--help-gutter);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.help-body [role='tabpanel']:focus-visible {
+  outline-offset: 4px;
+}
+.help-body [id^='help-'] {
+  scroll-margin-block-start: var(--space-sm);
+}
+.help-body h3 {
+  margin-block: var(--space-lg) var(--space-sm);
+  font-size: var(--text-body);
+  font-weight: 650;
+}
+.help-body p,
+.help-body ul {
+  max-inline-size: 65ch;
+}
+.help-body ul {
+  display: grid;
+  gap: var(--space-sm);
+  margin: 0;
+  padding-inline-start: var(--space-lg);
+}
+.help-body strong {
+  font-weight: 650;
+}
+@media (max-width: 639px) {
+  .help-dialog {
+    --help-gutter: var(--space-base);
+    width: 100%;
+    height: 100dvh;
+    max-height: none;
+    border-radius: 0;
+  }
+  .help-frame {
+    height: 100dvh;
+    max-height: none;
   }
 }

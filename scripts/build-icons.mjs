@@ -3,6 +3,7 @@ const names = [
   'search',
   'x',
   'map-pin',
+  'circle-question-mark',
   'expand',
   'plus',
   'minus',
@@ -13,6 +14,7 @@ const names = [
   'download',
   'external-link',
   'book-open',
+  'book-open-text',
   'file-text',
   'user-round',
   'network',
@@ -21,6 +23,8 @@ const names = [
   'circle-alert',
   'arrow-left',
   'arrow-right',
+  'chevron-down',
+  'chevron-up',
   'quote',
 ];
 const symbols = await Promise.all(

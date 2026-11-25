@@ -1,5 +1,5 @@
 import { PAGE_SIZE } from './crossref.js';
-import { el, externalLink, icon } from './dom.js';
+import { el, externalLink, helpLink, icon } from './dom.js';
 
 const BEYOND_CROSSREF = [
   ['Google Scholar', (q) => `https://scholar.google.com/scholar?q=${q}`],
@@ -54,6 +54,8 @@ export function renderSearchFooter(
         'p',
         { class: 'scope-note' },
         'You have reached the publication-date browsing limit. Narrow the publication years or topic, or switch to relevance.',
+        ' ',
+        helpLink('limits:load'),
       ),
     );
   if (beyondQuery && !loading)

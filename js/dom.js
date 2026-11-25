@@ -25,6 +25,14 @@ export function icon(name) {
 export function externalLink(label, href, attrs = {}) {
   return el('a', { href, target: '_blank', rel: 'noopener noreferrer', ...attrs }, label);
 }
+// A link-styled button that opens Search help, e.g. topic "limits:totals" for a section of the Limitations tab.
+export function helpLink(topic) {
+  return el(
+    'button',
+    { class: 'inline-help', type: 'button', 'data-help-open': topic },
+    'Search help',
+  );
+}
 export function emptyState(title, message, iconName = 'search') {
   return el(
     'div',

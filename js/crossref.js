@@ -5,6 +5,8 @@ export const API = 'https://api.crossref.org';
 export const CONTACT = 'admin@wunderkammer.dev';
 export const PAGE_SIZE = 25;
 export const DATE_BROWSE_LIMIT = 10000;
+// The most records Crossref sends in a single request.
+export const MAX_ROWS = 1000;
 const cache = new Map();
 const TTL = 5 * 60 * 1000;
 const pending = [];

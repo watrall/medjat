@@ -14,7 +14,7 @@ import { createPlaceRecord } from './place-record.js';
 import { createInspector } from './inspector.js';
 import { createPlaceCollection } from './place-collection.js';
 import { BREAKPOINTS } from './breakpoints.js';
-import { el, icon, externalLink, skeletons, notify } from './dom.js';
+import { el, icon, externalLink, helpLink, skeletons, notify } from './dom.js';
 
 export function createPlaces(
   root,
@@ -322,6 +322,8 @@ export function createPlaces(
         'p',
         { class: 'places-caveat', role: 'note' },
         'Crossref has no place metadata. Places searches for a place\u2019s names and checks each title and abstract for them, so a match is a suggestion, not proof that the work concerns the place. Work that never names the place will not appear.',
+        ' ',
+        helpLink('limits:places'),
       ),
       el(
         'div',
@@ -665,7 +667,7 @@ export function createPlaces(
         el(
           'p',
           {},
-          'Crossref keyword searches return ranked candidates, not an exhaustive bibliography. A name mention in a title or supplied abstract is a suggestion to review, not a verified geographic subject. Search names come from reviewed Pleiades variants and can refer to different periods or locations.',
+          'Search names come from reviewed Pleiades variants and can refer to different periods or locations.',
         ),
       ),
     );

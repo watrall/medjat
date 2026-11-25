@@ -1,5 +1,5 @@
 import { TYPES } from './data.js';
-import { el, icon } from './dom.js';
+import { el, helpLink, icon } from './dom.js';
 
 export const FACET_VISIBLE = 9;
 const NOTE =
@@ -94,7 +94,7 @@ export function createFacetLists({ onDecade, onAccess }) {
       },
     );
     $('facetNote').hidden = !facets;
-    $('facetNote').textContent = facets ? NOTE : '';
+    $('facetNote').replaceChildren(...(facets ? [NOTE, ' ', helpLink('limits:totals')] : []));
   }
 
   function renderAccess({ loaded, openAccess, selected }) {
