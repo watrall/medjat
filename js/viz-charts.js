@@ -423,6 +423,8 @@ function fingerprintChart(works, { colors, windowSize }) {
     })),
   );
   const HIT = 'hit';
+  // The bar and a little around it respond to the pointer; the gaps between bars do not.
+  const BAR_HIT = 22;
   // One active cell stays at full strength and the rest fade; -1 means nothing is hovered.
   const visuals = (width, active) => {
     const left = Math.min(230, width * 0.3);
@@ -533,10 +535,10 @@ function fingerprintChart(works, { colors, windowSize }) {
             id: HIT,
             type: 'scatter',
             symbol: 'rect',
-            symbolSize: [pitch, ROW],
+            symbolSize: [track, BAR_HIT],
             itemStyle: { color: 'transparent' },
             emphasis: { disabled: true },
-            data: cells.map(({ x, y, info }) => ({ value: [x + 0.5, y + 0.5], ...info })),
+            data: cells.map(({ x, y, info }) => ({ value: [x + 0.5, y + 0.4], ...info })),
           },
         ],
       };
@@ -554,17 +556,22 @@ function fingerprintChart(works, { colors, windowSize }) {
           ],
         });
       };
-      // The cell under the pointer is worked out from its position, so the fade always follows
-      // the pointer and clears the moment it leaves the grid.
+      // The cell under the pointer comes from the chart's own coordinates, the same ones the
+      // tooltip uses, so the fade can never land on a different cell than the tooltip names.
       const cellAt = (event) => {
-        const box = canvas.getBoundingClientRect();
-        const width = chart.getWidth();
-        const left = Math.min(230, width * 0.3);
-        const pitch = (width - left - 8) / FIELDS.length;
-        const column = Math.floor((event.clientX - box.left - left) / pitch);
-        const row = Math.floor((event.clientY - box.top - 6 - HEAD) / ROW);
-        const inside = column >= 0 && column < FIELDS.length && row >= 0 && row < print.rows.length;
-        return inside ? row * FIELDS.length + column : -1;
+        const [x, y] = chart.convertFromPixel({ xAxisIndex: 0, yAxisIndex: 0 }, [
+          event.offsetX,
+          event.offsetY,
+        ]);
+        const column = Math.floor(x);
+        const row = Math.floor(y);
+        if (column < 0 || column >= FIELDS.length || row < 0 || row >= print.rows.length) return -1;
+        const pitch =
+          (chart.getWidth() - Math.min(230, chart.getWidth() * 0.3) - 8) / FIELDS.length;
+        const onBar =
+          Math.abs(x - column - 0.5) * pitch <= (pitch - 18) / 2 &&
+          Math.abs(y - row - 0.4) * ROW <= BAR_HIT / 2;
+        return onBar ? row * FIELDS.length + column : -1;
       };
       const follow = (event) => {
         const next = cellAt(event);
@@ -577,7 +584,9 @@ function fingerprintChart(works, { colors, windowSize }) {
         active = -1;
         paint(-1);
       };
-      canvas.addEventListener('pointermove', follow);
+      const zr = chart.getZr();
+      zr.on('mousemove', follow);
+      zr.on('globalout', leave);
       canvas.addEventListener('pointerleave', leave);
     },
     table: {

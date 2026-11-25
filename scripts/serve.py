@@ -11,6 +11,8 @@ class Handler(SimpleHTTPRequestHandler):
         super().__init__(*args, **kwargs)
 
     def end_headers(self):
+        # Always serve fresh files so an edited module is never replaced by a cached copy.
+        self.send_header("Cache-Control", "no-store")
         for name, value in self.security_headers:
             self.send_header(name, value)
         super().end_headers()

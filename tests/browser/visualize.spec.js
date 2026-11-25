@@ -272,7 +272,7 @@ test('hovering a metadata bar fades the others, and the fade follows the pointer
   const pitch = (box.width - left - 8) / 7;
   const cell = (column, row) => [
     box.x + left + pitch * (column + 0.5),
-    box.y + 6 + 40 + 62 * (row + 0.5),
+    box.y + 6 + 40 + 62 * (row + 0.4),
   ];
   const fadedCount = () =>
     canvas.locator('svg [opacity="0.28"], svg [fill-opacity="0.28"]').count();
@@ -308,4 +308,88 @@ test('the scope line names the ranking terms and each filter, with the values in
     .locator('strong')
     .evaluateAll((nodes) => nodes.map((n) => getComputedStyle(n).fontWeight));
   expect(new Set(weights)).toEqual(new Set(['700']));
+});
+
+test('the one bright metadata bar is always the one under the pointer, however you move', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.route('https://api.crossref.org/**', (route) =>
+    route.fulfill({
+      json: {
+        message: {
+          'total-results': 900,
+          items: Array.from({ length: 60 }, (_, i) =>
+            windowItem(i, 2024 - (i % 6), { publisher: `Publisher ${i % 5}` }),
+          ),
+        },
+      },
+    }),
+  );
+  await page.goto('/?q=ancient+egypt&view=visualize');
+  const canvas = page.locator('#viz-complete .viz-canvas');
+  await expect(canvas.locator('svg')).toBeVisible();
+  await canvas.scrollIntoViewIfNeeded();
+  const box = await canvas.boundingBox();
+  const left = Math.min(230, box.width * 0.3);
+  const pitch = (box.width - left - 8) / 7;
+  const centre = (column, row) => [
+    box.x + left + pitch * (column + 0.5),
+    box.y + 6 + 40 + 62 * (row + 0.4),
+  ];
+  // Which cells hold a faded bar, read from where the faded shapes actually are on screen.
+  const fadedCells = () =>
+    canvas.evaluate(
+      (node, grid) => {
+        const found = new Set();
+        for (const shape of node.querySelectorAll(
+          'svg [opacity="0.28"], svg [fill-opacity="0.28"]',
+        )) {
+          const rect = shape.getBoundingClientRect();
+          if (!rect.width || rect.height > 14) continue;
+          const column = Math.floor((rect.left + rect.width / 2 - grid.x - grid.left) / grid.pitch);
+          const row = Math.floor((rect.top + rect.height / 2 - grid.y - 6 - 40) / 62);
+          if (column >= 0 && column < 7 && row >= 0) found.add(row * 7 + column);
+        }
+        return [...found];
+      },
+      { x: box.x, y: box.y, left, pitch },
+    );
+  const rows = 6;
+  const path = [
+    [0, 0],
+    [1, 0],
+    [2, 0],
+    [2, 1],
+    [6, 4],
+    [5, 4],
+    [5, 3],
+    [1, 5],
+    [0, 5],
+    [3, 2],
+    [4, 2],
+    [3, 3],
+  ];
+  for (const [column, row] of path) {
+    await page.mouse.move(...centre(column, row), { steps: 8 });
+    await page.waitForTimeout(250);
+    const faded = await fadedCells();
+    expect(faded, `cell ${column},${row}`).toHaveLength(7 * rows - 1);
+    expect(faded).not.toContain(row * 7 + column);
+    // Slide into the gap beside the bar: everything goes back to normal at once.
+    await page.mouse.move(box.x + left + pitch * (column + 1), centre(column, row)[1], {
+      steps: 4,
+    });
+    await expect
+      .poll(async () => (await fadedCells()).length, `gap beside ${column},${row}`)
+      .toBe(0);
+    // And the gap between this bar and the next row.
+    await page.mouse.move(...centre(column, row), { steps: 4 });
+    await page.mouse.move(centre(column, row)[0], centre(column, row)[1] + 30, { steps: 4 });
+    await expect
+      .poll(async () => (await fadedCells()).length, `gap below ${column},${row}`)
+      .toBe(0);
+  }
+  await page.mouse.move(box.x + 4, box.y + box.height + 40, { steps: 5 });
+  await expect.poll(async () => (await fadedCells()).length).toBe(0);
 });
