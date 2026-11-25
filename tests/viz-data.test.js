@@ -3,9 +3,11 @@ import assert from 'node:assert/strict';
 import { normalizeWork } from '../js/data.js';
 import {
   constellation,
+  fingerprint,
   publisherTree,
   registration,
   typeGroups,
+  typeMix,
   waffle,
   yearStack,
 } from '../js/viz-data.js';
@@ -20,6 +22,7 @@ const work = ({
   publisher = 'A press',
   created = year,
   title = 'A record',
+  abstract,
 } = {}) =>
   normalizeWork({
     DOI: `10.1234/viz${counter++}`,
@@ -30,6 +33,7 @@ const work = ({
     'is-referenced-by-count': cited,
     'container-title': container ? [container] : [],
     publisher,
+    abstract,
   });
 
 test('the three commonest types get a group each and the rest share one', () => {
@@ -166,4 +170,59 @@ test('registration measures how long after publication a DOI was registered', ()
   assert.equal(result.promptShare, 50);
   assert.deepEqual(result.earlyPeriod, [1975, 1998]);
   assert.equal(registration([]).total, 0);
+});
+
+test('the type mix counts each period and leaves out periods with no records', () => {
+  const kind = (record) => record.type;
+  const { rows, total } = typeMix(
+    [
+      work({ year: 1985, type: 'book' }),
+      work({ year: 2015, type: 'book' }),
+      work({ year: 2016, type: 'dataset' }),
+      work({ year: 2021, type: 'dataset' }),
+      work({ year: null, type: 'dataset' }),
+    ],
+    kind,
+    ['book', 'dataset'],
+  );
+  assert.equal(total, 4);
+  assert.deepEqual(
+    rows.map((row) => [row.label, row.total, row.counts]),
+    [
+      ['Before 1990', 1, [1, 0]],
+      ['2010s', 2, [1, 1]],
+      ['2020s', 1, [0, 1]],
+    ],
+  );
+});
+
+test('the fingerprint counts records that carry each field, for everyone and for the big publishers', () => {
+  const full = { abstract: '<p>Text.</p>' };
+  const print = fingerprint([
+    ...Array.from({ length: 3 }, () => work({ publisher: 'Big Press', ...full })),
+    work({ publisher: 'Small Press' }),
+  ]);
+  assert.deepEqual(
+    print.rows.map((row) => [row.name, row.total]),
+    [
+      ['All records', 4],
+      ['Big Press', 3],
+    ],
+  );
+  const abstract = print.rows[0].shares[1];
+  assert.equal(abstract, 75);
+  assert.equal(print.rows[1].shares[1], 100);
+  assert.equal(print.best.share >= print.worst.share, true);
+  assert.equal(print.worst.share, 0);
+});
+
+test('a thousand records still leave every dot clear of its neighbours', () => {
+  const works = Array.from({ length: 900 }, (_, i) =>
+    work({ year: 1990 + (i % 35), cited: i % 3 === 0 ? 1 : 0 }),
+  );
+  const layout = constellation(works, { width: 1100, height: 788, radius: 3.6 });
+  const unit = 788 / (layout.y.max - layout.y.min);
+  for (const [i, a] of layout.points.entries())
+    for (const b of layout.points.slice(i + 1))
+      assert.ok(Math.hypot(a.px - b.px, (a.y - b.y) * unit) >= 2 * layout.radius, 'dots overlap');
 });

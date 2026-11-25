@@ -23,7 +23,9 @@ export function typeGroups(works) {
 }
 
 // Records no one has cited sit in a band below the axis, packed so no two dots overlap.
-export function constellation(works, { width, height, radius = 5.4 }) {
+const SPREAD = 0.12;
+const LARGE_WINDOW = 400;
+export function constellation(works, { width, height, radius = 5.4, pack = true }) {
   const records = works.filter(dated);
   const when = (work) => work.year + ((work.month ?? 6.5) - 0.5) / 12;
   const maxCited = Math.max(0, ...records.map((work) => work.citedBy ?? 0));
@@ -31,19 +33,25 @@ export function constellation(works, { width, height, radius = 5.4 }) {
     min: Math.floor(Math.min(...records.map((work) => work.year)) / 10) * 10,
     max: new Date().getFullYear() + 2,
   };
-  const y = { min: -1.75, max: Math.max(2.6, Math.log10(Math.max(1, maxCited)) + 0.55) };
+  const floor = records.length > LARGE_WINDOW ? -2.3 : -1.55;
+  const y = { min: floor - 0.2, max: Math.max(2.6, Math.log10(Math.max(1, maxCited)) + 0.55) };
   const pxPerYear = width / (x.max - x.min);
   const pxPerUnit = height / (y.max - y.min);
-  const placed = [];
   const nudges = [];
-  for (let across = -10; across <= 10; across++)
-    for (let down = -12; down <= 12; down++)
+  for (let across = -45; across <= 45; across++)
+    for (let down = -64; down <= 64; down++)
       nudges.push([across * radius * 0.95, down * radius * 1.05]);
   nudges.sort((a, b) => Math.hypot(...a) - Math.hypot(...b));
-  const crowded = (px, y) =>
-    placed.some(
-      (other) => (other.px - px) ** 2 + ((other.y - y) * pxPerUnit) ** 2 < (2 * radius + 1) ** 2,
-    );
+  const reach = (2 * radius + 1) ** 2;
+  const cell = 2 * radius + 1;
+  const columns = new Map();
+  const crowded = (px, y) => {
+    const column = Math.floor(px / cell);
+    for (let next = column - 1; next <= column + 1; next++)
+      for (const other of columns.get(next) ?? [])
+        if ((other.px - px) ** 2 + ((other.y - y) * pxPerUnit) ** 2 < reach) return true;
+    return false;
+  };
   const points = [...records]
     .sort((a, b) => when(a) - when(b))
     .map((work) => {
@@ -52,18 +60,22 @@ export function constellation(works, { width, height, radius = 5.4 }) {
       const base = cited > 0 ? Math.log10(cited) + 0.45 : -0.62;
       let px = origin;
       let value = base;
-      // Cited records move sideways only, so height stays true to the count. Uncited ones can also
-      // move up and down inside their band.
-      for (const [across, down] of nudges) {
+      // Cited records stay within a hair of their true height, so the count still reads off the
+      // axis. Uncited ones can move anywhere inside their band.
+      for (const [across, down] of pack ? nudges : []) {
         const candidate = base + down / pxPerUnit;
-        if (cited > 0 ? down !== 0 : candidate < -1.55 || candidate > -0.1) continue;
-        if (!crowded(origin + across, candidate)) {
-          px = origin + across;
+        if (cited > 0 ? Math.abs(candidate - base) > SPREAD : candidate < floor || candidate > -0.1)
+          continue;
+        const sideways = origin + across;
+        if (sideways < 0 || sideways > width) continue;
+        if (!crowded(sideways, candidate)) {
+          px = sideways;
           value = candidate;
           break;
         }
       }
-      placed.push({ px, y: value });
+      const key = Math.floor(px / cell);
+      columns.set(key, [...(columns.get(key) ?? []), { px, y: value }]);
       return { work, cited, value: [x.min + px / pxPerYear, value], px, y: value };
     });
   const citedCount = records.filter((work) => (work.citedBy ?? 0) > 0).length;
@@ -173,7 +185,31 @@ export function publisherTree(works) {
   };
 }
 
-export const WAFFLE_COLUMNS = 25;
+const PERIODS = [
+  ['Before 1990', 'before 1990', 0, 1989],
+  ['1990s', 'in the 1990s', 1990, 1999],
+  ['2000s', 'in the 2000s', 2000, 2009],
+  ['2010s', 'in the 2010s', 2010, 2019],
+  ['2020s', 'in the 2020s', 2020, 2099],
+];
+
+// How the mix of types changes from one period to the next, for periods that have records.
+export function typeMix(works, groupOf, order) {
+  const records = works.filter(dated);
+  const rows = PERIODS.map(([label, when, from, to]) => {
+    const inPeriod = records.filter((work) => work.year >= from && work.year <= to);
+    return {
+      label,
+      when,
+      total: inPeriod.length,
+      counts: order.map((name) => inPeriod.filter((work) => groupOf(work) === name).length),
+    };
+  }).filter((row) => row.total);
+  return { rows, total: records.length };
+}
+
+const WAFFLE_COLUMNS = 25;
+const LARGE_WAFFLE_COLUMNS = 40;
 
 // One square per record, filled group by group so each type reads as a block.
 export function waffle(works, groupOf, order) {
@@ -181,7 +217,8 @@ export function waffle(works, groupOf, order) {
     (a, b) =>
       order.indexOf(groupOf(a)) - order.indexOf(groupOf(b)) || (b.citedBy ?? 0) - (a.citedBy ?? 0),
   );
-  const columns = Math.min(WAFFLE_COLUMNS, Math.max(1, sorted.length));
+  const wide = sorted.length > LARGE_WINDOW ? LARGE_WAFFLE_COLUMNS : WAFFLE_COLUMNS;
+  const columns = Math.min(wide, Math.max(1, sorted.length));
   return {
     cells: sorted.map((work, index) => ({
       work,
@@ -227,3 +264,44 @@ export function registration(works) {
 export const openShare = (works) =>
   pct(works.filter((work) => openAccess(work)).length, works.length);
 export { shorten };
+
+export const FIELDS = [
+  ['authors', 'Authors', 'named authors', (work) => work.authors.length > 0],
+  ['abstract', 'Abstract', 'an abstract', (work) => Boolean(work.abstract)],
+  ['references', 'References', 'a reference list', (work) => work.references.length > 0],
+  ['license', 'License', 'a license', (work) => work.licenses.length > 0],
+  ['open', 'Open license', 'an open license', (work) => openAccess(work) !== null],
+  ['orcid', 'ORCID', 'an author ORCID', (work) => work.authors.some((author) => author.orcid)],
+  ['funder', 'Funder', 'a funder', (work) => work.funders.length > 0],
+];
+const FINGERPRINT_PUBLISHERS = 5;
+const FINGERPRINT_MIN = 3;
+
+// The share of records carrying each metadata field, for all records and the largest publishers.
+export function fingerprint(works) {
+  const byPublisher = new Map();
+  for (const work of works)
+    if (work.publisher)
+      byPublisher.set(work.publisher, [...(byPublisher.get(work.publisher) ?? []), work]);
+  const groups = [...byPublisher]
+    .filter(([, records]) => records.length >= FINGERPRINT_MIN)
+    .sort((a, b) => b[1].length - a[1].length)
+    .slice(0, FINGERPRINT_PUBLISHERS);
+  const row = (name, records) => {
+    const counts = FIELDS.map(([, , , has]) => records.filter(has).length);
+    return {
+      name,
+      total: records.length,
+      counts,
+      shares: counts.map((n) => pct(n, records.length)),
+    };
+  };
+  const rows = [row('All records', works), ...groups.map(([name, records]) => row(name, records))];
+  const ranked = FIELDS.map(([key, label, phrase], index) => ({
+    key,
+    label,
+    phrase,
+    share: rows[0].shares[index],
+  })).sort((a, b) => b.share - a.share);
+  return { rows, best: ranked[0], worst: ranked.at(-1), total: works.length };
+}

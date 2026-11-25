@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  LARGE_WINDOW_SIZE,
   WINDOW_SIZE,
   aggregateKey,
   aggregateSearch,
@@ -154,6 +155,23 @@ test('aggregation reads one ranked window and reuses the cached summary', async 
   const cached = await aggregateSearch(query, { fetcher });
   assert.equal(urls.length, 1);
   assert.equal(cached, result);
+});
+
+test('a larger window asks Crossref for more rows and is cached separately', async () => {
+  const query = readQuery('?q=aggregate-large');
+  assert.equal(new URL(windowURL(query, LARGE_WINDOW_SIZE)).searchParams.get('rows'), '1000');
+  assert.notEqual(aggregateKey(query), aggregateKey(query, LARGE_WINDOW_SIZE));
+  const rows = [];
+  const fetcher = async (url) => {
+    rows.push(new URL(url).searchParams.get('rows'));
+    return new Response(JSON.stringify({ message: { 'total-results': 5000, items: [work()] } }), {
+      status: 200,
+    });
+  };
+  await aggregateSearch(query, { fresh: true, fetcher });
+  await aggregateSearch(query, { fresh: true, fetcher, size: LARGE_WINDOW_SIZE });
+  await aggregateSearch(query, { fetcher, size: LARGE_WINDOW_SIZE });
+  assert.deepEqual(rows, ['250', '1000']);
 });
 
 test('a failed window request surfaces instead of showing partial charts', async () => {

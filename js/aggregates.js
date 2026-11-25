@@ -3,6 +3,7 @@ import { buildSearchURL, getWork, request } from './crossref.js';
 import { FACET_TYPE_IDS, normalizeDOI, normalizeWork, TYPES } from './data.js';
 
 export const WINDOW_SIZE = 250;
+export const LARGE_WINDOW_SIZE = 1000;
 const TTL = 15 * 60 * 1000;
 const cache = new Map();
 
@@ -11,17 +12,21 @@ const cache = new Map();
  * totals count every record matching any word, so they cannot describe a
  * discipline; the ranked window is the population the charts report.
  * @param {import('./types.js').Query} query
+ * @param {number} [size]
  */
-export function windowURL(query) {
+export function windowURL(query, size = WINDOW_SIZE) {
   const url = new URL(buildSearchURL({ ...query, sort: 'relevance' }));
   for (const key of ['cursor', 'offset']) url.searchParams.delete(key);
-  url.searchParams.set('rows', String(WINDOW_SIZE));
+  url.searchParams.set('rows', String(size));
   return url.toString();
 }
 
-/** @param {import('./types.js').Query} query */
-export function aggregateKey(query) {
-  return windowURL(query);
+/**
+ * @param {import('./types.js').Query} query
+ * @param {number} [size]
+ */
+export function aggregateKey(query, size = WINDOW_SIZE) {
+  return windowURL(query, size);
 }
 
 /**
@@ -99,19 +104,19 @@ export function decadeRows(rows) {
 
 /**
  * @param {import('./types.js').Query} query
- * @param {{signal?: AbortSignal, fresh?: boolean, fetcher?: typeof fetch, onPart?: (result: any) => void}} [options]
+ * @param {{signal?: AbortSignal, fresh?: boolean, size?: number, fetcher?: typeof fetch, onPart?: (result: any) => void}} [options]
  */
 export async function aggregateSearch(
   query,
-  { signal, fresh = false, fetcher, onPart = () => {} } = {},
+  { signal, fresh = false, size = WINDOW_SIZE, fetcher, onPart = () => {} } = {},
 ) {
   if (normalizeDOI(query.q))
     return { doi: await getWork(query.q, { signal, fresh, fetcher }), query: { ...query } };
-  const key = aggregateKey(query),
+  const key = aggregateKey(query, size),
     previous = cache.get(key);
   if (!fresh && previous && Date.now() - previous.time < TTL) return previous.result;
   const startedAt = new Date().toISOString();
-  const response = await request(windowURL(query), { signal, fetcher, fresh });
+  const response = await request(windowURL(query, size), { signal, fetcher, fresh });
   const message = response.body?.message;
   if (!Array.isArray(message?.items) || !Number.isFinite(message['total-results']))
     throw new Error('Crossref returned an unexpected response. Please retry.');
