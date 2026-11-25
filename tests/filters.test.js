@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { filterChips, filterDescription, queryFilters } from '../js/filters.js';
+import { filterChips, filterParts, queryFilters } from '../js/filters.js';
 
 const query = {
   period: 'new-kingdom',
@@ -50,10 +50,15 @@ test('applied query chips retain their labels', () => {
   );
 });
 
-test('filter descriptions retain their labels and fallback', () => {
-  assert.equal(
-    filterDescription(query),
-    'Publication years: 2000 to 2020 · Type: Book · Venue: The Journal of Egyptian Archaeology · Abstract required · References required',
-  );
-  assert.equal(filterDescription({}), 'No additional publication filters');
+test('filter parts pair each label with its value and describe open year ranges', () => {
+  assert.deepEqual(filterParts(query), [
+    ['Publication years', '2000 to 2020'],
+    ['Type', 'Book'],
+    ['Venue', 'The Journal of Egyptian Archaeology'],
+    ['Abstract required'],
+    ['References required'],
+  ]);
+  assert.deepEqual(filterParts({ from: '2000' }), [['Publication years', '2000 onward']]);
+  assert.deepEqual(filterParts({ to: '1950' }), [['Publication years', 'up to 1950']]);
+  assert.deepEqual(filterParts({}), []);
 });

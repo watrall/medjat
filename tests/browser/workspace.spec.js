@@ -1010,9 +1010,7 @@ test('global navigation search opens Explore and preserves synchronized text', a
   for (const id of ['collectionNav', 'visualizeNav', 'placesNav']) {
     await page.locator(`#${id}`).click();
     if (id === 'visualizeNav')
-      await expect(
-        page.getByRole('button', { name: 'Refresh summaries', exact: true }),
-      ).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Refresh', exact: true })).toBeVisible();
     await page.evaluate(() => window.scrollTo(0, 650));
     await expect(page.locator('#navSearchForm')).toHaveAttribute('aria-hidden', 'false');
     await page.locator('#navSearchInput').fill(`Search from ${id}`);

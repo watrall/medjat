@@ -95,19 +95,25 @@ export function filterChips(query) {
   return filterEntries(query).map((entry) => /** @type {string} */ (entry.label));
 }
 
-/** @param {Query} query @returns {string} */
-export function filterDescription(query) {
-  return (
+// The applied publication filters as [label, value] pairs. A requirement has no value.
+/** @param {Query} query @returns {string[][]} */
+export function filterParts(query) {
+  const years =
+    query.from && query.to
+      ? `${query.from} to ${query.to}`
+      : query.from
+        ? `${query.from} onward`
+        : query.to
+          ? `up to ${query.to}`
+          : '';
+  return /** @type {string[][]} */ (
     [
-      (query.from || query.to) &&
-        `Publication years: ${query.from || 'any'} to ${query.to || 'any'}`,
-      query.type && `Type: ${TYPES.get(query.type) || query.type}`,
-      query.container && `Venue: ${query.container}`,
-      query.abstract && 'Abstract required',
-      query.orcid && 'Author ORCID required',
-      query.references && 'References required',
-    ]
-      .filter(Boolean)
-      .join(' · ') || 'No additional publication filters'
+      years && ['Publication years', years],
+      query.type && ['Type', TYPES.get(query.type) || query.type],
+      query.container && ['Venue', query.container],
+      query.abstract && ['Abstract required'],
+      query.orcid && ['Author ORCID required'],
+      query.references && ['References required'],
+    ].filter(Boolean)
   );
 }

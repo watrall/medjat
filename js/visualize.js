@@ -1,16 +1,17 @@
-import { aggregateSearch } from './aggregates.js';
+import { LARGE_WINDOW_SIZE, WINDOW_SIZE, aggregateSearch } from './aggregates.js';
 import { addedSearchTerms, bibliographicTerms } from './crossref.js';
 import { queryString } from './data.js';
 import { el, icon } from './dom.js';
 import { downloadText } from './download.js';
 import { csvCell } from './export.js';
-import { filterDescription } from './filters.js';
+import { filterParts } from './filters.js';
 import { palette } from './viz-palette.js';
 import { buildSections } from './viz-charts.js';
 export function createVisualize(root, { onRefine, onOpenRecord, onExplore }) {
   let controller,
     generation = 0,
     renderedQuery,
+    size = WINDOW_SIZE,
     unmount = () => {};
   const number = (value) => Number(value).toLocaleString();
   function download(result) {
@@ -130,6 +131,22 @@ export function createVisualize(root, { onRefine, onOpenRecord, onExplore }) {
     );
   }
 
+  const leadParts = (lead) =>
+    lead.map((part) => (typeof part === 'string' ? part : el('strong', {}, part.strong)));
+
+  function canvasFor(spec, mounts) {
+    const canvas = el('div', {
+      class: 'viz-canvas',
+      role: 'img',
+      'aria-label': spec.label,
+      tabindex: '-1',
+      'aria-busy': 'true',
+      style: `height:${spec.height}px${spec.maxWidth ? `;max-inline-size:${spec.maxWidth}px` : ''}`,
+    });
+    mounts.push({ spec, canvas });
+    return canvas;
+  }
+
   function chartBlock(spec, act, mounts) {
     if (spec.empty)
       return el(
@@ -138,14 +155,7 @@ export function createVisualize(root, { onRefine, onOpenRecord, onExplore }) {
         el('h4', {}, spec.title, el('span', { class: 'viz-coverage' }, spec.coverage)),
         el('p', { class: 'viz-lead' }, spec.lead),
       );
-    const canvas = el('div', {
-      class: 'viz-canvas',
-      role: 'img',
-      'aria-label': spec.label,
-      tabindex: '-1',
-      style: `height:${spec.height}px${spec.maxWidth ? `;max-inline-size:${spec.maxWidth}px` : ''}`,
-    });
-    mounts.push({ spec, canvas });
+    const canvas = canvasFor(spec, mounts);
     const legend =
       spec.legend &&
       el(
@@ -169,22 +179,24 @@ export function createVisualize(root, { onRefine, onOpenRecord, onExplore }) {
           ),
         ),
       );
+    const parts = (part) => [
+      el('h4', {}, part.title, el('span', { class: 'viz-coverage' }, part.coverage)),
+      el('p', { class: 'viz-lead' }, leadParts(part.lead)),
+      part === spec ? el('div', {}, canvas, legend) : canvasFor(part, mounts),
+      el('p', { class: 'viz-note' }, part.note),
+      el('details', {}, el('summary', {}, 'View data table'), table(part, act)),
+    ];
+    const left = parts(spec);
+    if (!spec.side) return el('article', { class: 'viz-chart' }, left);
+    const right = parts(spec.side);
     return el(
       'article',
-      { class: 'viz-chart' },
-      el('h4', {}, spec.title, el('span', { class: 'viz-coverage' }, spec.coverage)),
-      el(
-        'p',
-        { class: 'viz-lead' },
-        spec.lead.map((part) => (typeof part === 'string' ? part : el('strong', {}, part.strong))),
-      ),
-      legend ? el('div', { class: 'viz-split' }, canvas, legend) : canvas,
-      el('p', { class: 'viz-note' }, spec.note),
-      el('details', {}, el('summary', {}, 'View data table'), table(spec, act)),
+      { class: 'viz-chart viz-pair' },
+      left.flatMap((part, index) => [part, right[index]]),
     );
   }
 
-  async function sectionsFor(result, query) {
+  function sectionsFor(result, query) {
     const act = {
       open: (work, trigger) => onOpenRecord(work, trigger),
       refine: (filter, trigger) => onRefine(query, filter, trigger),
@@ -221,7 +233,7 @@ export function createVisualize(root, { onRefine, onOpenRecord, onExplore }) {
         ),
       ),
     );
-    const wrapper = el('div', {}, nav, elements);
+    const wrapper = el('div', { class: 'viz-body' }, nav, elements);
     const observer = new IntersectionObserver(
       (entries) => {
         const visible = entries
@@ -236,33 +248,42 @@ export function createVisualize(root, { onRefine, onOpenRecord, onExplore }) {
     );
     elements.forEach((element) => observer.observe(element));
     const charts = [];
+    const watchers = [];
+    let closed = false;
     unmount = () => {
+      closed = true;
       observer.disconnect();
+      for (const watcher of watchers) watcher.disconnect();
       for (const chart of charts) chart.dispose();
-      charts.length = 0;
       unmount = () => {};
     };
-    queueMicrotask(async () => {
-      try {
-        const echarts = await loadCharts();
+    loadCharts()
+      .then((echarts) => {
+        if (closed) return;
         for (const { spec, canvas } of mounts) {
           const chart = echarts.init(canvas, null, { renderer: 'svg' });
           charts.push(chart);
           let width = canvas.clientWidth;
           chart.setOption(spec.option(width, !reduced()));
+          canvas.removeAttribute('aria-busy');
+          spec.bind?.(chart, canvas);
           chart.on('click', (params) => {
             const action = spec.click?.(params.data);
             if (action?.open) act.open(action.open, canvas);
             else if (action?.refine) act.refine(action.refine, canvas);
           });
-          new ResizeObserver(() => {
-            if (canvas.clientWidth === width || !canvas.isConnected) return;
+          const watcher = new ResizeObserver(() => {
+            if (!canvas.clientWidth || canvas.clientWidth === width) return;
             width = canvas.clientWidth;
             chart.resize();
             chart.setOption(spec.option(width, false), true);
-          }).observe(canvas);
+          });
+          watcher.observe(canvas);
+          watchers.push(watcher);
         }
-      } catch {
+      })
+      .catch(() => {
+        for (const { canvas } of mounts) canvas.removeAttribute('aria-busy');
         wrapper.prepend(
           el(
             'p',
@@ -270,10 +291,135 @@ export function createVisualize(root, { onRefine, onOpenRecord, onExplore }) {
             'The charts could not be drawn. The data tables below still list everything.',
           ),
         );
-      }
-    });
+      });
     return wrapper;
   }
+  const SIZES = [WINDOW_SIZE, LARGE_WINDOW_SIZE];
+
+  function setBusy(busy, message = '') {
+    const head = root.querySelector('.viz-head');
+    if (!head) return;
+    head.toggleAttribute('data-busy', busy);
+    head.querySelector('.viz-loading span').textContent = message;
+    for (const control of root.querySelectorAll('.viz-head button, .viz-actions button'))
+      control.disabled = busy;
+    root.querySelector('.viz-body')?.toggleAttribute('aria-busy', busy);
+  }
+
+  function sizeSwitch(query) {
+    return el(
+      'div',
+      { class: 'viz-size', role: 'group', 'aria-label': 'Records analyzed' },
+      el('i', { class: 'viz-spinner', 'aria-hidden': 'true' }),
+      el('span', { class: 'viz-size-label' }, 'Records analyzed'),
+      el(
+        'div',
+        { class: 'viz-segments' },
+        SIZES.map((option) =>
+          el(
+            'button',
+            {
+              type: 'button',
+              'data-size': String(option),
+              'aria-pressed': String(option === size),
+              onclick: () => {
+                if (option === size) return;
+                const previous = size;
+                size = option;
+                show(query, false, previous);
+              },
+            },
+            number(option),
+          ),
+        ),
+      ),
+    );
+  }
+
+  function whyNotAll(total) {
+    return el(
+      'p',
+      { class: 'scope-note viz-why' },
+      el('strong', {}, 'Why not all records? '),
+      `Crossref sends at most 1,000 records per request, so all ${number(total)} matches would take ${number(Math.ceil(total / 1000))} requests. A keyword search also matches any word, so deeper results drift off topic.`,
+    );
+  }
+
+  // What Crossref was asked and which filters narrowed it, with the values set in heavier type.
+  function scopeNote(query) {
+    const added = addedSearchTerms(query);
+    const terms =
+      query.field === 'author'
+        ? added && ['Added terms ', el('strong', {}, added), '. ']
+        : ['Ranked on ', el('strong', {}, bibliographicTerms(query)), '. '];
+    const filters = filterParts(query).flatMap(([label, value], index) => [
+      index ? ', ' : '',
+      value ? [`${label} `, el('strong', {}, value)] : el('strong', {}, label),
+    ]);
+    return el(
+      'p',
+      { class: 'scope-note viz-scope' },
+      terms || '',
+      filters.length ? ['Filtered by ', ...filters] : 'No publication filters.',
+    );
+  }
+
+  function headFor(result, query, title) {
+    const sample = `${number(result.window)} relevance-ranked ${result.window === 1 ? 'match' : 'matches'}`;
+    const summary = !result.window
+      ? 'Crossref returned no records for this chart sample.'
+      : result.total === null
+        ? `Charts describe ${sample}. The overall match count is unavailable.`
+        : result.total > result.window
+          ? `Charts describe the first ${sample}. Crossref lists ${number(result.total)} keyword matches.`
+          : `Charts include all ${sample}.`;
+    return [
+      el(
+        'div',
+        { class: 'viz-titlebar' },
+        title,
+        el(
+          'div',
+          { class: 'viz-actions' },
+          el(
+            'button',
+            { class: 'button', onclick: () => show(query, true) },
+            icon('refresh-cw'),
+            'Refresh',
+          ),
+          el(
+            'button',
+            { class: 'button', onclick: () => download(result) },
+            icon('download'),
+            'Download CSV',
+          ),
+        ),
+      ),
+      el(
+        'div',
+        { class: 'viz-head' },
+        el(
+          'div',
+          { class: 'viz-head-column' },
+          el('p', { class: 'analysis-intro viz-head-lead' }, summary),
+          el(
+            'p',
+            { class: 'scope-note' },
+            'Crossref counts records that match any keyword, and the ranked sample can change between requests.',
+          ),
+          scopeNote(query),
+        ),
+        el(
+          'div',
+          { class: 'viz-head-column' },
+          (result.total > WINDOW_SIZE || size !== WINDOW_SIZE) && sizeSwitch(query),
+          result.total > result.window && whyNotAll(result.total),
+        ),
+        el('p', { class: 'viz-loading sr-only', role: 'status' }, el('span', {})),
+      ),
+    ];
+  }
+
   function heading(query) {
     return el(
       'h2',
@@ -283,7 +429,10 @@ export function createVisualize(root, { onRefine, onOpenRecord, onExplore }) {
         : `Analyzing Crossref results for “${query.q}”`,
     );
   }
-  async function show(query, fresh = false) {
+
+  // `previousSize` is set only when the size switch asked for this, so the header and controls stay
+  // on screen while the larger window loads.
+  async function show(query, fresh = false, previousSize) {
     if (!query.q) {
       renderedQuery = null;
       root.replaceChildren(
@@ -293,26 +442,39 @@ export function createVisualize(root, { onRefine, onOpenRecord, onExplore }) {
       );
       return;
     }
-    const key = queryString(query);
-    if (!fresh && renderedQuery === key) return;
-    renderedQuery = null;
-    unmount();
+    const switching = previousSize !== undefined;
+    const key = `${queryString(query)}|${size}`;
+    if (!fresh && !switching && renderedQuery === key) return;
     controller?.abort();
     controller = new AbortController();
     const id = ++generation;
-    const title = heading(query);
-    root.replaceChildren(
-      title,
-      el('p', { class: 'scope-note', role: 'status' }, 'Retrieving ranked summaries…'),
-    );
-    if (fresh) title.focus();
+    let title;
+    if (switching) {
+      title = root.querySelector('h2');
+      setBusy(true, `Retrieving ${number(size)} ranked records. This can take several seconds…`);
+    } else {
+      renderedQuery = null;
+      unmount();
+      title = heading(query);
+      root.replaceChildren(
+        title,
+        el(
+          'p',
+          { class: 'scope-note viz-loading viz-loading-page', role: 'status' },
+          el('i', { class: 'viz-spinner', 'aria-hidden': 'true' }),
+          el('span', {}, 'Retrieving ranked summaries…'),
+        ),
+      );
+      if (fresh) title.focus();
+    }
     try {
-      const result = await aggregateSearch(query, { signal: controller.signal, fresh });
+      const result = await aggregateSearch(query, { signal: controller.signal, fresh, size });
       if (id !== generation) return;
       renderedQuery = key;
-      title.nextElementSibling.remove();
+      unmount();
       if (result.doi) {
-        root.append(
+        root.replaceChildren(
+          title,
           el('p', {}, 'An exact DOI identifies one record, not a comparative search.'),
           el('h3', {}, result.doi.title),
           el(
@@ -323,53 +485,25 @@ export function createVisualize(root, { onRefine, onOpenRecord, onExplore }) {
         );
         return;
       }
-      const sample = `${number(result.window)} relevance-ranked ${result.window === 1 ? 'match' : 'matches'}`;
-      const summary = !result.window
-        ? 'Crossref returned no records for this chart sample.'
-        : result.total === null
-          ? `Charts describe ${sample}. The overall match count is unavailable.`
-          : result.total > result.window
-            ? `Charts describe the first ${sample}. Crossref lists ${number(result.total)} keyword matches.`
-            : `Charts include all ${sample}.`;
-      root.append(
-        el('p', { class: 'analysis-intro' }, summary),
-        el(
-          'p',
-          { class: 'scope-note' },
-          query.field === 'author'
-            ? `Added bibliographic terms: ${addedSearchTerms(query) || 'none'}.`
-            : `Ranking terms: ${bibliographicTerms(query)}`,
-        ),
-        el('p', { class: 'scope-note' }, filterDescription(query)),
-        el(
-          'p',
-          { class: 'scope-note' },
-          `Retrieved ${new Date(result.finishedAt).toLocaleString()}. Crossref counts records that match any keyword. The ranked sample can change between requests.`,
-        ),
-        el(
-          'div',
-          { class: 'analysis-actions' },
-          el(
-            'button',
-            { class: 'button', onclick: () => show(query, true) },
-            icon('refresh-cw'),
-            'Refresh summaries',
-          ),
-          el(
-            'button',
-            { class: 'button', onclick: () => download(result) },
-            icon('download'),
-            'Download aggregate CSV',
-          ),
-        ),
+      root.replaceChildren(
+        ...headFor(result, query, title),
+        ...(result.window ? [sectionsFor(result, query)] : []),
       );
-      root.append(await sectionsFor(result, query));
+      if (switching) root.querySelector(`[data-size="${size}"]`)?.focus();
     } catch (error) {
       if (id !== generation || controller.signal.aborted) return;
-      root.querySelector('[role="status"]')?.remove();
+      if (switching) {
+        size = previousSize;
+        setBusy(false);
+      } else root.querySelector('.viz-loading-page')?.remove();
+      root.querySelectorAll('.notice-error, .viz-retry').forEach((node) => node.remove());
       root.append(
         el('p', { class: 'notice notice-error', role: 'alert' }, error.message),
-        el('button', { class: 'button', onclick: () => show(query, true) }, 'Retry summaries'),
+        el(
+          'button',
+          { class: 'button viz-retry', onclick: () => show(query, true) },
+          'Retry summaries',
+        ),
       );
     }
   }
@@ -377,7 +511,6 @@ export function createVisualize(root, { onRefine, onOpenRecord, onExplore }) {
     show,
     cancel() {
       generation++;
-      unmount();
       controller?.abort();
     },
   };
