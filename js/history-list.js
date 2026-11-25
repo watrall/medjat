@@ -1,21 +1,9 @@
 import { el, icon, notify } from './dom.js';
-
-const VISIBLE_SEARCHES = 6;
+import { whenSearched } from './search-history.js';
 
 export function createHistoryList(section, list, clearButton, { history, onOpen }) {
-  let expanded = false;
-  const more = el('button', {
-    class: 'text-button history-more',
-    type: 'button',
-    'aria-expanded': 'false',
-    onclick: () => {
-      expanded = !expanded;
-      render();
-    },
-  });
-  list.after(more);
-
   function row(entry) {
+    const when = whenSearched(entry.at);
     return el(
       'li',
       { class: 'history-row' },
@@ -28,6 +16,16 @@ export function createHistoryList(section, list, clearButton, { history, onOpen 
       el(
         'div',
         { class: 'history-actions' },
+        when &&
+          el(
+            'time',
+            {
+              class: 'history-time',
+              datetime: entry.at,
+              title: new Date(entry.at).toLocaleString(),
+            },
+            when,
+          ),
         el(
           'button',
           {
@@ -64,13 +62,9 @@ export function createHistoryList(section, list, clearButton, { history, onOpen 
   // After a change the list is rebuilt, so put focus back where the reader was.
   function render({ keep, index } = {}) {
     const entries = [...history.kept(), ...history.recent()];
-    const shown = expanded ? entries : entries.slice(0, VISIBLE_SEARCHES);
     section.hidden = !entries.length;
     clearButton.hidden = !history.recent().length;
-    list.replaceChildren(...shown.map(row));
-    more.hidden = entries.length <= VISIBLE_SEARCHES;
-    more.setAttribute('aria-expanded', String(expanded));
-    more.textContent = expanded ? 'Show fewer searches' : `Show all ${entries.length} searches`;
+    list.replaceChildren(...entries.map(row));
     if (keep) list.querySelector(`[data-keep="${CSS.escape(keep)}"]`)?.focus();
     else if (index !== undefined)
       (

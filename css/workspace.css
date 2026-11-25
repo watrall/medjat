@@ -2612,6 +2612,13 @@ html {
   display: flex;
   gap: var(--space-xs);
 }
+.history-time {
+  align-self: center;
+  margin-inline-end: var(--space-xs);
+  color: var(--color-muted);
+  font-size: var(--text-caption);
+  white-space: nowrap;
+}
 .history-actions .text-button {
   display: inline-flex;
   align-items: center;
@@ -2639,10 +2646,6 @@ html {
   inline-size: 14px;
   block-size: 14px;
 }
-.history-more {
-  min-block-size: 44px;
-  margin-block-start: var(--space-xs);
-}
 @media (max-width: 479px) {
   .history-row {
     grid-template-columns: minmax(0, 1fr);
@@ -2652,6 +2655,10 @@ html {
   }
   .history-actions {
     margin-inline-start: calc(var(--space-sm) * -1);
+  }
+  /* Undo the actions' negative margin so the time lines up with the search text above it. */
+  .history-time {
+    padding-inline-start: var(--space-sm);
   }
 }
 

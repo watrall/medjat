@@ -229,6 +229,22 @@ test('Most cited keeps Crossref relevance paging and orders loaded results local
   assert.equal(params.has('offset'), false);
 });
 
+test('a search time is short, unambiguous and never numeric day or month order', async () => {
+  const { whenSearched } = await import('../js/search-history.js');
+  const now = new Date(2026, 10, 25, 12, 0, 0);
+  const ago = (ms) => new Date(now - ms).toISOString();
+  assert.equal(whenSearched(ago(20 * 1000), now), 'Just now');
+  assert.equal(whenSearched(ago(5 * 60000), now), '5 min ago');
+  assert.equal(whenSearched(ago(59 * 60000), now), '59 min ago');
+  assert.equal(whenSearched(ago(3 * 3600000), now), '3 h ago');
+  assert.equal(whenSearched(ago(25 * 3600000), now), 'Yesterday');
+  assert.equal(whenSearched(new Date(2026, 10, 12, 9, 0).toISOString(), now), '12 Nov');
+  assert.equal(whenSearched(new Date(2025, 9, 21, 9, 0).toISOString(), now), '21 Oct 2025');
+  assert.equal(whenSearched(new Date(2026, 0, 3, 9, 0).toISOString(), now), '3 Jan');
+  assert.equal(whenSearched('', now), '');
+  assert.equal(whenSearched('not a date', now), '');
+});
+
 test('search history dedupes, keeps, and trims searches in storage', async () => {
   const { createSearchHistory, describeSearch, MAX_RECENT } =
     await import('../js/search-history.js');
@@ -248,6 +264,22 @@ test('search history dedupes, keeps, and trims searches in storage', async () =>
   assert.equal(history.kept().length, 1);
   assert.equal(history.recent().length, MAX_RECENT);
   assert.equal(createSearchHistory({ storage }).kept().length, 1);
+  const crowded = new Map([
+    [
+      'medjat-search-history-v1',
+      JSON.stringify(
+        Array.from({ length: MAX_RECENT + 3 }, (_, i) => ({
+          qs: `q=old${i}`,
+          kept: false,
+          at: '',
+        })),
+      ),
+    ],
+  ]);
+  const loaded = createSearchHistory({
+    storage: { getItem: (key) => crowded.get(key) ?? null, setItem() {} },
+  });
+  assert.equal(loaded.recent().length, MAX_RECENT, 'older stored searches are trimmed on load');
   history.clearRecent();
   assert.equal(history.recent().length, 0);
   assert.equal(history.kept().length, 1);

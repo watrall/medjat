@@ -2198,7 +2198,7 @@ const seedSearches = (page, count) =>
     localStorage.setItem('medjat-search-history-v1', JSON.stringify(entries));
   }, count);
 
-test('your searches fill the width on the same three columns as the tiles below', async ({
+test('recent searches fill the width on the same three columns as the tiles below', async ({
   page,
 }) => {
   await seedSearches(page, 6);
@@ -2228,16 +2228,41 @@ test('your searches fill the width on the same three columns as the tiles below'
   ).toBeVisible();
 });
 
-test('your searches show six and fold the rest behind a count', async ({ page }) => {
+test('recent searches hold the six newest, with kept ones pinned above them', async ({ page }) => {
   await seedSearches(page, 9);
   await page.goto('/');
-  await expect(page.locator('.history-row')).toHaveCount(6);
-  const more = page.getByRole('button', { name: 'Show all 9 searches' });
-  await expect(more).toHaveAttribute('aria-expanded', 'false');
-  await more.click();
-  await expect(page.locator('.history-row')).toHaveCount(9);
-  await page.getByRole('button', { name: 'Show fewer searches' }).click();
-  await expect(page.locator('.history-row')).toHaveCount(6);
+  // Two kept searches, then the six newest of the seven others.
+  await expect(page.locator('.history-row')).toHaveCount(8);
+  await expect(page.locator('.history-query').nth(2)).toHaveText('topic 2');
+  await expect(page.locator('.history-query').nth(7)).toHaveText('topic 7');
+  await expect(page.getByRole('button', { name: /^Show (all|fewer)/ })).toHaveCount(0);
+});
+
+test('each recent search shows when it ran, on the same line as Keep and Remove on a phone', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.addInitScript(() => {
+    const at = new Date(Date.now() - 14 * 60000).toISOString();
+    localStorage.setItem(
+      'medjat-search-history-v1',
+      JSON.stringify([{ qs: 'q=amarna&context=0', kept: false, at }]),
+    );
+  });
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Your recent searches' })).toBeVisible();
+  const time = page.locator('.history-time');
+  await expect(time).toHaveText('14 min ago');
+  await expect(time).toHaveAttribute('datetime', /^\d{4}-\d{2}-\d{2}T/);
+  const [when, keep, remove] = await Promise.all([
+    time.boundingBox(),
+    page.getByRole('button', { name: 'Keep search: amarna' }).boundingBox(),
+    page.getByRole('button', { name: 'Remove search: amarna' }).boundingBox(),
+  ]);
+  const middle = (box) => box.y + box.height / 2;
+  expect(Math.abs(middle(when) - middle(keep))).toBeLessThan(2);
+  expect(Math.abs(middle(keep) - middle(remove))).toBeLessThan(2);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
 });
 
 test('keeping or removing a search leaves keyboard focus where the reader was', async ({
