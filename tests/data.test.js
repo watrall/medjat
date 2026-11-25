@@ -12,6 +12,7 @@ import {
   queryString,
 } from '../js/data.js';
 import { buildSearchURL, searchWorks, request } from '../js/crossref.js';
+import { SEARCH_FIELDS, searchField } from '../js/search-fields.js';
 
 const raw = {
   DOI: '10.1234/Example',
@@ -59,7 +60,7 @@ test('query state round-trips and period queries do not become BCE publication f
 test('added search context can be removed and restored through shared URLs', () => {
   const query = readQuery('?q=Hatshepsut');
   const terms = (query) => new URL(buildSearchURL(query)).searchParams.get('query.bibliographic');
-  assert.equal(terms(query), 'Hatshepsut ancient Egypt');
+  assert.equal(terms(query), 'Hatshepsut ancient Egypt Egyptian');
   const withoutContext = { ...query, context: false };
   assert.deepEqual(readQuery(queryString(withoutContext)), withoutContext);
   assert.equal(terms(withoutContext), 'Hatshepsut');
@@ -164,7 +165,29 @@ test('author search keeps names separate from bibliographic refinements and pers
   assert.equal(params.get('query.bibliographic'), 'New Kingdom Egypt');
   const plain = new URL(buildSearchURL(readQuery('?q=Ada&field=author&context=0'))).searchParams;
   assert.equal(plain.has('query.bibliographic'), false);
-  assert.equal(readQuery('?field=title').field, undefined);
+  assert.equal(readQuery('?field=unknown').field, undefined);
+});
+
+test('every named search field sends its words to its own Crossref parameter with the research context', async () => {
+  const { describeSearch } = await import('../js/search-history.js');
+  for (const { id, param } of SEARCH_FIELDS.filter((field) => field.id && field.param)) {
+    const query = readQuery(`?q=Petrie&field=${id}`);
+    assert.equal(query.field, id);
+    assert.deepEqual(readQuery(queryString(query)), query);
+    const params = new URL(buildSearchURL(query)).searchParams;
+    assert.equal(params.get(param), 'Petrie', id);
+    assert.equal(params.get('query.bibliographic'), 'ancient Egypt Egyptian', id);
+    const plain = new URL(buildSearchURL(readQuery(`?q=Petrie&field=${id}&context=0`)))
+      .searchParams;
+    assert.equal(plain.get(param), 'Petrie', id);
+    assert.equal(plain.has('query.bibliographic'), false, id);
+    assert.equal(describeSearch(query), `${searchField(id).label} search`);
+  }
+  const all = new URL(buildSearchURL(readQuery('?q=Petrie'))).searchParams;
+  assert.equal(all.get('query.bibliographic'), 'Petrie ancient Egypt Egyptian');
+  const egypt = new URL(buildSearchURL(readQuery('?q=Egyptian+Museum&field=title'))).searchParams;
+  assert.equal(egypt.get('query.title'), 'Egyptian Museum');
+  assert.equal(egypt.has('query.bibliographic'), false);
 });
 
 test('explicit DOI mode rejects incomplete values before making a request', async () => {

@@ -1,5 +1,6 @@
 import { PERIODS, normalizeDOI, normalizeWork, parseUpdates } from './data.js';
 import { queryFilters } from './filters.js';
+import { isFieldSearch, searchField } from './search-fields.js';
 
 export const API = 'https://api.crossref.org';
 export const CONTACT = 'admin@wunderkammer.dev';
@@ -58,10 +59,12 @@ function dispatch() {
   dispatch();
 }
 
+// Crossref matches words, not stems: "Egypt" does not find works that only say "Egyptian".
+const EGYPT_CONTEXT = 'ancient Egypt Egyptian';
 export function addedSearchTerms(query) {
   const period = PERIODS.find((p) => p.id === query.period);
   if (period) return period.query;
-  return query.context !== false && !/\begypt(?:ian)?\b/i.test(query.q) ? 'ancient Egypt' : '';
+  return query.context !== false && !/\begypt(?:ian)?\b/i.test(query.q) ? EGYPT_CONTEXT : '';
 }
 export function bibliographicTerms(query) {
   return [query.q.trim(), addedSearchTerms(query)].filter(Boolean).join(' ');
@@ -74,8 +77,8 @@ export function buildSearchURL(query, cursor = '*') {
     rows: String(PAGE_SIZE),
     mailto: CONTACT,
   });
-  if (query.field === 'author') {
-    params.set('query.author', query.q.trim());
+  if (isFieldSearch(query.field)) {
+    params.set(searchField(query.field).param, query.q.trim());
     const context = addedSearchTerms(query);
     if (context) params.set('query.bibliographic', context);
     else params.delete('query.bibliographic');

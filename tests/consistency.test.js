@@ -94,3 +94,12 @@ test('the icon sprite is exactly what scripts/build-icons.mjs builds', async () 
     'Add the icon to the names list in scripts/build-icons.mjs and run npm run build:icons',
   );
 });
+
+test('the page text names the exact words the search context adds', async () => {
+  const { addedSearchTerms } = await import('../js/crossref.js');
+  const terms = addedSearchTerms({ q: 'Petrie', context: true, period: '' });
+  const html = (await read('index.html')).replace(/\s+/g, ' ');
+  assert.ok(terms);
+  assert.ok(html.includes(`“${terms}”`), 'The filter help must quote the added words');
+  assert.ok(html.includes(`&ldquo;${terms}&rdquo;`), 'Search help must quote the added words');
+});

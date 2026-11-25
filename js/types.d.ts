@@ -2,7 +2,7 @@ export interface Query {
   [key: string]: string | boolean;
   q: string;
   container: string;
-  field?: 'author' | 'doi';
+  field?: string;
   period: string;
   context: boolean;
   type: string;

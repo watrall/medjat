@@ -41,6 +41,7 @@ import { VIEW_CONFIG } from './view-config.js';
 import { createSearchHandoff } from './search-handoff.js';
 import { createSearchToggle } from './search-toggle.js';
 import { createHelpDialog } from './help-dialog.js';
+import { SEARCH_FIELDS, isFieldSearch, searchField } from './search-fields.js';
 import { BREAKPOINTS } from './breakpoints.js';
 import { el, icon, emptyState, notify, skeletons } from './dom.js';
 
@@ -54,6 +55,12 @@ const collectionStore = createCollectionStore({ storage });
 const searchHistory = createSearchHistory({ storage });
 const saved = await collectionStore.ready;
 const resumedSession = readSession();
+// Nothing is applied on the idle landing page, but the first search should start with the research
+// context on, so its checkbox starts checked.
+function draftFor(query) {
+  return query.q ? { ...query } : { ...query, context: true };
+}
+
 const state = {
   facets: null,
   facetsFor: '',
@@ -70,7 +77,7 @@ const state = {
   exportFormat: 'ris',
   lastRemoved: null,
   query: readQuery(location.search),
-  draft: readQuery(location.search),
+  draft: draftFor(readQuery(location.search)),
   items: [],
   total: 0,
   nextCursor: null,
@@ -93,6 +100,10 @@ const state = {
 const searchHandoff = createSearchHandoff();
 createSearchToggle();
 createHelpDialog();
+const defaultPlaceholder = $('searchInput').placeholder;
+$('searchField').replaceChildren(
+  ...SEARCH_FIELDS.map((field) => el('option', { value: field.id }, field.label)),
+);
 
 let initialized = false,
   restoringLocation = false;
@@ -256,18 +267,9 @@ function renderDraftStatus() {
   $('yearPending').hidden =
     state.draft.from === state.query.from && state.draft.to === state.query.to;
   const mode = $('searchField').value;
-  $('navSearchInput').placeholder =
-    mode === 'author'
-      ? 'Search author names'
-      : mode === 'doi'
-        ? 'Enter a DOI'
-        : 'Search publications';
-  $('searchScope').textContent =
-    mode === 'doi'
-      ? 'Look up one exact Crossref record. Publication refinements do not apply.'
-      : mode === 'author'
-        ? 'Search author names in Crossref, with your selected research context.'
-        : 'Search publication metadata in Crossref. Paste a DOI for an exact record.';
+  $('searchInput').placeholder = mode ? searchField(mode).placeholder : defaultPlaceholder;
+  $('navSearchInput').placeholder = searchField(mode).placeholder;
+  $('searchScope').textContent = searchField(mode).hint;
 }
 function captureDraft() {
   state.draft = readDraft();
@@ -291,14 +293,14 @@ function renderAppliedQuery() {
   const query = chartSearch && state.loading ? state.query : state.resultQuery || state.query;
   $('effectiveQuery').textContent = state.doiLookup
     ? `Exact DOI lookup: ${query.q}. Topic and publication refinements do not apply.`
-    : query.field === 'author'
-      ? `Author names: ${query.q}. Added bibliographic terms: ${addedSearchTerms(query) || 'none'}.`
+    : isFieldSearch(query.field)
+      ? `${searchField(query.field).label}: ${query.q}. Added bibliographic terms: ${addedSearchTerms(query) || 'none'}.`
       : `Ranking context sent to Crossref: ${bibliographicTerms(query)}${state.total > DATE_BROWSE_LIMIT ? '. Large totals include loosely related records.' : ''}`;
   const current = state.query;
   const doi = Boolean(normalizeDOI(current.q)) || current.field === 'doi';
   const entries = doi ? [] : filterEntries(current);
   if (!doi && !current.period && addedSearchTerms(current))
-    entries.unshift({ key: 'context', label: 'Added terms: ancient Egypt' });
+    entries.unshift({ key: 'context', label: `Added terms: ${addedSearchTerms(current)}` });
   const focusedKey = $('currentFilters').contains(document.activeElement)
     ? document.activeElement?.getAttribute('data-filter-key')
     : null;
@@ -306,7 +308,7 @@ function renderAppliedQuery() {
     el(
       'p',
       { class: 'current-search' },
-      `${current.field === 'author' ? 'Author' : doi ? 'DOI' : 'All metadata'}: ${current.q}`,
+      `${doi ? 'DOI' : searchField(current.field).label}: ${current.q}`,
     ),
     ...(entries.length
       ? entries.map(({ key, label }) =>
@@ -1328,7 +1330,7 @@ async function restoreLocation(resume = null) {
     }
     const idleLanding = !state.query.q && !state.directRecord && !params.has('view');
     const draft = resume?.draft ?? (idleLanding ? history.state?.landingDraft : null);
-    state.draft = draft ? readQuery(queryString(draft)) : { ...state.query };
+    state.draft = draft ? readQuery(queryString(draft)) : draftFor(state.query);
     state.collectionQuery =
       typeof resume?.collectionQuery === 'string' ? resume.collectionQuery : '';
     state.exportSelection = new Set(

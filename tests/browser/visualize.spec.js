@@ -296,10 +296,10 @@ test('the scope line names the ranking terms and each filter, with the values in
   await expect(page.locator('.viz-canvas svg')).toHaveCount(7);
   const scope = page.locator('.viz-scope');
   await expect(scope).toContainText(
-    'Ranked on hierakonpolis ancient Egypt. Filtered by Publication years 2000 onward',
+    'Ranked on hierakonpolis ancient Egypt Egyptian. Filtered by Publication years 2000 onward',
   );
   await expect(scope.locator('strong')).toContainText([
-    'hierakonpolis ancient Egypt',
+    'hierakonpolis ancient Egypt Egyptian',
     '2000 onward',
     'Book',
     'Abstract required',

@@ -3,6 +3,8 @@ const names = [
   'search',
   'x',
   'map-pin',
+  'compass',
+  'chart-column',
   'circle-question-mark',
   'expand',
   'plus',

@@ -1,4 +1,5 @@
 import { PERIODS, TYPES, queryString, readQuery } from './data.js';
+import { isFieldSearch, searchField } from './search-fields.js';
 
 const KEY = 'medjat-search-history-v1';
 export const MAX_RECENT = 8;
@@ -6,7 +7,7 @@ export const MAX_KEPT = 12;
 
 export function describeSearch(query) {
   return [
-    query.field === 'author' && 'Author search',
+    isFieldSearch(query.field) && `${searchField(query.field).label} search`,
     query.field === 'doi' && 'DOI',
     PERIODS.find((period) => period.id === query.period)?.name,
     TYPES.get(query.type),

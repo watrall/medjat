@@ -1,3 +1,4 @@
+import { isSearchFieldId } from './search-fields.js';
 import { SEVERITY_RANK, updateSeverity } from './updates.js';
 
 // Approximate ranges follow the Egypt Exploration Society's Chronology of Egypt.
@@ -339,7 +340,7 @@ export function readQuery(search = '') {
   return {
     q,
     container: (p.get('container') || '').slice(0, 500),
-    ...(['author', 'doi'].includes(p.get('field')) ? { field: p.get('field') } : {}),
+    ...(isSearchFieldId(p.get('field')) ? { field: p.get('field') } : {}),
     period: PERIODS.some((x) => x.id === p.get('period')) ? p.get('period') : '',
     context: p.has('context') ? p.get('context') !== '0' : Boolean(q),
     type: TYPES.has(p.get('type')) ? p.get('type') : '',

@@ -5,6 +5,7 @@ import { el, icon } from './dom.js';
 import { downloadText } from './download.js';
 import { csvCell } from './export.js';
 import { filterParts } from './filters.js';
+import { isFieldSearch, searchField } from './search-fields.js';
 import { palette } from './viz-palette.js';
 import { buildSections } from './viz-charts.js';
 export function createVisualize(root, { onRefine, onOpenRecord, onExplore }) {
@@ -348,10 +349,9 @@ export function createVisualize(root, { onRefine, onOpenRecord, onExplore }) {
   // What Crossref was asked and which filters narrowed it, with the values set in heavier type.
   function scopeNote(query) {
     const added = addedSearchTerms(query);
-    const terms =
-      query.field === 'author'
-        ? added && ['Added terms ', el('strong', {}, added), '. ']
-        : ['Ranked on ', el('strong', {}, bibliographicTerms(query)), '. '];
+    const terms = isFieldSearch(query.field)
+      ? added && ['Added terms ', el('strong', {}, added), '. ']
+      : ['Ranked on ', el('strong', {}, bibliographicTerms(query)), '. '];
     const filters = filterParts(query).flatMap(([label, value], index) => [
       index ? ', ' : '',
       value ? [`${label} `, el('strong', {}, value)] : el('strong', {}, label),
@@ -424,8 +424,8 @@ export function createVisualize(root, { onRefine, onOpenRecord, onExplore }) {
     return el(
       'h2',
       { tabindex: '-1' },
-      query.field === 'author'
-        ? `Analyzing Crossref results for author “${query.q}”`
+      isFieldSearch(query.field)
+        ? `Analyzing Crossref results for ${searchField(query.field).label.toLowerCase()} “${query.q}”`
         : `Analyzing Crossref results for “${query.q}”`,
     );
   }

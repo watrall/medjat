@@ -211,6 +211,17 @@ legend {
   border-color: var(--color-accent);
   color: var(--color-accent);
 }
+/* Tab icons need the room of a full desktop header; narrower headers already wrap without them. */
+.nav-icon {
+  display: none;
+  inline-size: 18px;
+  block-size: 18px;
+}
+@media (min-width: 1300px) {
+  .nav-icon {
+    display: block;
+  }
+}
 @media (hover: hover) and (pointer: fine) {
   .nav-button[aria-pressed='false']:enabled::after {
     position: absolute;

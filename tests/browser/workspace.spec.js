@@ -923,7 +923,7 @@ test('added context is removable without applying drafts and survives refresh an
   await page.goto('/?q=Hatshepsut');
   await expect(page.locator('.result-row')).toHaveCount(25);
   await expect(page.locator('#resultCount')).toHaveText(/^25( of [\d,+]+)? results loaded$/);
-  await expect(page.locator('#effectiveQuery')).toContainText('Hatshepsut ancient Egypt');
+  await expect(page.locator('#effectiveQuery')).toContainText('Hatshepsut ancient Egypt Egyptian');
   await page.locator('#searchInput').fill('Unfinished topic');
   await page.getByRole('button', { name: 'Remove added ancient Egypt terms', exact: true }).click();
   await expect(page).toHaveURL(/context=0/);
@@ -939,7 +939,7 @@ test('added context is removable without applying drafts and survives refresh an
   );
   await expect(page.locator('#addEgyptContext')).not.toBeChecked();
   await page.goBack();
-  await expect(page.locator('#effectiveQuery')).toContainText('Hatshepsut ancient Egypt');
+  await expect(page.locator('#effectiveQuery')).toContainText('Hatshepsut ancient Egypt Egyptian');
   await expect(page.locator('#addEgyptContext')).toBeChecked();
 });
 
@@ -1053,6 +1053,95 @@ test('phone filters are a Show / Hide button under the search fields', async ({ 
   await expect(page.locator('#currentFilters')).toBeVisible();
   await summary.click();
   await expect(page.locator('#currentFilters')).toBeHidden();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
+});
+
+test('tab icons appear only where the header has room, and never rename a tab', async ({
+  page,
+}) => {
+  await fixtures(page);
+  await page.goto('/');
+  const icons = page.locator('.main-nav .nav-icon');
+  await expect(icons).toHaveCount(4);
+  for (const [width, visible] of [
+    [1440, true],
+    [1300, true],
+    [1299, false],
+    [768, false],
+    [390, false],
+  ]) {
+    await page.setViewportSize({ width, height: 800 });
+    for (const icon of await icons.all()) expect(await icon.isVisible()).toBe(visible);
+  }
+  await expect(page.getByRole('button', { name: 'Explore', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Places', exact: true })).toBeVisible();
+});
+
+test('every search field sends its words to its own Crossref parameter', async ({ page }) => {
+  const requests = await fixtures(page);
+  await page.goto('/?q=ancient+egypt');
+  expect(await page.locator('#searchField option').allTextContents()).toEqual([
+    'All metadata',
+    'Title',
+    'Author',
+    'Editor',
+    'Journal or book',
+    'Publisher',
+    'Institution',
+    'Funder',
+    'DOI',
+  ]);
+  for (const [value, label, param] of [
+    ['title', 'Title', 'query.title'],
+    ['author', 'Author', 'query.author'],
+    ['editor', 'Editor', 'query.editor'],
+    ['journal', 'Journal or book', 'query.container-title'],
+    ['publisher', 'Publisher', 'query.publisher-name'],
+    ['affiliation', 'Institution', 'query.affiliation'],
+    ['funder', 'Funder', 'query.funder-name'],
+  ]) {
+    await page.locator('#searchField').selectOption(value);
+    await expect(page.locator('#searchInput')).toHaveAttribute('placeholder', /^Search /);
+    await page.locator('#searchInput').fill('Petrie');
+    await page.locator('#searchForm').getByRole('button', { name: 'Search', exact: true }).click();
+    await expect
+      .poll(() => requests.at(-1).searchParams.get(param), { message: label })
+      .toBe('Petrie');
+    expect(requests.at(-1).searchParams.get('query.bibliographic')).toBe('ancient Egypt Egyptian');
+    await expect(page.locator('.current-search')).toHaveText(`${label}: Petrie`);
+    await expect(page.locator('#searchField')).toHaveValue(value);
+  }
+});
+
+test('a search started from the landing page carries the Egypt context, with Egyptian', async ({
+  page,
+}) => {
+  const requests = await fixtures(page);
+  await page.goto('/');
+  await expect(page).toHaveURL(/\/$/);
+  await page.locator('#searchField').selectOption('funder');
+  await page.locator('#searchInput').fill('European Research Council');
+  await page.locator('#searchForm').getByRole('button', { name: 'Search', exact: true }).click();
+  await expect
+    .poll(() => requests.at(-1).searchParams.get('query.funder-name'))
+    .toBe('European Research Council');
+  expect(requests.at(-1).searchParams.get('query.bibliographic')).toBe('ancient Egypt Egyptian');
+  await expect(page).not.toHaveURL(/context/);
+  await expect(page.locator('#addEgyptContext')).toBeChecked();
+  await page.getByRole('button', { name: 'Remove added ancient Egypt terms', exact: true }).click();
+  await expect(page).toHaveURL(/context=0/);
+  await expect.poll(() => requests.at(-1).searchParams.has('query.bibliographic')).toBe(false);
+});
+
+test('the field menu and its longest label fit a phone', async ({ page }) => {
+  await fixtures(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await page.locator('#searchField').selectOption('journal');
+  const fits = await page
+    .locator('#searchField')
+    .evaluate((select) => select.scrollWidth <= select.clientWidth);
+  expect(fits).toBe(true);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
 });
 

@@ -30,12 +30,30 @@
           <span class="brand-name">Medjat<span>Ancient Egyptian Research Explorer</span></span>
         </a>
         <nav class="main-nav" aria-label="Research workspace">
-          <button id="exploreNav" class="nav-button" aria-pressed="true">Explore</button>
+          <button id="exploreNav" class="nav-button" aria-pressed="true">
+            <svg class="icon nav-icon" aria-hidden="true">
+              <use href="assets/icons.svg#compass" />
+            </svg>
+            Explore
+          </button>
           <button id="collectionNav" class="nav-button" aria-pressed="false" disabled>
+            <svg class="icon nav-icon" aria-hidden="true">
+              <use href="assets/icons.svg#bookmark" />
+            </svg>
             Collection <span id="collectionCount" class="nav-count">0</span>
           </button>
-          <button id="visualizeNav" class="nav-button" aria-pressed="false">Visualize</button>
-          <button id="placesNav" class="nav-button" aria-pressed="false">Places</button>
+          <button id="visualizeNav" class="nav-button" aria-pressed="false">
+            <svg class="icon nav-icon" aria-hidden="true">
+              <use href="assets/icons.svg#chart-column" />
+            </svg>
+            Visualize
+          </button>
+          <button id="placesNav" class="nav-button" aria-pressed="false">
+            <svg class="icon nav-icon" aria-hidden="true">
+              <use href="assets/icons.svg#map-pin" />
+            </svg>
+            Places
+          </button>
           <button
             id="searchToggle"
             class="nav-button search-toggle"
@@ -120,11 +138,7 @@
                 </div>
                 <div class="search-mode">
                   <label class="sr-only" for="searchField">Search in</label>
-                  <select id="searchField" name="field">
-                    <option value="">All metadata</option>
-                    <option value="author">Author</option>
-                    <option value="doi">DOI</option>
-                  </select>
+                  <select id="searchField" name="field"></select>
                 </div>
                 <button
                   id="primarySearchSubmit"
@@ -321,8 +335,8 @@
                     />Add ancient Egypt terms</label
                   >
                   <p id="contextHelp" class="filter-help">
-                    Adds “ancient Egypt” as keywords when no period is selected and Egypt is absent
-                    from your query. This can broaden the results.
+                    Adds the words “ancient Egypt Egyptian” when no period is selected and Egypt is
+                    absent from your query. This can broaden the results.
                   </p>
                 </div>
               </details>
@@ -454,7 +468,10 @@
                 excavation or Deir el-Medina ostraca.
               </li>
               <li>
-                <strong>An author.</strong> Change All metadata to Author beside the search box.
+                <strong>One field.</strong> Use the menu beside the search box to search only
+                titles, authors, editors, journal or book titles, publishers, institutions or
+                funders. Institution and funder searches can only find records where the publisher
+                listed them.
               </li>
               <li>
                 <strong>A DOI.</strong> Paste one, with or without the https://doi.org/ prefix, to
@@ -469,9 +486,14 @@
                 specific words usually work better than a long sentence.
               </li>
               <li>
-                When no historical period is chosen and your search does not mention Egypt, Medjat
-                adds &ldquo;ancient Egypt&rdquo; to the ranking words. You can turn this off under
-                Search context in the filters.
+                Unless your search mentions Egypt or you choose a historical period, Medjat adds the
+                words &ldquo;ancient Egypt Egyptian&rdquo; to your search. Crossref matches whole
+                words, so Egyptian is included to catch works that never say Egypt. Turn this off
+                with Add ancient Egypt terms under Search context in the filters.
+              </li>
+              <li>
+                Name fields also match any word, so a funder or institution search can return
+                loosely related records. The added words above keep them on topic.
               </li>
             </ul>
             <h3>Narrowing and sorting</h3>
@@ -562,10 +584,10 @@
                 reports and some regional publications have no DOI and do not appear.
               </li>
               <li>
-                <strong>Gaps are common.</strong> Abstracts, reference lists, ORCID iDs, licences
-                and funders exist for only some records. A missing field means nothing was
-                deposited. It says nothing about quality or about whether other relevant work
-                exists.
+                <strong>Gaps are common.</strong> Abstracts, reference lists, ORCID iDs, licences,
+                funders and author institutions exist for only some records. A missing field means
+                nothing was deposited. It says nothing about quality or about whether other relevant
+                work exists.
               </li>
               <li>
                 <strong>Records can be untidy.</strong> Authors may be missing, especially on book
