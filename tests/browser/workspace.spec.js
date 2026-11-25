@@ -947,12 +947,12 @@ for (const width of [320, 390, 768, 1024, 1440]) {
   test(`sticky search hands off without overflow or layout shifts at ${width}px`, async ({
     page,
   }) => {
+    // Phones use the navigation bar's search button instead (see the phone header test).
+    test.skip(width < 640, 'phone header');
     await page.setViewportSize({ width, height: 844 });
     await fixtures(page);
     await page.goto('/?q=ancient+egypt');
     await expect(page.locator('.result-row')).toHaveCount(25);
-    // Phones use the navigation bar's search button instead (see the phone header test).
-    test.skip(width < 640, 'phone header');
     const nav = page.locator('#navSearchForm');
     await expect(nav).toHaveAttribute('aria-hidden', 'true');
     await page.locator('#searchInput').fill('Abydos draft');
@@ -1029,12 +1029,31 @@ test('the phone header is a logo bar over a pinned navigation bar with a search 
   await page.evaluate(() => window.scrollTo(0, 600));
   expect((await page.locator('.main-nav').boundingBox()).y).toBe(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
-  await page.locator('#collectionNav').evaluate((e) => (e.disabled = false));
   await page.locator('#placesNav').click();
   await expect(toggle).toHaveAttribute('aria-expanded', 'false');
   await toggle.click();
   await expect(page.locator('#exploreNav')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('#searchInput')).toBeFocused();
+});
+
+test('phone filters are a Show / Hide button under the search fields', async ({ page }) => {
+  await fixtures(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/?q=ancient+egypt');
+  await expect(page.locator('.result-row')).toHaveCount(25);
+  const summary = page.locator('#refinements > summary');
+  await expect(summary).toHaveAccessibleName(/Show search filters/);
+  const search = await page.locator('#searchArea').boundingBox();
+  const button = await summary.boundingBox();
+  expect(button.y).toBeGreaterThan(search.y + search.height);
+  expect(button.width).toBeGreaterThan(330);
+  await expect(page.locator('#refinements')).not.toHaveAttribute('open', '');
+  await summary.click();
+  await expect(summary).toHaveAccessibleName(/Hide search filters/);
+  await expect(page.locator('#currentFilters')).toBeVisible();
+  await summary.click();
+  await expect(page.locator('#currentFilters')).toBeHidden();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
 });
 
 test('global navigation search opens Explore and preserves synchronized text', async ({ page }) => {
@@ -1218,7 +1237,16 @@ test('workspace tabs restore each reading position and Collection can map its sa
   await page.locator('.result-open').nth(8).click();
   await page.locator('#inspector').getByRole('tab', { name: 'Connections', exact: true }).click();
   const { x, y, width, height } = await page.locator('#collectionNav').boundingBox();
-  const exploreScroll = await page.evaluate(() => window.scrollY);
+  // Layout is still settling after the row and tab clicks, so record the position once it holds.
+  let exploreScroll = -1;
+  await expect
+    .poll(async () => {
+      const y = await page.evaluate(() => window.scrollY);
+      const steady = y === exploreScroll;
+      exploreScroll = y;
+      return steady;
+    })
+    .toBe(true);
   expect(exploreScroll).toBeGreaterThan(0);
 
   // Click the sticky control in place so the driver does not scroll it into view first.

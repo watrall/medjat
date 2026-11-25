@@ -206,12 +206,17 @@
         <h1 class="sr-only mobile-detail-title">Your collection</h1>
         <details id="refinements" class="refinements" open>
           <summary>
-            <span>Filter your search</span><span id="filterCount" class="filter-count"></span>
+            <span class="filters-label">Filter your search</span>
+            <span class="filters-toggle-label"
+              ><span class="when-closed">Show</span><span class="when-open">Hide</span> search
+              filters</span
+            >
+            <span id="filterCount" class="filter-count"></span>
           </summary>
           <div class="refinement-body">
             <details class="filter-section current-filters" open>
               <summary>Current filters</summary>
-              <div id="currentFilters" class="current-filter-list"></div>
+              <div id="currentFilters"></div>
               <button id="clearFilters" class="button clear-filters" type="button">
                 Clear filters
               </button>

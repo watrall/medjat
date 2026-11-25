@@ -767,7 +767,6 @@ export function createPlaces(
     },
     cancel,
     location,
-    choose,
     refresh: () => {
       if (active) {
         renderPublications();

@@ -11,7 +11,6 @@ export function createSearchToggle() {
     const shown = open && !document.body.classList.contains('is-collection');
     area.dataset.open = String(shown);
     button.setAttribute('aria-expanded', String(shown));
-    button.classList.toggle('is-open', shown);
   }
   button.addEventListener('click', () => {
     if (document.body.classList.contains('is-collection')) {

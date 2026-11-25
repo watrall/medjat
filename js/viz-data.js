@@ -261,8 +261,6 @@ export function registration(works) {
   };
 }
 
-export const openShare = (works) =>
-  pct(works.filter((work) => openAccess(work)).length, works.length);
 export { shorten };
 
 export const FIELDS = [

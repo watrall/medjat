@@ -1,7 +1,10 @@
+import { BREAKPOINTS } from './breakpoints.js';
+
 // Keep search available without moving the page or interrupting keyboard input.
 export function createSearchHandoff() {
   const header = document.querySelector('.masthead');
   const nav = document.querySelector('.main-nav');
+  const phone = matchMedia(BREAKPOINTS.phone);
   const row = document.getElementById('primarySearchRow');
   const form = document.getElementById('navSearchForm');
   const slot = document.querySelector('.nav-search-slot');
@@ -28,8 +31,7 @@ export function createSearchHandoff() {
   }
   function measure() {
     // On phones only the navigation bar stays pinned; the logo bar scrolls away.
-    const height = (matchMedia('(max-width: 639px)').matches ? nav : header).getBoundingClientRect()
-      .height;
+    const height = (phone.matches ? nav : header).getBoundingClientRect().height;
     headerHeight = height;
     if (matchMedia('(max-width: 999px)').matches) {
       const bounds = brandName.getBoundingClientRect();
@@ -56,9 +58,9 @@ export function createSearchHandoff() {
   const resizeObserver = new ResizeObserver(measure);
   resizeObserver.observe(header);
   resizeObserver.observe(nav);
-  matchMedia('(max-width: 639px)').addEventListener('change', measure);
   resizeObserver.observe(slot);
   resizeObserver.observe(brandName);
+  phone.addEventListener('change', measure);
   form.addEventListener('focusout', (event) => {
     if (!form.contains(event.relatedTarget)) requestAnimationFrame(update);
   });

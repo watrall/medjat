@@ -1,9 +1,6 @@
 * {
   box-sizing: border-box;
 }
-html {
-  scroll-padding-top: 5rem;
-}
 body {
   margin: 0;
   background: var(--color-canvas);
@@ -174,7 +171,6 @@ legend {
   gap: var(--space-md);
   color: var(--color-ink);
   text-decoration: none;
-  flex-shrink: 0;
 }
 .brand-mark {
   width: 38px;
@@ -182,7 +178,6 @@ legend {
   color: var(--color-accent);
 }
 .brand-name {
-  font-size: var(--text-lead);
   font-weight: 650;
   line-height: 1.05;
   letter-spacing: -0.04em;
@@ -191,7 +186,6 @@ legend {
   display: block;
   font-size: var(--text-label);
   font-weight: 450;
-  letter-spacing: -0.02em;
   margin-top: 4px;
 }
 .main-nav {
@@ -305,27 +299,18 @@ h1 {
   max-width: 33ch;
   display: none;
 }
-.search-form {
-  display: block;
-}
 .search-label {
   grid-column: 1/-1;
   font-size: var(--text-label);
   font-weight: 550;
 }
 .search-field {
-  min-width: 0;
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  background: var(--color-surface);
-  border: 1px solid var(--color-control);
-  border-radius: var(--radius-base);
-  padding-inline: var(--space-base);
 }
 .search-field:focus-within {
   outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
 }
 .search-field .icon {
   color: var(--color-muted);
@@ -333,7 +318,6 @@ h1 {
 .search-field input {
   width: 100%;
   min-width: 0;
-  min-height: 54px;
   border: 0;
   background: transparent;
   padding-inline: 0;
@@ -377,7 +361,6 @@ h1 {
 }
 .search-submit {
   padding-inline: var(--space-lg);
-  border-radius: var(--radius-base);
 }
 .text-button {
   display: inline-flex;
@@ -433,7 +416,6 @@ h1 {
   display: none;
 }
 .filter-form {
-  display: grid;
   gap: var(--space-lg);
   margin-top: var(--space-base);
 }
@@ -691,7 +673,6 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-base);
   margin-bottom: var(--space-base);
 }
 .inspector-kicker {
@@ -702,10 +683,7 @@ h1 {
   color: var(--color-muted);
 }
 .inspector-close {
-  min-height: 44px;
   min-width: 44px;
-  display: flex;
-  align-items: center;
   justify-content: center;
 }
 .inspector-tabs {
@@ -1134,13 +1112,8 @@ h1 {
     background: transparent;
     align-self: start;
     position: sticky;
-    top: var(--space-lg);
-    max-height: calc(100vh - 3rem);
     overflow-y: auto;
     scrollbar-gutter: stable;
-  }
-  .inspector-close {
-    display: none;
   }
   .inspector-top {
     min-height: 28px;
@@ -1154,12 +1127,10 @@ h1 {
     width: min(100% - 5rem, 1600px);
   }
   .workspace {
-    grid-template-columns: 216px minmax(0, 1.2fr) minmax(345px, 0.9fr);
     gap: var(--space-xl);
   }
   .refinements {
     grid-column: auto;
-    padding-right: var(--space-lg);
     border-right: 1px solid var(--color-line);
   }
   .refinements summary {
@@ -1167,31 +1138,6 @@ h1 {
   }
 }
 @media (max-width: 639px) {
-  .masthead-inner {
-    flex-wrap: nowrap;
-    gap: 8px;
-    min-height: 76px;
-    padding-block: 12px;
-  }
-  .brand {
-    gap: 6px;
-  }
-  .brand-mark {
-    width: 28px;
-    height: 32px;
-  }
-  .brand-name {
-    font-size: 1rem;
-  }
-  .brand-name span {
-    font-size: 0.75rem;
-  }
-  .main-nav {
-    gap: 8px;
-  }
-  .nav-button {
-    gap: 4px;
-  }
   .nav-count {
     min-width: 20px;
     padding-inline: 3px;
@@ -1201,25 +1147,10 @@ h1 {
     padding-block: var(--space-lg) var(--space-base);
   }
   .results-toolbar {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
   }
   .sort-control {
     flex-wrap: wrap;
-    justify-content: flex-end;
-    max-width: 130px;
-  }
-  .sort-control label {
-    font-size: var(--text-caption);
-  }
-}
-@media (max-width: 359px) {
-  .masthead-inner {
-    flex-wrap: wrap;
-  }
-  .main-nav {
-    margin-left: auto;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1338,8 +1269,6 @@ p {
   }
   .sort-control {
     justify-self: start;
-    justify-content: start;
-    max-width: 100%;
   }
   .inspector-tabs {
     gap: var(--space-base);
@@ -1792,19 +1721,6 @@ p {
     grid-template-columns: minmax(0, 1fr);
   }
 }
-@media (max-width: 639px) {
-  .masthead-inner {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 4px 8px;
-  }
-  .main-nav {
-    grid-column: 1/-1;
-    grid-row: 2;
-    margin: 0;
-    gap: 12px;
-  }
-}
 
 .place-search-form :is(select, input),
 .places-map-tools select,
@@ -1919,11 +1835,7 @@ p {
   flex-shrink: 0;
 }
 @media (max-width: 639px) {
-  .brand-name {
-    font-size: var(--text-lead);
-  }
   .brand-name span {
-    font-size: var(--text-caption);
     max-inline-size: 28ch;
   }
 }
@@ -2297,9 +2209,6 @@ html {
     gap: var(--space-base);
   }
   .refinements {
-    padding: var(--space-sm) var(--space-base);
-    background: var(--color-surface);
-    border: 1px solid var(--color-line);
     border-radius: var(--radius-base);
   }
   .refinements .filter-help,
@@ -3390,32 +3299,36 @@ html {
 }
 
 /* Phone header: the logo on its own, then a navigation bar with tabs and a search button. */
-.search-toggle {
+.search-toggle,
+.filters-toggle-label {
   display: none;
 }
 @media (max-width: 639px) {
+  /* Only the navigation bar stays pinned, so the header wrappers must not form a box. */
   .masthead,
   .masthead-inner {
     display: contents;
   }
   .brand {
     min-height: 56px;
+    gap: 6px;
     padding-inline: var(--space-base);
     background: var(--color-surface);
-  }
-  .brand-name span {
-    font-size: var(--text-caption);
   }
   .brand-mark {
     width: 32px;
     height: 36px;
   }
+  .brand-name {
+    font-size: 1rem;
+  }
+  .brand-name span {
+    font-size: var(--text-caption);
+  }
   .main-nav {
     position: sticky;
     top: 0;
     z-index: var(--layer-sticky);
-    grid-column: auto;
-    flex-wrap: nowrap;
     justify-content: space-between;
     gap: var(--space-sm);
     margin: 0;
@@ -3430,7 +3343,12 @@ html {
   }
   .nav-button {
     flex: none;
+    gap: 4px;
     min-height: 48px;
+  }
+  /* The scrolling bar would clip an outset focus ring. */
+  .nav-button:focus-visible {
+    outline-offset: -2px;
   }
   .has-nav-search .brand-name {
     visibility: visible;
@@ -3442,28 +3360,29 @@ html {
     display: grid;
     place-items: center;
     min-width: 44px;
-    margin-inline-start: auto;
-    color: var(--color-ink);
     margin-block: 2px;
+    margin-inline-start: auto;
     border: 0;
     border-radius: var(--radius-base);
+    color: var(--color-ink);
   }
   .search-toggle[aria-expanded='true'] {
     background: var(--color-selected);
     color: var(--color-accent);
   }
+
+  /* Animating the row track is the only way to reveal content of unknown height without script. */
   .search-area {
     display: grid;
     grid-template-rows: 1fr;
     transition:
-      grid-template-rows var(--duration-slow, 260ms) var(--ease-out),
-      opacity var(--duration-slow, 260ms) var(--ease-out),
-      visibility 0s;
+      grid-template-rows var(--duration-slow) var(--ease-out),
+      opacity var(--duration-slow) var(--ease-out);
   }
   .search-area-inner {
     min-height: 0;
     overflow: hidden;
-    /* Room for the focus ring, which would otherwise be clipped while open. */
+    /* Room for the focus ring, which the clipping would otherwise cut off. */
     margin: -4px;
     padding: 4px;
   }
@@ -3472,8 +3391,57 @@ html {
     opacity: 0;
     visibility: hidden;
     transition:
-      grid-template-rows var(--duration-slow, 260ms) var(--ease-out),
+      grid-template-rows var(--duration-slow) var(--ease-out),
       opacity var(--duration-fast) var(--ease-out),
-      visibility 0s var(--duration-slow, 260ms);
+      visibility 0s var(--duration-slow);
+  }
+
+  /* Filters: a full-width Show / Hide button under the search fields. */
+  .refinements {
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+  .refinements > summary {
+    justify-content: center;
+    gap: var(--space-xs);
+    min-height: 48px;
+    border: 1px solid var(--color-accent);
+    border-radius: var(--radius-base);
+    background: var(--color-surface);
+    color: var(--color-accent);
+    font-weight: 650;
+    cursor: pointer;
+    transition:
+      background-color var(--duration-fast) var(--ease-out),
+      color var(--duration-fast) var(--ease-out);
+  }
+  .refinements > summary:hover {
+    background: var(--color-selected);
+  }
+  .refinements[open] > summary {
+    background: var(--color-accent);
+    color: var(--color-surface);
+  }
+  .refinements[open] > summary:hover {
+    background: var(--color-accent-hover);
+  }
+  .refinements > summary:focus-visible {
+    outline-color: var(--color-accent);
+    outline-offset: 3px;
+  }
+  .refinements > summary .filters-label,
+  .refinements > summary .chevron {
+    display: none;
+  }
+  .refinements > summary .filters-toggle-label {
+    display: inline;
+  }
+  .refinements:not([open]) .when-open,
+  .refinements[open] .when-closed {
+    display: none;
+  }
+  .refinement-body {
+    margin-top: var(--space-base);
   }
 }
