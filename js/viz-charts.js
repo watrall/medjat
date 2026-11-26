@@ -156,7 +156,7 @@ function constellationChart(works, { colors, groupOf, groupNames, windowSize }) 
               label: {
                 color: colors.muted,
                 fontFamily: colors.font,
-                fontSize: 11.5,
+                fontSize: 12,
                 fontWeight: 600,
                 position: 'insideStartTop',
                 distance: [0, 3],
@@ -861,7 +861,7 @@ function registrationChart(works, { colors, groupOf, groupNames, windowSize }) {
                 show: true,
                 color: colors.muted,
                 fontFamily: colors.font,
-                fontSize: 11.5,
+                fontSize: 12,
                 fontWeight: 600,
                 formatter: 'Registered the year it was published',
                 position: 'insideMiddleTop',

@@ -4,7 +4,7 @@ const names = [
   'x',
   'map-pin',
   'compass',
-  'chart-column',
+  'chart-candlestick',
   'circle-question-mark',
   'expand',
   'plus',

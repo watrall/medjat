@@ -1145,6 +1145,63 @@ test('the field menu and its longest label fit a phone', async ({ page }) => {
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
 });
 
+test('long unbroken metadata wraps instead of widening the page on a small phone', async ({
+  page,
+}) => {
+  const long = (n, c) => c.repeat(n);
+  await fixtures(page);
+  await page.route('https://api.crossref.org/**', (route) => {
+    const url = new URL(route.request().url());
+    if (
+      url.pathname !== '/works' ||
+      url.searchParams.has('facet') ||
+      url.searchParams.get('select')
+    )
+      return route.fallback();
+    const item = (i) => ({
+      DOI: `10.1234/${long(70, 'd')}${i}`,
+      title: [`Pneumonoultramicroscopicsilicovolcanoconiosis${long(90, 'o')} ${i}`],
+      author: [
+        { given: long(40, 'G'), family: long(55, 'F'), affiliation: [{ name: long(120, 'A') }] },
+      ],
+      published: { 'date-parts': [[2020]] },
+      type: 'book-chapter',
+      'container-title': [long(110, 'C')],
+      publisher: long(100, 'P'),
+      abstract: `<jats:p>A link https://example.org/${long(160, 'u')} and a word ${long(120, 'w')}.</jats:p>`,
+      reference: [
+        { DOI: `10.1234/${long(80, 'r')}`, unstructured: `https://doi.org/${long(150, 'r')}` },
+      ],
+      license: [
+        {
+          URL: `https://creativecommons.org/licenses/by/4.0/${long(100, 'l')}`,
+          'content-version': 'vor',
+        },
+      ],
+    });
+    return route.fulfill({
+      json: { status: 'ok', message: { items: [item(1), item(2)], 'total-results': 2 } },
+    });
+  });
+  await page.setViewportSize({ width: 320, height: 844 });
+  const scrollWidth = () => page.evaluate(() => document.documentElement.scrollWidth);
+  await page.goto('/?q=ancient+egypt');
+  await expect(page.locator('.result-open')).toHaveCount(2);
+  expect(await scrollWidth()).toBe(320);
+  await page.locator('.result-open').first().click();
+  for (const accordion of await page.locator('#inspector details').all())
+    if (await accordion.isVisible()) await accordion.locator('summary').first().click();
+  for (const tab of ['Overview', 'Connections', 'Cite']) {
+    await page.getByRole('tab', { name: tab, exact: true }).click();
+    expect(await scrollWidth(), tab).toBe(320);
+  }
+  await page.goto('/?q=ancient+egypt');
+  await expect(page.locator('.result-open')).toHaveCount(2);
+  await page.locator('#visualizeNav').click();
+  await expect(page.locator('.viz-lead').first()).toBeVisible();
+  expect(await scrollWidth()).toBe(320);
+});
+
 test('global navigation search opens Explore and preserves synchronized text', async ({ page }) => {
   const requests = await fixtures(page);
   await stubPlaceServices(page);

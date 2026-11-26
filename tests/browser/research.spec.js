@@ -89,3 +89,47 @@ test('unresolved citations require confirmation and can be undone after rebuildi
   await page.getByRole('button', { name: 'Undo citation match from Abydos research' }).click();
   await expect(page.locator('#researchTools')).toContainText('Unresolved citations (1)');
 });
+
+test('opening every Collection accordion on a phone never widens the page', async ({ page }) => {
+  await page.route('https://api.crossref.org/**', (route) => {
+    const url = new URL(route.request().url());
+    const work = (i) => ({
+      DOI: `10.1234/source${i}`,
+      title: [`The Sixth Satrapy: The Archaeology of Egypt Under Achaemenid Rule ${i}`],
+      reference: [
+        { DOI: '10.1234/shared', unstructured: 'A common source' },
+        { unstructured: 'An older book without a DOI, in a series with a very long title' },
+      ],
+    });
+    return route.fulfill({
+      json: {
+        message:
+          url.pathname === '/works'
+            ? { items: [work(1), work(2)], 'total-results': 2 }
+            : { DOI: '10.1234/shared', title: ['A common source'] },
+      },
+    });
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/?q=ancient+egypt');
+  await expect(page.locator('.result-row')).toHaveCount(2);
+  await page.locator('.save-button').nth(0).click();
+  await page.locator('.save-button').nth(1).click();
+  await page.locator('#collectionNav').click();
+  await page.getByText('Collection tools', { exact: true }).click();
+  await page
+    .getByRole('button', { name: /Discover references from \d+ saved publications?/ })
+    .click();
+  await expect(page.locator('#researchTools')).toContainText('Shared foundations');
+  const accordions = page.locator('#research details');
+  for (let i = 0; i < (await accordions.count()); i++) {
+    const accordion = accordions.nth(i);
+    if (!(await accordion.isVisible())) continue;
+    if (!(await accordion.evaluate((node) => node.open)))
+      await accordion.locator('summary').first().click();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
+  }
+  // The wide network scrolls inside its own box instead.
+  const network = page.locator('.reference-network');
+  expect(await network.evaluate((node) => node.scrollWidth > node.clientWidth)).toBe(true);
+});
