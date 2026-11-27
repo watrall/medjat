@@ -268,6 +268,25 @@ export function createVisualize(root, { onRefine, onOpenRecord, onExplore }) {
           chart.setOption(spec.option(width, !reduced()));
           canvas.removeAttribute('aria-busy');
           spec.bind?.(chart, canvas);
+          // A finger has no hover to leave, so lifting it dismisses the tooltip: at once after a
+          // press and hold, and after a moment to read it following a quick tap.
+          let pressedAt = 0,
+            dismiss = 0;
+          canvas.addEventListener('pointerdown', (event) => {
+            if (event.pointerType !== 'touch') return;
+            clearTimeout(dismiss);
+            pressedAt = performance.now();
+          });
+          for (const end of ['pointerup', 'pointercancel'])
+            canvas.addEventListener(end, (event) => {
+              if (event.pointerType !== 'touch') return;
+              clearTimeout(dismiss);
+              const held = performance.now() - pressedAt >= 400;
+              dismiss = setTimeout(
+                () => !chart.isDisposed() && chart.dispatchAction({ type: 'hideTip' }),
+                held ? 80 : 2500,
+              );
+            });
           chart.on('click', (params) => {
             const action = spec.click?.(params.data);
             if (action?.open) act.open(action.open, canvas);

@@ -397,3 +397,40 @@ test('the one bright metadata bar is always the one under the pointer, however y
   await page.mouse.move(box.x + 4, box.y + box.height + 40, { steps: 5 });
   await expect.poll(async () => (await fadedCells()).length).toBe(0);
 });
+
+test.describe('on a touch screen', () => {
+  test.use({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 } });
+  async function pressBar(page) {
+    await stub(page);
+    await page.goto('/?q=ancient+egypt&view=visualize');
+    const canvas = page.locator('#viz-complete .viz-canvas');
+    await expect(canvas.locator('svg')).toBeVisible();
+    await canvas.scrollIntoViewIfNeeded();
+    const box = await canvas.boundingBox();
+    const left = Math.min(230, box.width * 0.3);
+    const pitch = (box.width - left - 8) / 7;
+    const point = { x: box.x + left + pitch * 1.5, y: box.y + 6 + 40 + 62 * 0.4 };
+    const cdp = await page.context().newCDPSession(page);
+    return {
+      tip: page.getByText(/^\d+ of \d+ records have an abstract$/),
+      down: () =>
+        cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point] }),
+      up: () => cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }),
+    };
+  }
+  test('a tooltip held open with a finger goes away when the finger lifts', async ({ page }) => {
+    const { tip, down, up } = await pressBar(page);
+    await down();
+    await expect(tip).toBeVisible();
+    await page.waitForTimeout(600);
+    await up();
+    await expect(tip).toBeHidden({ timeout: 1500 });
+  });
+  test('a tooltip opened by a quick tap stays a moment, then goes away', async ({ page }) => {
+    const { tip, down, up } = await pressBar(page);
+    await down();
+    await up();
+    await expect(tip).toBeVisible();
+    await expect(tip).toBeHidden({ timeout: 5000 });
+  });
+});

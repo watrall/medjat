@@ -36,7 +36,7 @@ const work = ({
     abstract,
   });
 
-test('the three commonest types get a group each and the rest share one', () => {
+test('the three most common types get a group each and the rest share one', () => {
   const works = [
     ...Array.from({ length: 4 }, () => work({ type: 'book-chapter' })),
     ...Array.from({ length: 3 }, () => work()),

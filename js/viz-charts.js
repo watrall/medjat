@@ -73,18 +73,18 @@ function constellationChart(works, { colors, groupOf, groupNames, windowSize }) 
     coverage: `${first.total} of ${windowSize} records dated`,
     lead: first.total
       ? first.citedShare === 0
-        ? ['None of these records has been cited by another Crossref record yet.']
+        ? ['None of these records has been cited in another Crossref record yet.']
         : [
             'Only ',
             strong(`${first.citedShare}%`),
-            ' of these records have been cited by another Crossref record. The most cited, “',
+            ' of these records have been cited in another Crossref record. The most cited, “',
             topTitle,
             '”, has ',
             strong(first.top.cited.toLocaleString()),
             '.',
           ]
       : ['No record in this window has a publication date.'],
-    note: 'Each dot is one record. Across is the publication year. Up is the number of Crossref records that cite it, on a log scale. Records with few citations are spread slightly so none overlap. Records no one has cited yet sit in the band below the line.',
+    note: 'Each dot is one record. Across is the publication year. Up is the number of times it is cited in other Crossref records, on a log scale. Records with few citations are spread slightly so none overlap. Records no one has cited yet sit in the band below the line.',
     label: `Scatter of ${first.total} dated records by publication year and citation count`,
     height,
     filters: true,
@@ -611,7 +611,7 @@ function wafflesChart(works, { colors, groupOf, groupNames, groups, windowSize }
     coverage: `${works.length} of ${windowSize} records`,
     lead: [
       strong(lead.name),
-      ' is the commonest type, ',
+      ' is the most common type, ',
       strong(`${Math.round((100 * lead.count) / works.length)}%`),
       ` of these ${works.length.toLocaleString()} records.`,
     ],
@@ -685,7 +685,7 @@ function publishersChart(works, { colors, windowSize }) {
         ? 'One publisher accounts for '
         : `${tree.data.length === 5 ? 'Five' : tree.data.length} publishers account for `,
       strong(`${tree.shownShare}%`),
-      ` of these records, led by ${tree.leader}.`,
+      ' of these records.',
     ],
     note: tree.restPublishers
       ? `${plural(tree.restPublishers, 'other publisher', 'other publishers')} account for the remaining ${tree.restRecords.toLocaleString()} records (${tree.restShare}%) and are not drawn. Area is the number of records. Select a venue to search for it.`

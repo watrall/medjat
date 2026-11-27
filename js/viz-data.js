@@ -180,7 +180,6 @@ export function publisherTree(works) {
     restPublishers: ranked.length - top.length,
     restRecords: works.length - shown,
     restShare: pct(works.length - shown, works.length),
-    leader: top[0]?.name ?? '',
     total: works.length,
   };
 }
@@ -264,7 +263,7 @@ export function registration(works) {
 export { shorten };
 
 export const FIELDS = [
-  ['authors', 'Authors', 'named authors', (work) => work.authors.length > 0],
+  ['authors', 'Authors', 'a named author or authors', (work) => work.authors.length > 0],
   ['abstract', 'Abstract', 'an abstract', (work) => Boolean(work.abstract)],
   ['references', 'References', 'a reference list', (work) => work.references.length > 0],
   ['license', 'License', 'a license', (work) => work.licenses.length > 0],
