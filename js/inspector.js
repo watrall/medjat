@@ -19,6 +19,7 @@ import {
   getWorks,
   RELATED_LIMIT,
 } from './crossref.js';
+import { getCitingDOIs } from './opencitations.js';
 import { citationLine, nameSeparator } from './citation-line.js';
 import { el, icon, externalLink, emptyState, helpLink, notify } from './dom.js';
 import { downloadText } from './download.js';
@@ -34,7 +35,7 @@ import {
 } from './updates.js';
 
 const CITED_BY_NOTE =
-  'Counts citations from reference lists that Crossref members deposited. It is not complete, and Crossref does not list the citing works.';
+  'Crossref counts only citations from works whose publishers supplied reference lists, so the count is a minimum. It gives only a count, not the citations themselves, so they are looked up in OpenCitations.';
 const RELATION_LABELS = {
   'is-part-of': 'Part of',
   'has-part': 'Has part',
@@ -81,7 +82,9 @@ export function createInspector(
   const matches = new Map();
   let chapters = null,
     chaptersOpen = false,
-    related = null;
+    related = null,
+    citers = null,
+    citersAbort = null;
   let book = null;
   let bookElement = null;
   let trail = [],
@@ -143,9 +146,13 @@ export function createInspector(
     chapters = null;
     chaptersOpen = false;
     related = null;
+    citers = null;
+    citersAbort?.abort();
+    citersAbort = new AbortController();
     book = work?.type === 'book-chapter' && work.partOf ? { loading: true } : null;
     if (!fromReference) trail = [];
     render();
+    if (work) loadCiters();
     if (book) loadBook();
     focusAfterSites =
       restorePage && reading?.focusKey?.startsWith('place-') ? reading.focusKey : null;
@@ -243,6 +250,7 @@ export function createInspector(
             id: `${citationStyleId}-tab-${id}`,
             'aria-controls': `${citationStyleId}-panel`,
             'data-focus-key': `tab-${id}`,
+            'aria-label': id === 'connections' ? connectionLabel() : label,
             'aria-selected': String(tab === id),
             tabindex: tab === id ? '0' : '-1',
             onclick: () => choose(id),
@@ -261,6 +269,7 @@ export function createInspector(
             },
           },
           label,
+          id === 'connections' && connectionBadge(),
         ),
       );
     root.append(
@@ -327,6 +336,21 @@ export function createInspector(
               `Cited by ${work.citedBy.toLocaleString()} in Crossref`,
             ),
             el('p', {}, CITED_BY_NOTE, ' ', helpLink('limits:citations')),
+            work.citedBy > 0 &&
+              el(
+                'button',
+                {
+                  class: 'text-button',
+                  onclick: () => {
+                    tab = 'connections';
+                    render();
+                    root
+                      .querySelector('[data-focus-key="tab-connections"]')
+                      ?.focus({ preventScroll: true });
+                  },
+                },
+                'See the citations',
+              ),
           ),
       ].filter(Boolean),
     );
@@ -892,31 +916,178 @@ export function createInspector(
           : el('small', { role: 'status' }, 'Crossref returned no candidates for this citation.')),
     );
   }
-  function connections(container) {
-    if (work.citedBy !== null)
-      container.append(
-        section(
-          'Cited by',
-          el(
-            'p',
-            {},
-            `${work.citedBy.toLocaleString()} citations recorded in Crossref. `,
-            CITED_BY_NOTE,
-            ' ',
-            helpLink('limits:citations'),
-          ),
+  // Everything the Connections tab can list. Null until the citations have been looked up.
+  // When that lookup failed the number is only what is known without it.
+  function connectionCount() {
+    if (!citers || citers.loading) return null;
+    const known = work.references.length + relationEntries().length;
+    if (citers.failed) return { count: known + (work.citedBy ?? 0), partial: true };
+    return { count: known + Math.max(work.citedBy ?? 0, citers.dois.length), partial: false };
+  }
+  function connectionLabel() {
+    const found = connectionCount();
+    if (!found) return 'Connections, counting';
+    const { count, partial } = found;
+    if (partial)
+      return count ? `Connections, at least ${count.toLocaleString()}` : 'Connections, unknown';
+    return `Connections, ${count === 0 ? 'none' : count.toLocaleString()}`;
+  }
+  function connectionBadge() {
+    const found = connectionCount();
+    const empty = found && !found.partial && found.count === 0;
+    const text = !found
+      ? '…'
+      : found.partial
+        ? found.count
+          ? `${found.count.toLocaleString()}+`
+          : '?'
+        : found.count.toLocaleString();
+    return el(
+      'span',
+      { class: `tab-count${empty ? ' tab-count-empty' : ''}`, 'aria-hidden': 'true' },
+      text,
+    );
+  }
+  // The citations' DOIs load when a record opens so the tab can show a count. Their titles
+  // load later, only if the tab is opened. Each lookup writes only to the state object it
+  // started with, so a slow answer for one record can never change another's.
+  async function loadCiters() {
+    if (citers) return;
+    const record = work,
+      state = { loading: true };
+    citers = state;
+    let result;
+    try {
+      result = await getCitingDOIs(record.doi, { signal: citersAbort?.signal });
+    } catch {
+      result = { failed: true };
+    }
+    if (citers !== state) return;
+    citers = result;
+    if (tab === 'connections') render();
+    else refreshConnectionBadge();
+  }
+  async function loadCiterDetails() {
+    const state = citers;
+    if (!state?.dois?.length || state.works || state.loadingDetails) return;
+    state.loadingDetails = true;
+    try {
+      state.works = await getWorks(state.dois, { signal: citersAbort?.signal });
+    } catch {
+      state.works = new Map();
+    }
+    if (citers === state && tab === 'connections') render();
+  }
+  // Updates the badge in place, so a lookup finishing never moves focus.
+  function refreshConnectionBadge() {
+    const button = root.querySelector('[data-focus-key="tab-connections"]');
+    if (!button) return;
+    button.setAttribute('aria-label', connectionLabel());
+    button.querySelector('.tab-count')?.replaceWith(connectionBadge());
+  }
+  function citationCredit() {
+    return el(
+      'p',
+      { class: 'source-credit' },
+      'Citations provided by ',
+      externalLink('OpenCitations', 'https://opencitations.net'),
+      '.',
+    );
+  }
+  function citedBySection() {
+    const count = work.citedBy ?? 0;
+    const title = work.citedBy === null ? 'Cited by' : `Cited by (${count.toLocaleString()})`;
+    const note = el(
+      'p',
+      { class: 'citation-note' },
+      CITED_BY_NOTE,
+      ' ',
+      helpLink('limits:citations'),
+    );
+    if (!citers || citers.loading)
+      return section(title, el('p', { role: 'status' }, 'Looking up the citations…'), note);
+    if (citers.failed)
+      return section(
+        title,
+        el(
+          'p',
+          { role: 'status' },
+          `${count ? `Crossref records ${count.toLocaleString()} citations, but the` : 'The'} list of citations could not be loaded. Try again later.`,
         ),
+        el(
+          'button',
+          {
+            class: 'text-button',
+            onclick: () => {
+              citers = null;
+              render();
+            },
+          },
+          'Retry',
+        ),
+        note,
       );
-    container.append(
-      section(
-        'Follow connections',
+    if (!citers.dois.length)
+      return section(
+        title,
         el(
           'p',
           {},
-          'References and relationships come from this record. Their absence does not mean a work has no connections.',
+          count
+            ? `Crossref records ${count.toLocaleString()} citations, but OpenCitations does not list any citations for this record.`
+            : 'No citations found.',
         ),
+        citationCredit(),
+        note,
+      );
+    const shown = citers.dois.slice(0, RELATED_LIMIT);
+    return section(
+      title,
+      el(
+        'p',
+        { class: 'scope-note', role: 'status' },
+        citers.dois.length > shown.length
+          ? `Showing the ${RELATED_LIMIT} most recent of ${citers.dois.length} citations found in OpenCitations.`
+          : `${citers.dois.length.toLocaleString()} ${citers.dois.length === 1 ? 'citation' : 'citations'} found in OpenCitations${citers.dois.length < count ? `. Crossref counts ${count.toLocaleString()}, but the rest could not be identified` : ''}.`,
       ),
+      el(
+        'ul',
+        { class: 'related-list' },
+        shown.map((doi, index) => {
+          const record = citers.works?.get(doi);
+          return el(
+            'li',
+            {},
+            record
+              ? [
+                  el(
+                    'button',
+                    {
+                      class: 'record-title',
+                      'data-focus-key': `citer-${index}`,
+                      disabled: following,
+                      onclick: () => follow(doi),
+                    },
+                    displayTitle(record.title),
+                  ),
+                  el('p', { class: 'record-citation' }, citationLine(record, { doi: true })),
+                ]
+              : el(
+                  'p',
+                  { class: 'record-citation' },
+                  externalLink(doi, doiURL(doi)),
+                  citers.works ? ' Details not available from Crossref.' : ' Loading details…',
+                ),
+          );
+        }),
+      ),
+      citationCredit(),
+      note,
     );
+  }
+  function connections(container) {
+    loadCiters().then(loadCiterDetails);
+    container.append(citedBySection());
     if (following)
       container.append(
         el(
@@ -935,7 +1106,16 @@ export function createInspector(
       );
     const refs = work.references;
     if (!refs.length)
-      container.append(section('References', el('p', {}, 'No reference list available.')));
+      container.append(
+        section(
+          'References',
+          el(
+            'p',
+            {},
+            `${work.publisher || 'The publisher'} did not supply a reference list to Crossref for this work.`,
+          ),
+        ),
+      );
     else {
       const list = el('ol', { class: 'reference-list' });
       for (const [index, ref] of refs.slice(0, referenceLimit).entries()) {
@@ -1005,7 +1185,25 @@ export function createInspector(
     if (entries.length) {
       loadRelated(entries);
       container.append(section('Related records', relatedList(entries)));
-    }
+    } else
+      container.append(
+        section(
+          'Related records',
+          el(
+            'p',
+            {},
+            `${work.publisher || 'The publisher'} did not supply any related records to Crossref for this work.`,
+          ),
+        ),
+      );
+    container.append(
+      el(
+        'p',
+        { class: 'citation-note' },
+        'Crossref only knows what publishers send it. Many publishers do not send reference lists or related records, so the connections shown here are often incomplete. That is a gap in the supplied data, not a sign that the work has no connections. ',
+        helpLink('limits:citations'),
+      ),
+    );
   }
   async function loadCitation() {
     const id = ++generation;

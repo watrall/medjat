@@ -17,3 +17,7 @@ export async function stubPlaceServices(page) {
 export async function choosePlace(page, id) {
   await page.locator(`[data-place-id="${id}"]`).first().click();
 }
+// Keeps citation lookups off the network: OpenCitations knows of no citations.
+export async function stubCitations(page) {
+  await page.route('https://api.opencitations.net/**', (route) => route.fulfill({ json: [] }));
+}

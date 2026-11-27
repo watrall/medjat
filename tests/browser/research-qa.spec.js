@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { choosePlace, stubPlaceServices } from './fixtures.js';
+import { choosePlace, stubPlaceServices, stubCitations } from './fixtures.js';
 
 test('research views retain accessible controls and reflow across desktop and mobile', async ({
   page,
@@ -18,6 +18,7 @@ test('research views retain accessible controls and reflow across desktop and mo
       { unstructured: 'An older book' },
     ],
   };
+  await stubCitations(page);
   await page.route('https://api.crossref.org/**', (route) => {
     const url = new URL(route.request().url());
     return route.fulfill({

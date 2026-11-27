@@ -86,7 +86,7 @@ The current view and inspected DOI are addressable in the URL. Per-tab session s
 
 Publication-date sorts use offset pagination, limited here to the first 10,000 candidates; relevance uses cursor pagination. Narrow the topic or publication years for deeper date-specific research. These controls follow the [current Crossref API contract](https://api.crossref.org/swagger-ui/index.html); publication dates are never replaced with deposit dates.
 
-Open Library cover requests contain the deposited ISBN of the inspected book. Covers are requested only for inspected records and credited to Open Library. Google Fonts supplies Quicksand. Crossref supplies the official “Metadata from Crossref” badge directly from its asset CDN, following its [brand guidance](https://www.crossref.org/brand/). There is no application analytics or account system.
+Open Library cover requests contain the deposited ISBN of the inspected book. Covers are requested only for inspected records and credited to Open Library. When a publication is inspected, its DOI is sent to OpenCitations (api.opencitations.net) to list the works that cite it, and again to Crossref to name them when the Connections tab is opened. The list is credited to OpenCitations in the app. Google Fonts supplies Quicksand. Crossref supplies the official “Metadata from Crossref” badge directly from its asset CDN, following its [brand guidance](https://www.crossref.org/brand/). There is no application analytics or account system.
 
 ## Application structure
 

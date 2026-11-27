@@ -1,6 +1,8 @@
+import { stubCitations } from './fixtures.js';
 import { test, expect } from '@playwright/test';
 test('metadata changes require explicit acceptance', async ({ page }) => {
   const old = { DOI: '10.1234/abydos', title: ['Excavations at Abydos'], type: 'journal-article' };
+  await stubCitations(page);
   await page.route('https://api.crossref.org/**', (route) =>
     route.fulfill({
       json: {

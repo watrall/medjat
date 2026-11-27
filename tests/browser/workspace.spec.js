@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { readFile, writeFile } from 'node:fs/promises';
 import AxeBuilder from '@axe-core/playwright';
-import { choosePlace, stubPlaceServices } from './fixtures.js';
+import { choosePlace, stubPlaceServices, stubCitations } from './fixtures.js';
 
 // Synthetic records are isolated to tests. The application has no fixture mode.
 const publication = (i) => ({
@@ -51,6 +51,7 @@ async function fixtures(
   await page.route('https://covers.openlibrary.org/**', (r) =>
     r.fulfill({ status: 404, body: '' }),
   );
+  await stubCitations(page);
   await page.route('https://api.crossref.org/**', async (route) => {
     const url = new URL(route.request().url());
     requests.push(url);
@@ -332,14 +333,14 @@ test('refresh preserves a reference trail and expanded source connections', asyn
   await fixtures(page, { referenceCount: 30 });
   await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
-  await page.getByRole('tab', { name: 'Connections', exact: true }).click();
+  await page.getByRole('tab', { name: /^Connections/ }).click();
   await page.getByRole('button', { name: 'Show 20 more references', exact: true }).click();
   await page.getByRole('button', { name: 'View reference', exact: true }).nth(24).click();
   await expect(page.locator('.detail-title')).toHaveText('A referenced publication');
   await page.reload();
   await expect(page.locator('.detail-title')).toHaveText('A referenced publication');
   await page.getByRole('button', { name: 'Back to previous publication', exact: true }).click();
-  await expect(page.getByRole('tab', { name: 'Connections', exact: true })).toHaveAttribute(
+  await expect(page.getByRole('tab', { name: /^Connections/ })).toHaveAttribute(
     'aria-selected',
     'true',
   );
@@ -679,7 +680,7 @@ test('reference navigation retains its source publication', async ({ page }) => 
   await fixtures(page, { referenceCount: 30 });
   await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
-  await page.getByRole('tab', { name: 'Connections', exact: true }).click();
+  await page.getByRole('tab', { name: /^Connections/ }).click();
   await page.getByRole('button', { name: 'Show 20 more references', exact: true }).click();
   const reference = page.getByRole('button', { name: 'View reference', exact: true }).nth(24);
   await reference.focus();
@@ -690,7 +691,7 @@ test('reference navigation retains its source publication', async ({ page }) => 
   await expect(page.locator('.detail-title')).toBeFocused();
   await page.getByRole('button', { name: 'Back to previous publication', exact: true }).click();
   await expect(page.locator('.detail-title')).toHaveText(/Settlement patterns/);
-  await expect(page.getByRole('tab', { name: 'Connections', exact: true })).toHaveAttribute(
+  await expect(page.getByRole('tab', { name: /^Connections/ })).toHaveAttribute(
     'aria-selected',
     'true',
   );
@@ -721,7 +722,7 @@ test('search and collection views have no detected WCAG AA violations', async ({
     measurements.scans.push({ violations: result.violations });
   };
   await check();
-  await page.getByRole('tab', { name: 'Connections', exact: true }).click();
+  await page.getByRole('tab', { name: /^Connections/ }).click();
   await measureTarget('Reference DOI', page.locator('.reference-list small a').first());
   await check();
   await page.getByRole('tab', { name: 'Cite', exact: true }).click();
@@ -1150,6 +1151,7 @@ test('long unbroken metadata wraps instead of widening the page on a small phone
 }) => {
   const long = (n, c) => c.repeat(n);
   await fixtures(page);
+  await stubCitations(page);
   await page.route('https://api.crossref.org/**', (route) => {
     const url = new URL(route.request().url());
     if (
@@ -1192,7 +1194,7 @@ test('long unbroken metadata wraps instead of widening the page on a small phone
   for (const accordion of await page.locator('#inspector details').all())
     if (await accordion.isVisible()) await accordion.locator('summary').first().click();
   for (const tab of ['Overview', 'Connections', 'Cite']) {
-    await page.getByRole('tab', { name: tab, exact: true }).click();
+    await page.getByRole('tab', { name: new RegExp(`^${tab}`) }).click();
     expect(await scrollWidth(), tab).toBe(320);
   }
   await page.goto('/?q=ancient+egypt');
@@ -1486,7 +1488,10 @@ test('workspace tabs restore each reading position and Collection can map its sa
   await page.locator('.save-button').nth(0).click();
   await page.locator('.save-button').nth(1).click();
   await page.locator('.result-open').nth(8).click();
-  await page.locator('#inspector').getByRole('tab', { name: 'Connections', exact: true }).click();
+  await page
+    .locator('#inspector')
+    .getByRole('tab', { name: /^Connections/ })
+    .click();
   const { x, y, width, height } = await page.locator('#collectionNav').boundingBox();
   // Layout is still settling after the row and tab clicks, so record the position once it holds.
   let exploreScroll = -1;
@@ -1529,7 +1534,7 @@ test('workspace tabs restore each reading position and Collection can map its sa
   await page.locator('#exploreNav').click();
   await expect(page.locator('.detail-title')).toHaveText('Ancient Egyptian research 8');
   await expect(
-    page.locator('#inspector').getByRole('tab', { name: 'Connections', exact: true }),
+    page.locator('#inspector').getByRole('tab', { name: /^Connections/ }),
   ).toHaveAttribute('aria-selected', 'true');
   expect(await page.evaluate(() => window.scrollY)).toBeCloseTo(exploreScroll, -1);
 
@@ -1655,6 +1660,7 @@ test('the landing stays idle and thematic tiles submit their exact titles', asyn
 
 test('a direct record URL retrieves only the requested DOI', async ({ page }) => {
   const calls = [];
+  await stubCitations(page);
   await page.route('https://api.crossref.org/**', (route) => {
     calls.push(new URL(route.request().url()).pathname);
     return route.fulfill({ json: { message: publication(1) } });
@@ -1749,7 +1755,7 @@ test('references without a DOI can be searched in Crossref from the inspector', 
   const requests = await fixtures(page, { plainReference: true });
   await page.goto('/?q=ancient+egypt');
   await expect(page.locator('.result-row')).toHaveCount(25);
-  await page.getByRole('tab', { name: 'Connections', exact: true }).click();
+  await page.getByRole('tab', { name: /^Connections/ }).click();
   await expect(page.getByText('Cited monograph about boundary stelae, 1998')).toBeVisible();
   await expect(page.getByText('1. Cited monograph')).toHaveCount(0);
   const searches = () => requests.filter((url) => !url.searchParams.has('facet'));
@@ -1868,10 +1874,10 @@ test('inspector views follow the tab pattern with arrow-key navigation', async (
   await expect(overview).toHaveAttribute('aria-selected', 'true');
   await overview.focus();
   await page.keyboard.press('ArrowRight');
-  const connections = page.getByRole('tab', { name: 'Connections', exact: true });
+  const connections = page.getByRole('tab', { name: /^Connections/ });
   await expect(connections).toBeFocused();
   await expect(connections).toHaveAttribute('aria-selected', 'true');
-  await expect(page.getByRole('tabpanel')).toContainText('Follow connections');
+  await expect(page.getByRole('tabpanel')).toContainText('Cited by');
   await page.keyboard.press('End');
   await expect(page.getByRole('tab', { name: 'Cite', exact: true })).toBeFocused();
   await page.keyboard.press('Home');
@@ -2090,8 +2096,11 @@ test('missing abstracts and references say not available, without the word depos
     'No abstract available. Open the publication for more information.',
   );
   await expect(panel).not.toContainText(/deposit/i);
-  await page.getByRole('tab', { name: 'Connections', exact: true }).click();
-  await expect(panel).toContainText('No reference list available.');
+  const tab = page.getByRole('tab', { name: /^Connections/ });
+  await expect(tab).toHaveAccessibleName('Connections, none');
+  await expect(tab.locator('.tab-count')).toHaveText('0');
+  await tab.click();
+  await expect(panel).toContainText('did not supply a reference list to Crossref');
   await expect(panel).not.toContainText(/deposit/i);
   await page.getByRole('tab', { name: 'Cite', exact: true }).click();
   await expect(panel).not.toContainText(/deposit/i);
@@ -2197,13 +2206,13 @@ test('the citation count sits under the title, with what it counts one click awa
   await page.goto('/?q=ancient+egypt');
   const cited = page.locator('.detail-cited');
   await expect(cited.locator('summary')).toHaveText('Cited by 7 in Crossref');
-  await expect(cited.getByText('does not list the citing works')).toBeHidden();
+  await expect(cited.getByText('not the citations themselves')).toBeHidden();
   await cited.locator('summary').click();
-  await expect(cited.getByText('does not list the citing works')).toBeVisible();
+  await expect(cited.getByText('not the citations themselves')).toBeVisible();
   await page.getByRole('tab', { name: 'Connections' }).click();
   const first = page.locator('.detail-section').first();
-  await expect(first.getByRole('heading', { name: 'Cited by' })).toBeVisible();
-  await expect(first).toContainText('7 citations recorded in Crossref');
+  await expect(first.getByRole('heading', { name: 'Cited by (7)' })).toBeVisible();
+  await expect(first).toContainText('looked up in OpenCitations');
   await page.locator('.result-open').nth(1).click();
   await expect(page.locator('.detail-cited summary')).toHaveText('Cited by 0 in Crossref');
 });
@@ -2513,4 +2522,144 @@ test('a saved search does not remember the open access view of its results', asy
   const link = page.locator('.history-link').first();
   await expect(link).toContainText('Hatshepsut');
   expect(await link.getAttribute('href')).not.toContain('access');
+});
+
+test('button text is left-aligned on phones, whether the button is a button or a link', async ({
+  page,
+}) => {
+  await fixtures(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/?q=ancient+egypt');
+  await page.locator('.result-open').first().click();
+  await expect(page.locator('.detail-actions .button').first()).toBeVisible();
+  for (const button of await page.locator('.detail-actions .button').all())
+    await expect(button).toHaveCSS('text-align', 'start');
+});
+
+const CITER = '10.1234/citer-one';
+async function citerRoutes(page, { openCitations, gateWorks } = {}) {
+  await page.route('https://api.opencitations.net/**', async (route) => {
+    if (openCitations) await openCitations();
+    return route.fulfill({
+      json: [{ citing: `omid:br/1 doi:${CITER}`, cited: 'doi:x', creation: '2024-01-01' }],
+    });
+  });
+  await page.route('https://api.crossref.org/works?**', async (route) => {
+    const filter = new URL(route.request().url()).searchParams.get('filter') || '';
+    if (!filter.includes(`doi:${CITER}`)) return route.fallback();
+    if (gateWorks) await gateWorks();
+    return route.fulfill({
+      json: {
+        status: 'ok',
+        message: {
+          items: [
+            {
+              DOI: CITER,
+              title: ['A paper that cites it'],
+              author: [{ given: 'Ada', family: 'Citer' }],
+              published: { 'date-parts': [[2024]] },
+              type: 'journal-article',
+              'container-title': ['Journal of Citing'],
+            },
+          ],
+        },
+      },
+    });
+  });
+}
+
+test('the connections badge settles even if the citation tab is used while it counts', async ({
+  page,
+}) => {
+  await fixtures(page);
+  let release;
+  const gate = new Promise((resolve) => (release = resolve));
+  await citerRoutes(page, { openCitations: () => gate });
+  await page.goto('/?q=ancient+egypt');
+  const tab = page.getByRole('tab', { name: /^Connections/ });
+  await expect(tab.locator('.tab-count')).toHaveText('…');
+  await page.getByRole('tab', { name: 'Cite' }).click();
+  await expect(page.getByRole('textbox', { name: 'Formatted citation' })).toBeVisible();
+  release();
+  await expect(tab.locator('.tab-count')).not.toHaveText('…', { timeout: 5000 });
+  await tab.click();
+  await expect(page.getByRole('button', { name: 'A paper that cites it' })).toBeVisible();
+});
+
+test('citation titles still load if another action runs while they load', async ({ page }) => {
+  await fixtures(page);
+  let release;
+  const gate = new Promise((resolve) => (release = resolve));
+  await citerRoutes(page, { gateWorks: () => gate });
+  await page.goto('/?q=ancient+egypt');
+  const tab = page.getByRole('tab', { name: /^Connections/ });
+  await expect(tab.locator('.tab-count')).not.toHaveText('…');
+  await tab.click();
+  await expect(page.getByText('Loading details…')).toBeVisible();
+  await page.getByRole('tab', { name: 'Cite' }).click();
+  await expect(page.getByRole('textbox', { name: 'Formatted citation' })).toBeVisible();
+  release();
+  await tab.click();
+  await expect(page.getByRole('button', { name: 'A paper that cites it' })).toBeVisible({
+    timeout: 5000,
+  });
+});
+
+test('the connections badge says it is partial when the citations cannot be loaded', async ({
+  page,
+}) => {
+  await fixtures(page);
+  await page.route('https://api.opencitations.net/**', (route) => route.abort());
+  await page.goto('/?q=ancient+egypt');
+  const tab = page.getByRole('tab', { name: /^Connections/ });
+  await expect(tab).toHaveAccessibleName(/^Connections, (at least \d+|unknown)$/, {
+    timeout: 10000,
+  });
+  await expect(tab.locator('.tab-count')).toHaveText(/^(\d+\+|\?)$/);
+});
+
+test('a slow citation lookup for one record never changes the next record', async ({ page }) => {
+  await fixtures(page);
+  let release;
+  const gate = new Promise((resolve) => (release = resolve));
+  let calls = 0;
+  await page.route('https://api.opencitations.net/**', async (route) => {
+    calls++;
+    if (calls > 1) return route.fulfill({ json: [] });
+    await gate;
+    return route.fulfill({
+      json: [{ citing: `omid:br/1 doi:${CITER}`, cited: 'doi:x', creation: '2024-01-01' }],
+    });
+  });
+  await page.goto('/?q=ancient+egypt');
+  await page.locator('.result-open').nth(1).click();
+  const tab = page.getByRole('tab', { name: /^Connections/ });
+  await expect(tab.locator('.tab-count')).not.toHaveText('…');
+  const settled = await tab.locator('.tab-count').innerText();
+  release();
+  await page.waitForTimeout(500);
+  await tab.click();
+  await expect(page.getByRole('heading', { name: /^Cited by/ })).toBeVisible();
+  await expect(page.getByText('A paper that cites it')).toHaveCount(0);
+  await expect(page.getByRole('tab', { name: /^Connections/ }).locator('.tab-count')).toHaveText(
+    settled,
+  );
+});
+
+test('opening another record cancels the citation lookup for the one before', async ({ page }) => {
+  await fixtures(page);
+  const aborted = [];
+  page.on('requestfailed', (request) => {
+    if (request.url().includes('opencitations.net')) aborted.push(request.url());
+  });
+  let calls = 0;
+  await page.route('https://api.opencitations.net/**', async (route) => {
+    calls++;
+    if (calls === 1) return new Promise(() => {});
+    return route.fulfill({ json: [] });
+  });
+  await page.goto('/?q=ancient+egypt');
+  await expect.poll(() => calls).toBe(1);
+  await page.locator('.result-open').nth(1).click();
+  await expect.poll(() => aborted.length).toBe(1);
 });

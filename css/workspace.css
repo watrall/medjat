@@ -721,6 +721,33 @@ h1 {
   border-color: var(--color-accent);
   color: var(--color-accent);
 }
+.source-credit {
+  margin-top: var(--space-sm);
+  color: var(--color-muted);
+  font-size: var(--text-label);
+}
+.tab-count {
+  display: inline-block;
+  min-width: 1.5em;
+  margin-left: 0.4em;
+  padding: 0 0.45em;
+  border-radius: 999px;
+  background: var(--color-subtle);
+  color: var(--color-ink);
+  font-size: 0.8em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.6;
+  text-align: center;
+}
+.inspector-tab[aria-selected='true'] .tab-count {
+  background: var(--color-accent);
+  color: var(--color-surface);
+}
+.inspector-tab .tab-count-empty {
+  background: transparent;
+  color: var(--color-muted);
+  box-shadow: inset 0 0 0 1px var(--color-control);
+}
 .detail-title {
   font-size: var(--text-section);
   font-weight: 600;
@@ -3018,6 +3045,17 @@ html {
 @media (max-width: 639px) {
   .book-actions .button {
     flex: 1 1 100%;
+  }
+}
+/* Button text reads from the left on phones, so a wrapped label lines up the same on a
+   <button> (centered by default) and on a link. */
+@media (max-width: 639px) {
+  button,
+  .button {
+    text-align: start;
+  }
+  .button {
+    justify-content: flex-start;
   }
 }
 

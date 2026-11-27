@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
-import { choosePlace, stubPlaceServices } from './fixtures.js';
+import { choosePlace, stubPlaceServices, stubCitations } from './fixtures.js';
 const source = {
   DOI: '10.1234/abydos',
   title: ['Excavations at Abydos'],
@@ -14,6 +14,7 @@ test('Places discovers Crossref works from a Pleiades place without a saved coll
     errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await stubPlaceServices(page);
+  await stubCitations(page);
   await page.route('https://api.crossref.org/**', (route) => {
     requests.push(new URL(route.request().url()));
     return route.fulfill({
@@ -62,6 +63,7 @@ test('place bibliographies export their exact saved scope and retain manual rese
     { DOI: '10.1234/grammar', title: ['An Egyptian grammar'] },
   ];
   await stubPlaceServices(page);
+  await stubCitations(page);
   await page.route('https://api.crossref.org/**', (route) =>
     route.fulfill({ json: { message: { items: records, 'total-results': 3 } } }),
   );
@@ -120,6 +122,7 @@ test('publication place links retain evidence and return to the search draft aft
   page,
 }) => {
   await stubPlaceServices(page);
+  await stubCitations(page);
   await page.route('https://api.crossref.org/**', (route) =>
     route.fulfill({
       json: {
@@ -155,6 +158,7 @@ test('place pagination keeps its applied query while preserving unfinished topic
 }) => {
   const requested = [];
   await stubPlaceServices(page);
+  await stubCitations(page);
   await page.route('https://api.crossref.org/**', (route) => {
     const url = new URL(route.request().url());
     requested.push(url);
@@ -187,6 +191,7 @@ test('Places restores applied query, drafts, evidence scope and direct-entry col
   page,
 }) => {
   await stubPlaceServices(page);
+  await stubCitations(page);
   await page.route('https://api.crossref.org/**', (r) =>
     r.fulfill({ json: { message: { items: [source], 'total-results': 1 } } }),
   );
@@ -216,6 +221,7 @@ test('an export keeps its original place identity while another place is selecte
     release = resolve;
   });
   await stubPlaceServices(page);
+  await stubCitations(page);
   await page.route('https://api.crossref.org/**', async (r) => {
     if (r.request().url().includes('/transform')) {
       await gate;
@@ -258,6 +264,7 @@ test('assignment identifies duplicate titles, searches without changing selectio
     },
   ];
   await stubPlaceServices(page);
+  await stubCitations(page);
   await page.route('https://api.crossref.org/**', (r) =>
     r.fulfill({ json: { message: { items: records, 'total-results': 2 } } }),
   );
@@ -290,6 +297,7 @@ test('Places reverses classification and removal without losing association revi
   page,
 }) => {
   await stubPlaceServices(page);
+  await stubCitations(page);
   await page.route('https://api.crossref.org/**', (r) =>
     r.fulfill({ json: { message: { items: [source], 'total-results': 1 } } }),
   );
@@ -314,6 +322,7 @@ test('Fit map changes only the camera while All places changes bibliography scop
   page,
 }) => {
   await stubPlaceServices(page);
+  await stubCitations(page);
   await page.route('https://api.crossref.org/**', (r) =>
     r.fulfill({
       json: {
@@ -353,6 +362,7 @@ test('search and review updates preserve keyboard position without stealing back
     release = resolve;
   });
   await stubPlaceServices(page);
+  await stubCitations(page);
   await page.route('https://api.crossref.org/**', async (r) => {
     if (new URL(r.request().url()).searchParams.get('query.bibliographic')?.includes('focus-test'))
       await gate;
@@ -395,6 +405,7 @@ test('mobile Places compacts geography, retains expansion choice and brings publ
       ),
     }),
   );
+  await stubCitations(page);
   await page.route('https://api.crossref.org/**', (r) =>
     r.fulfill({ json: { message: { items: [source], 'total-results': 1 } } }),
   );
@@ -427,6 +438,7 @@ test('the place finder searches every Pleiades place in Egypt by name, type and 
 }) => {
   const requests = [];
   await stubPlaceServices(page);
+  await stubCitations(page);
   await page.route('https://api.crossref.org/**', (route) => {
     requests.push(new URL(route.request().url()));
     return route.fulfill({ json: { message: { items: [source], 'total-results': 12 } } });
@@ -455,6 +467,7 @@ test('names that suggest a place are matched across the index with the matched t
   page,
 }) => {
   await stubPlaceServices(page);
+  await stubCitations(page);
   await page.route('https://api.crossref.org/**', (route) =>
     route.fulfill({
       json: {
@@ -493,6 +506,7 @@ test('a chosen place shows its live Pleiades record, and says so when Pleiades c
   page,
 }) => {
   await stubPlaceServices(page);
+  await stubCitations(page);
   await page.route('https://api.crossref.org/**', (route) =>
     route.fulfill({ json: { message: { items: [source], 'total-results': 1 } } }),
   );

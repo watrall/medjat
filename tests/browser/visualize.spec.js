@@ -1,3 +1,4 @@
+import { stubCitations } from './fixtures.js';
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
@@ -23,6 +24,7 @@ async function stub(page) {
   const refinement = new Promise((resolve) => {
     releaseRefinement = resolve;
   });
+  await stubCitations(page);
   await page.route('https://api.crossref.org/**', async (route) => {
     const url = new URL(route.request().url());
     if (url.pathname.startsWith('/works/'))
@@ -186,6 +188,7 @@ test('the charts are still drawn when you come back to them from Explore', async
 });
 
 test('a window with no records says so instead of failing', async ({ page }) => {
+  await stubCitations(page);
   await page.route('https://api.crossref.org/**', (route) =>
     route.fulfill({ json: { message: { 'total-results': 0, items: [] } } }),
   );
@@ -314,6 +317,7 @@ test('the one bright metadata bar is always the one under the pointer, however y
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
+  await stubCitations(page);
   await page.route('https://api.crossref.org/**', (route) =>
     route.fulfill({
       json: {

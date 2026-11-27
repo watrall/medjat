@@ -114,11 +114,19 @@ function wait(ms, signal) {
 
 /**
  * @param {string} url
- * @param {{signal?: AbortSignal, format?: 'json' | 'text', headers?: Record<string, string>, fetcher?: typeof fetch, fresh?: boolean}} [options]
+ * @param {{signal?: AbortSignal, format?: 'json' | 'text', headers?: Record<string, string>, fetcher?: typeof fetch, fresh?: boolean, shared?: boolean, service?: string}} [options]
  */
 export async function request(
   url,
-  { signal, format = 'json', headers = {}, fetcher = fetch, fresh = false } = {},
+  {
+    signal,
+    format = 'json',
+    headers = {},
+    fetcher = fetch,
+    fresh = false,
+    shared = true,
+    service = 'Crossref',
+  } = {},
 ) {
   const key = `${format}:${url}:${JSON.stringify(headers)}`;
   const found = cache.get(key);
@@ -127,7 +135,8 @@ export async function request(
   const combined = signal ? AbortSignal.any([signal, timeout]) : timeout;
   for (let attempt = 0; attempt < 3; attempt++) {
     let response, body;
-    const release = await reserveRequest(combined);
+    // Only Crossref requests share the polite-pool queue; another host must not slow search.
+    const release = shared ? await reserveRequest(combined) : () => {};
     try {
       response = await fetcher(url, {
         signal: combined,
@@ -152,12 +161,14 @@ export async function request(
       }
       const message =
         response.status === 429
-          ? 'Crossref is receiving too many requests. Wait a moment, then retry.'
+          ? `${service} is receiving too many requests. Wait a moment, then retry.`
           : response.status === 404
-            ? 'Crossref has no record for this DOI.'
+            ? `${service} has no record for this DOI.`
             : response.status >= 400 && response.status < 500
-              ? 'Crossref could not run this search. Change your search terms or refinements and try again.'
-              : 'Crossref is temporarily unavailable. Please try again shortly.';
+              ? service === 'Crossref'
+                ? 'Crossref could not run this search. Change your search terms or refinements and try again.'
+                : `${service} could not answer this request.`
+              : `${service} is temporarily unavailable. Please try again shortly.`;
       throw Object.assign(new Error(message), {
         status: response.status,
         retryable: response.status === 429 || response.status >= 500,

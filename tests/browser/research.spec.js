@@ -1,7 +1,9 @@
+import { stubCitations } from './fixtures.js';
 import { test, expect } from '@playwright/test';
 test('reference discovery explains overlap, records decisions, and preserves them on reload', async ({
   page,
 }) => {
+  await stubCitations(page);
   await page.route('https://api.crossref.org/**', (route) => {
     const url = new URL(route.request().url());
     const work = (i) => ({
@@ -45,6 +47,7 @@ test('reference discovery explains overlap, records decisions, and preserves the
 test('unresolved citations require confirmation and can be undone after rebuilding discovery', async ({
   page,
 }) => {
+  await stubCitations(page);
   await page.route('https://api.crossref.org/**', (route) => {
     const url = new URL(route.request().url());
     const matching = url.searchParams.get('query.bibliographic') === 'An older book';
@@ -91,6 +94,7 @@ test('unresolved citations require confirmation and can be undone after rebuildi
 });
 
 test('opening every Collection accordion on a phone never widens the page', async ({ page }) => {
+  await stubCitations(page);
   await page.route('https://api.crossref.org/**', (route) => {
     const url = new URL(route.request().url());
     const work = (i) => ({
